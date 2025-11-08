@@ -1,11 +1,11 @@
-import {ServerRouter} from 'react-router';
-import {isbot} from 'isbot';
-import {renderToReadableStream} from 'react-dom/server';
 import {
-  createContentSecurityPolicy,
-  type HydrogenRouterContextProvider,
+    createContentSecurityPolicy,
+    type HydrogenRouterContextProvider,
 } from '@shopify/hydrogen';
-import type {EntryContext} from 'react-router';
+import { isbot } from 'isbot';
+import { renderToReadableStream } from 'react-dom/server';
+import type { EntryContext } from 'react-router';
+import { ServerRouter } from 'react-router';
 
 export default async function handleRequest(
   request: Request,
@@ -19,6 +19,12 @@ export default async function handleRequest(
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    imgSrc: [
+      "'self'",
+      'data:',
+      'https://cdn.shopify.com',
+      'https://images.unsplash.com',
+    ],
   });
 
   const body = await renderToReadableStream(

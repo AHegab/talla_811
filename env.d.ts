@@ -5,3 +5,11 @@
 
 // Enhance TypeScript's built-in typings.
 import '@total-typescript/ts-reset';
+
+import type { HydrogenEnv } from '@shopify/hydrogen';
+
+declare global {
+    interface Env extends HydrogenEnv {
+        // Add your custom environment variables here
+    }
+}

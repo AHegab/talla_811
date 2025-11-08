@@ -1,9 +1,9 @@
-import type {CartApiQueryFragment} from 'storefrontapi.generated';
-import type {CartLayout} from '~/components/CartMain';
-import {CartForm, Money, type OptimisticCart} from '@shopify/hydrogen';
-import {useEffect, useRef} from 'react';
-import {useFetcher} from 'react-router';
-import type {FetcherWithComponents} from 'react-router';
+import { CartForm, Money, type OptimisticCart } from '@shopify/hydrogen';
+import { useEffect, useRef } from 'react';
+import type { FetcherWithComponents } from 'react-router';
+import { useFetcher } from 'react-router';
+import type { CartApiQueryFragment } from 'storefrontapi.generated';
+import type { CartLayout } from '~/components/CartMain';
 
 type CartSummaryProps = {
   cart: OptimisticCart<CartApiQueryFragment | null>;
@@ -11,25 +11,29 @@ type CartSummaryProps = {
 };
 
 export function CartSummary({cart, layout}: CartSummaryProps) {
-  const className =
-    layout === 'page' ? 'cart-summary-page' : 'cart-summary-aside';
-
   return (
-    <div aria-labelledby="cart-summary" className={className}>
-      <h4>Totals</h4>
-      <dl className="cart-subtotal">
-        <dt>Subtotal</dt>
-        <dd>
-          {cart?.cost?.subtotalAmount?.amount ? (
-            <Money data={cart?.cost?.subtotalAmount} />
-          ) : (
-            '-'
-          )}
-        </dd>
-      </dl>
+    <div aria-labelledby="cart-summary" className="border-t border-gray-200 bg-white px-6 py-6 space-y-6">
       <CartDiscounts discountCodes={cart?.discountCodes} />
       <CartGiftCard giftCardCodes={cart?.appliedGiftCards} />
-      <CartCheckoutActions checkoutUrl={cart?.checkoutUrl} />
+      
+      <div className="pt-4 border-t border-gray-200">
+        <div className="flex justify-between items-baseline mb-6">
+          <dt className="text-sm uppercase tracking-wider text-talla-text/60 font-medium">Subtotal</dt>
+          <dd className="text-2xl font-medium">
+            {cart?.cost?.subtotalAmount?.amount ? (
+              <Money data={cart?.cost?.subtotalAmount} />
+            ) : (
+              '-'
+            )}
+          </dd>
+        </div>
+        
+        <CartCheckoutActions checkoutUrl={cart?.checkoutUrl} />
+        
+        <p className="text-xs text-center text-talla-text/50 mt-4">
+          Taxes and shipping calculated at checkout
+        </p>
+      </div>
     </div>
   );
 }
@@ -38,12 +42,13 @@ function CartCheckoutActions({checkoutUrl}: {checkoutUrl?: string}) {
   if (!checkoutUrl) return null;
 
   return (
-    <div>
-      <a href={checkoutUrl} target="_self">
-        <p>Continue to Checkout &rarr;</p>
-      </a>
-      <br />
-    </div>
+    <a 
+      href={checkoutUrl} 
+      target="_self"
+      className="block w-full px-6 py-4 bg-talla-text text-talla-bg text-center text-sm font-semibold uppercase tracking-wider hover:bg-talla-text/90 transition-all duration-200 hover:shadow-lg"
+    >
+      Continue to Checkout
+    </a>
   );
 }
 
@@ -58,27 +63,39 @@ function CartDiscounts({
       ?.map(({code}) => code) || [];
 
   return (
-    <div>
+    <div className="space-y-3">
       {/* Have existing discount, display it with a remove option */}
-      <dl hidden={!codes.length}>
-        <div>
-          <dt>Discount(s)</dt>
+      {codes.length > 0 && (
+        <div className="flex items-center justify-between px-3 py-2.5 bg-green-50 border border-green-200 rounded text-sm">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-green-800 font-medium">{codes?.join(', ')}</span>
+          </div>
           <UpdateDiscountForm>
-            <div className="cart-discount">
-              <code>{codes?.join(', ')}</code>
-              &nbsp;
-              <button>Remove</button>
-            </div>
+            <button className="text-xs text-green-700 hover:text-green-900 underline underline-offset-2">
+              Remove
+            </button>
           </UpdateDiscountForm>
         </div>
-      </dl>
+      )}
 
       {/* Show an input to apply a discount */}
       <UpdateDiscountForm discountCodes={codes}>
-        <div>
-          <input type="text" name="discountCode" placeholder="Discount code" />
-          &nbsp;
-          <button type="submit">Apply</button>
+        <div className="flex gap-2">
+          <input 
+            type="text" 
+            name="discountCode" 
+            placeholder="Discount code" 
+            className="flex-1 px-4 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-talla-text focus:border-transparent"
+          />
+          <button 
+            type="submit"
+            className="px-5 py-2.5 bg-talla-text text-talla-bg text-sm font-semibold uppercase tracking-wider hover:bg-talla-text/90 transition-colors rounded"
+          >
+            Apply
+          </button>
         </div>
       </UpdateDiscountForm>
     </div>
@@ -129,23 +146,32 @@ function CartGiftCard({
   }
 
   return (
-    <div>
+    <div className="space-y-3">
       {/* Display applied gift cards with individual remove buttons */}
       {giftCardCodes && giftCardCodes.length > 0 && (
-        <dl>
-          <dt>Applied Gift Card(s)</dt>
+        <div className="space-y-2">
           {giftCardCodes.map((giftCard) => (
             <RemoveGiftCardForm key={giftCard.id} giftCardId={giftCard.id}>
-              <div className="cart-discount">
-                <code>***{giftCard.lastCharacters}</code>
-                &nbsp;
-                <Money data={giftCard.amountUsed} />
-                &nbsp;
-                <button type="submit">Remove</button>
+              <div className="flex items-center justify-between px-3 py-2.5 bg-purple-50 border border-purple-200 rounded text-sm">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                  </svg>
+                  <code className="font-medium text-purple-800">***{giftCard.lastCharacters}</code>
+                  <span className="text-purple-700">
+                    <Money data={giftCard.amountUsed} />
+                  </span>
+                </div>
+                <button 
+                  type="submit"
+                  className="text-xs text-purple-700 hover:text-purple-900 underline underline-offset-2"
+                >
+                  Remove
+                </button>
               </div>
             </RemoveGiftCardForm>
           ))}
-        </dl>
+        </div>
       )}
 
       {/* Show an input to apply a gift card */}
@@ -154,15 +180,19 @@ function CartGiftCard({
         saveAppliedCode={saveAppliedCode}
         fetcherKey="gift-card-add"
       >
-        <div>
+        <div className="flex gap-2">
           <input
             type="text"
             name="giftCardCode"
             placeholder="Gift card code"
             ref={giftCardCodeInput}
+            className="flex-1 px-4 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-talla-text focus:border-transparent"
           />
-          &nbsp;
-          <button type="submit" disabled={giftCardAddFetcher.state !== 'idle'}>
+          <button 
+            type="submit" 
+            disabled={giftCardAddFetcher.state !== 'idle'}
+            className="px-5 py-2.5 bg-talla-text text-talla-bg text-sm font-semibold uppercase tracking-wider hover:bg-talla-text/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
+          >
             Apply
           </button>
         </div>

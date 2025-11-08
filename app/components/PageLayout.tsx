@@ -1,19 +1,19 @@
-import {Await, Link} from 'react-router';
-import {Suspense, useId} from 'react';
+import { Suspense, useId } from 'react';
+import { Await, Link } from 'react-router';
 import type {
-  CartApiQueryFragment,
-  FooterQuery,
-  HeaderQuery,
+    CartApiQueryFragment,
+    FooterQuery,
+    HeaderQuery,
 } from 'storefrontapi.generated';
-import {Aside} from '~/components/Aside';
-import {Footer} from '~/components/Footer';
-import {Header, HeaderMenu} from '~/components/Header';
-import {CartMain} from '~/components/CartMain';
+import { Aside } from '~/components/Aside';
+import { CartMain } from '~/components/CartMain';
+import { Footer } from '~/components/Footer';
+import { Header, HeaderMenu } from '~/components/Header';
 import {
-  SEARCH_ENDPOINT,
-  SearchFormPredictive,
+    SEARCH_ENDPOINT,
+    SearchFormPredictive,
 } from '~/components/SearchFormPredictive';
-import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
+import { SearchResultsPredictive } from '~/components/SearchResultsPredictive';
 
 interface PageLayoutProps {
   cart: Promise<CartApiQueryFragment | null>;
@@ -37,20 +37,29 @@ export function PageLayout({
       <CartAside cart={cart} />
       <SearchAside />
       <MobileMenuAside header={header} publicStoreDomain={publicStoreDomain} />
-      {header && (
-        <Header
+      
+      {/* TALLA Premium Layout */}
+      <div className="min-h-screen flex flex-col bg-talla-bg text-talla-text">
+        {header && (
+          <Header
+            header={header}
+            cart={cart}
+            isLoggedIn={isLoggedIn}
+            publicStoreDomain={publicStoreDomain}
+          />
+        )}
+        
+        {/* Main content - offset for fixed header */}
+        <main className="flex-1 pt-16 sm:pt-18 lg:pt-22">
+          {children}
+        </main>
+        
+        <Footer
+          footer={footer}
           header={header}
-          cart={cart}
-          isLoggedIn={isLoggedIn}
           publicStoreDomain={publicStoreDomain}
         />
-      )}
-      <main>{children}</main>
-      <Footer
-        footer={footer}
-        header={header}
-        publicStoreDomain={publicStoreDomain}
-      />
+      </div>
     </Aside.Provider>
   );
 }
@@ -58,8 +67,8 @@ export function PageLayout({
 function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
   return (
     <Aside type="cart" heading="CART">
-      <Suspense fallback={<p>Loading cart ...</p>}>
-        <Await resolve={cart}>
+      <Suspense fallback={<div className="p-6 text-center text-talla-text/60">Loading cart...</div>}>
+        <Await resolve={cart} errorElement={<div className="p-6 text-center text-red-600">Error loading cart</div>}>
           {(cart) => {
             return <CartMain cart={cart} layout="aside" />;
           }}

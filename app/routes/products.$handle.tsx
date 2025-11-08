@@ -1,20 +1,16 @@
 import {
-  redirect,
-  useLoaderData,
-} from 'react-router';
-import type {Route} from './+types/products.$handle';
-import {
-  getSelectedProductOptions,
-  Analytics,
-  useOptimisticVariant,
-  getProductOptions,
-  getAdjacentAndFirstAvailableVariants,
-  useSelectedOptionInUrlParam,
+    Analytics,
+    getAdjacentAndFirstAvailableVariants,
+    getSelectedProductOptions,
+    useOptimisticVariant,
+    useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
-import {ProductPrice} from '~/components/ProductPrice';
-import {ProductImage} from '~/components/ProductImage';
-import {ProductForm} from '~/components/ProductForm';
-import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {
+    useLoaderData
+} from 'react-router';
+import { ProductPage } from '~/components/ProductPage';
+import { redirectIfHandleIsLocalized } from '~/lib/redirect';
+import type { Route } from './+types/products.$handle';
 
 export const meta: Route.MetaFunction = ({data}) => {
   return [
@@ -83,50 +79,18 @@ function loadDeferredData({context, params}: Route.LoaderArgs) {
   return {};
 }
 
-export default function Product() {
+export default function Product({params}: Route.ComponentProps) {
   const {product} = useLoaderData<typeof loader>();
-
-  // Optimistically selects a variant with given available variant information
   const selectedVariant = useOptimisticVariant(
     product.selectedOrFirstAvailableVariant,
     getAdjacentAndFirstAvailableVariants(product),
   );
 
-  // Sets the search param to the selected variant without navigation
-  // only when no search params are set in the url
-  useSelectedOptionInUrlParam(selectedVariant.selectedOptions);
-
-  // Get the product options array
-  const productOptions = getProductOptions({
-    ...product,
-    selectedOrFirstAvailableVariant: selectedVariant,
-  });
-
-  const {title, descriptionHtml} = product;
+  useSelectedOptionInUrlParam(selectedVariant?.selectedOptions);
 
   return (
-    <div className="product">
-      <ProductImage image={selectedVariant?.image} />
-      <div className="product-main">
-        <h1>{title}</h1>
-        <ProductPrice
-          price={selectedVariant?.price}
-          compareAtPrice={selectedVariant?.compareAtPrice}
-        />
-        <br />
-        <ProductForm
-          productOptions={productOptions}
-          selectedVariant={selectedVariant}
-        />
-        <br />
-        <br />
-        <p>
-          <strong>Description</strong>
-        </p>
-        <br />
-        <div dangerouslySetInnerHTML={{__html: descriptionHtml}} />
-        <br />
-      </div>
+    <>
+      <ProductPage product={product} selectedVariant={selectedVariant} />
       <Analytics.ProductView
         data={{
           products: [
@@ -142,7 +106,7 @@ export default function Product() {
           ],
         }}
       />
-    </div>
+    </>
   );
 }
 
@@ -184,13 +148,24 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
 ` as const;
 
 const PRODUCT_FRAGMENT = `#graphql
-  fragment Product on Product {
+  fragment ProductNonLocale on Product {
     id
     title
     vendor
     handle
     descriptionHtml
     description
+    productType
+    tags
+    images(first: 10) {
+      nodes {
+        id
+        url
+        altText
+        width
+        height
+      }
+    }
     encodedVariantExistence
     encodedVariantAvailability
     options {
@@ -216,6 +191,11 @@ const PRODUCT_FRAGMENT = `#graphql
     adjacentVariants (selectedOptions: $selectedOptions) {
       ...ProductVariant
     }
+    variants(first: 100) {
+      nodes {
+        ...ProductVariant
+      }
+    }
     seo {
       description
       title
@@ -225,14 +205,14 @@ const PRODUCT_FRAGMENT = `#graphql
 ` as const;
 
 const PRODUCT_QUERY = `#graphql
-  query Product(
+  query ProductNonLocale(
     $country: CountryCode
     $handle: String!
     $language: LanguageCode
     $selectedOptions: [SelectedOptionInput!]!
   ) @inContext(country: $country, language: $language) {
     product(handle: $handle) {
-      ...Product
+      ...ProductNonLocale
     }
   }
   ${PRODUCT_FRAGMENT}

@@ -1,17 +1,137 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Types for user measurements
 export interface UserMeasurements {
-  gender: 'women' | 'men' | 'unisex';
+  gender: 'male' | 'female';
   height: number;
   weight: number;
   bodyFit: 'slim' | 'regular' | 'athletic' | 'relaxed';
   chest?: number;
   waist?: number;
   hips?: number;
-  unit: 'metric' | 'imperial';
+  unit: 'metric';
   savedAt: string;
 }
+
+// Body fit visual descriptions with SVG diagrams
+const bodyFitDescriptions: Record<'male' | 'female', Record<'slim' | 'regular' | 'athletic' | 'relaxed', { title: string; description: string; svg: JSX.Element }>> = {
+  male: {
+    slim: {
+      title: 'Slim Fit',
+      description: 'Close to body, tailored silhouette',
+      svg: (
+        <svg viewBox="0 0 80 120" className="w-full h-full">
+          <ellipse cx="40" cy="20" rx="12" ry="14" fill="#E0E0E0" />
+          <rect x="30" y="34" width="20" height="35" rx="3" fill="#BDBDBD" />
+          <rect x="28" y="69" width="10" height="35" rx="2" fill="#9E9E9E" />
+          <rect x="42" y="69" width="10" height="35" rx="2" fill="#9E9E9E" />
+          <line x1="22" y1="40" x2="15" y2="60" stroke="#9E9E9E" strokeWidth="3" strokeLinecap="round" />
+          <line x1="58" y1="40" x2="65" y2="60" stroke="#9E9E9E" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      )
+    },
+    regular: {
+      title: 'Regular Fit',
+      description: 'Comfortable, classic fit with room to move',
+      svg: (
+        <svg viewBox="0 0 80 120" className="w-full h-full">
+          <ellipse cx="40" cy="20" rx="13" ry="15" fill="#E0E0E0" />
+          <rect x="27" y="34" width="26" height="38" rx="4" fill="#BDBDBD" />
+          <rect x="26" y="72" width="12" height="36" rx="2" fill="#9E9E9E" />
+          <rect x="42" y="72" width="12" height="36" rx="2" fill="#9E9E9E" />
+          <line x1="20" y1="42" x2="12" y2="65" stroke="#9E9E9E" strokeWidth="4" strokeLinecap="round" />
+          <line x1="60" y1="42" x2="68" y2="65" stroke="#9E9E9E" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+      )
+    },
+    athletic: {
+      title: 'Athletic Fit',
+      description: 'Broader shoulders, tapered waist',
+      svg: (
+        <svg viewBox="0 0 80 120" className="w-full h-full">
+          <ellipse cx="40" cy="20" rx="13" ry="15" fill="#E0E0E0" />
+          <path d="M 25 34 L 22 50 L 25 72 L 55 72 L 58 50 L 55 34 Z" fill="#BDBDBD" />
+          <rect x="27" y="72" width="11" height="36" rx="2" fill="#9E9E9E" />
+          <rect x="42" y="72" width="11" height="36" rx="2" fill="#9E9E9E" />
+          <line x1="18" y1="40" x2="10" y2="62" stroke="#9E9E9E" strokeWidth="5" strokeLinecap="round" />
+          <line x1="62" y1="40" x2="70" y2="62" stroke="#9E9E9E" strokeWidth="5" strokeLinecap="round" />
+        </svg>
+      )
+    },
+    relaxed: {
+      title: 'Relaxed Fit',
+      description: 'Loose, comfortable with extra room',
+      svg: (
+        <svg viewBox="0 0 80 120" className="w-full h-full">
+          <ellipse cx="40" cy="20" rx="14" ry="16" fill="#E0E0E0" />
+          <rect x="24" y="34" width="32" height="40" rx="5" fill="#BDBDBD" />
+          <rect x="24" y="74" width="14" height="36" rx="3" fill="#9E9E9E" />
+          <rect x="42" y="74" width="14" height="36" rx="3" fill="#9E9E9E" />
+          <line x1="18" y1="44" x2="10" y2="68" stroke="#9E9E9E" strokeWidth="5" strokeLinecap="round" />
+          <line x1="62" y1="44" x2="70" y2="68" stroke="#9E9E9E" strokeWidth="5" strokeLinecap="round" />
+        </svg>
+      )
+    }
+  },
+  female: {
+    slim: {
+      title: 'Slim Fit',
+      description: 'Close to body, figure-hugging silhouette',
+      svg: (
+        <svg viewBox="0 0 80 120" className="w-full h-full">
+          <ellipse cx="40" cy="20" rx="11" ry="13" fill="#E0E0E0" />
+          <path d="M 32 34 L 28 50 L 30 68 L 50 68 L 52 50 L 48 34 Z" fill="#BDBDBD" />
+          <path d="M 30 68 L 32 85 L 28 104 L 38 104 L 38 68 Z" fill="#9E9E9E" />
+          <path d="M 50 68 L 48 85 L 52 104 L 42 104 L 42 68 Z" fill="#9E9E9E" />
+          <line x1="24" y1="38" x2="16" y2="58" stroke="#9E9E9E" strokeWidth="3" strokeLinecap="round" />
+          <line x1="56" y1="38" x2="64" y2="58" stroke="#9E9E9E" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      )
+    },
+    regular: {
+      title: 'Regular Fit',
+      description: 'Comfortable, flattering everyday fit',
+      svg: (
+        <svg viewBox="0 0 80 120" className="w-full h-full">
+          <ellipse cx="40" cy="20" rx="12" ry="14" fill="#E0E0E0" />
+          <path d="M 30 34 L 26 52 L 28 70 L 52 70 L 54 52 L 50 34 Z" fill="#BDBDBD" />
+          <path d="M 28 70 L 30 88 L 26 106 L 37 106 L 37 70 Z" fill="#9E9E9E" />
+          <path d="M 52 70 L 50 88 L 54 106 L 43 106 L 43 70 Z" fill="#9E9E9E" />
+          <line x1="22" y1="40" x2="14" y2="62" stroke="#9E9E9E" strokeWidth="4" strokeLinecap="round" />
+          <line x1="58" y1="40" x2="66" y2="62" stroke="#9E9E9E" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+      )
+    },
+    athletic: {
+      title: 'Athletic Fit',
+      description: 'Defined shoulders, tailored through body',
+      svg: (
+        <svg viewBox="0 0 80 120" className="w-full h-full">
+          <ellipse cx="40" cy="20" rx="12" ry="14" fill="#E0E0E0" />
+          <path d="M 28 34 L 24 50 L 26 70 L 54 70 L 56 50 L 52 34 Z" fill="#BDBDBD" />
+          <path d="M 26 70 L 28 86 L 25 105 L 36 105 L 36 70 Z" fill="#9E9E9E" />
+          <path d="M 54 70 L 52 86 L 55 105 L 44 105 L 44 70 Z" fill="#9E9E9E" />
+          <line x1="20" y1="38" x2="12" y2="60" stroke="#9E9E9E" strokeWidth="4" strokeLinecap="round" />
+          <line x1="60" y1="38" x2="68" y2="60" stroke="#9E9E9E" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+      )
+    },
+    relaxed: {
+      title: 'Relaxed Fit',
+      description: 'Loose, comfortable with extra room',
+      svg: (
+        <svg viewBox="0 0 80 120" className="w-full h-full">
+          <ellipse cx="40" cy="20" rx="13" ry="15" fill="#E0E0E0" />
+          <rect x="26" y="34" width="28" height="38" rx="4" fill="#BDBDBD" />
+          <path d="M 26 72 L 28 90 L 24 108 L 36 108 L 36 72 Z" fill="#9E9E9E" />
+          <path d="M 54 72 L 52 90 L 56 108 L 44 108 L 44 72 Z" fill="#9E9E9E" />
+          <line x1="20" y1="42" x2="12" y2="66" stroke="#9E9E9E" strokeWidth="5" strokeLinecap="round" />
+          <line x1="60" y1="42" x2="68" y2="66" stroke="#9E9E9E" strokeWidth="5" strokeLinecap="round" />
+        </svg>
+      )
+    }
+  }
+};
 
 export const meta = () => {
   return [
@@ -25,7 +145,7 @@ export async function loader() {
 }
 
 export default function SizeGuidePage() {
-  const [gender, setGender] = useState<UserMeasurements['gender']>('women');
+  const [gender, setGender] = useState<UserMeasurements['gender']>('male');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
   const [bodyFit, setBodyFit] = useState<UserMeasurements['bodyFit']>('regular');
@@ -91,7 +211,7 @@ export default function SizeGuidePage() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('talla_user_measurements');
     }
-    setGender('women');
+    setGender('male');
     setHeight('');
     setWeight('');
     setBodyFit('regular');
@@ -153,56 +273,32 @@ export default function SizeGuidePage() {
               {/* Gender Selection */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-gray-700" style={{ fontFamily: 'Aeonik, sans-serif' }}>
-                  Category
+                  Gender
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['women', 'men', 'unisex'] as const).map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setGender(g)}
-                      className={`py-2.5 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
-                        gender === g
-                          ? 'bg-black text-white'
-                          : 'bg-white border border-gray-300 text-gray-700 hover:border-black'
-                      }`}
-                      style={{ fontFamily: 'Aeonik, sans-serif' }}
-                    >
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Unit Toggle */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-gray-700" style={{ fontFamily: 'Aeonik, sans-serif' }}>
-                  Measurement Unit
-                </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={() => setUnit('metric')}
-                    className={`py-2.5 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
-                      unit === 'metric'
+                    onClick={() => setGender('male')}
+                    className={`py-3 px-4 rounded-lg text-sm font-semibold uppercase tracking-wider transition-all duration-200 ${
+                      gender === 'male'
                         ? 'bg-black text-white'
                         : 'bg-white border border-gray-300 text-gray-700 hover:border-black'
                     }`}
                     style={{ fontFamily: 'Aeonik, sans-serif' }}
                   >
-                    Metric (cm/kg)
+                    MALE
                   </button>
                   <button
                     type="button"
-                    onClick={() => setUnit('imperial')}
-                    className={`py-2.5 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
-                      unit === 'imperial'
+                    onClick={() => setGender('female')}
+                    className={`py-3 px-4 rounded-lg text-sm font-semibold uppercase tracking-wider transition-all duration-200 ${
+                      gender === 'female'
                         ? 'bg-black text-white'
                         : 'bg-white border border-gray-300 text-gray-700 hover:border-black'
                     }`}
                     style={{ fontFamily: 'Aeonik, sans-serif' }}
                   >
-                    Imperial (in/lbs)
+                    FEMALE
                   </button>
                 </div>
               </div>
@@ -211,14 +307,14 @@ export default function SizeGuidePage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="height" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-gray-700" style={{ fontFamily: 'Aeonik, sans-serif' }}>
-                    Height {unit === 'metric' ? '(cm)' : '(in)'}*
+                    Height (CM)*
                   </label>
                   <input
                     id="height"
                     type="number"
                     value={height}
                     onChange={(e) => setHeight(e.target.value)}
-                    placeholder={unit === 'metric' ? '170' : '67'}
+                    placeholder="170"
                     required
                     className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-black transition-colors"
                     style={{ fontFamily: 'Quicking, sans-serif' }}
@@ -226,14 +322,14 @@ export default function SizeGuidePage() {
                 </div>
                 <div>
                   <label htmlFor="weight" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-gray-700" style={{ fontFamily: 'Aeonik, sans-serif' }}>
-                    Weight {unit === 'metric' ? '(kg)' : '(lbs)'}*
+                    Weight (KG)*
                   </label>
                   <input
                     id="weight"
                     type="number"
                     value={weight}
                     onChange={(e) => setWeight(e.target.value)}
-                    placeholder={unit === 'metric' ? '65' : '145'}
+                    placeholder="65"
                     required
                     className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-black transition-colors"
                     style={{ fontFamily: 'Quicking, sans-serif' }}
@@ -241,27 +337,51 @@ export default function SizeGuidePage() {
                 </div>
               </div>
 
-              {/* Body Fit Preference */}
+              {/* Body Fit Preference with Visual Diagrams */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-gray-700" style={{ fontFamily: 'Aeonik, sans-serif' }}>
-                  Preferred Fit*
+                  Body Shape*
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['slim', 'regular', 'athletic', 'relaxed'] as const).map((fit) => (
-                    <button
-                      key={fit}
-                      type="button"
-                      onClick={() => setBodyFit(fit)}
-                      className={`py-2.5 px-3 rounded-lg text-xs font-semibold capitalize transition-all duration-200 ${
-                        bodyFit === fit
-                          ? 'bg-black text-white'
-                          : 'bg-white border border-gray-300 text-gray-700 hover:border-black'
-                      }`}
-                      style={{ fontFamily: 'Aeonik, sans-serif' }}
-                    >
-                      {fit}
-                    </button>
-                  ))}
+                <div className="space-y-3">
+                  {(['slim', 'regular', 'athletic', 'relaxed'] as const).map((fit) => {
+                    const fitData = bodyFitDescriptions[gender][fit];
+                    return (
+                      <button
+                        key={fit}
+                        type="button"
+                        onClick={() => setBodyFit(fit)}
+                        className={`w-full relative p-5 rounded-xl border-2 transition-all duration-200 flex items-center gap-4 ${
+                          bodyFit === fit
+                            ? 'border-black bg-gray-50'
+                            : 'border-gray-200 bg-white hover:border-gray-400'
+                        }`}
+                      >
+                        {/* Visual Diagram */}
+                        <div className="w-16 h-24 flex-shrink-0">
+                          {fitData.svg}
+                        </div>
+                        
+                        {/* Text Content */}
+                        <div className="flex-1 text-left">
+                          <div className="text-sm font-bold mb-1" style={{ fontFamily: 'Aeonik, sans-serif' }}>
+                            {fitData.title}
+                          </div>
+                          <div className="text-xs text-gray-600" style={{ fontFamily: 'Quicking, sans-serif' }}>
+                            {fitData.description}
+                          </div>
+                        </div>
+                        
+                        {/* Check Mark when selected */}
+                        {bodyFit === fit && (
+                          <div className="flex-shrink-0">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-black">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -270,50 +390,48 @@ export default function SizeGuidePage() {
                 <p className="text-xs font-semibold uppercase tracking-wider mb-4 text-gray-500" style={{ fontFamily: 'Aeonik, sans-serif' }}>
                   Optional (for better accuracy)
                 </p>
-                <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label htmlFor="chest" className="block text-xs font-medium mb-2 text-gray-600" style={{ fontFamily: 'Quicking, sans-serif' }}>
-                      Chest/Bust {unit === 'metric' ? '(cm)' : '(in)'}
+                    <label htmlFor="chest" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-gray-600" style={{ fontFamily: 'Aeonik, sans-serif' }}>
+                      {gender === 'male' ? 'Chest' : 'Bust'} (CM)
                     </label>
                     <input
                       id="chest"
                       type="number"
                       value={chest}
                       onChange={(e) => setChest(e.target.value)}
-                      placeholder={unit === 'metric' ? '90' : '35'}
+                      placeholder="90"
                       className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-black transition-colors"
                       style={{ fontFamily: 'Quicking, sans-serif' }}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="waist" className="block text-xs font-medium mb-2 text-gray-600" style={{ fontFamily: 'Quicking, sans-serif' }}>
-                        Waist {unit === 'metric' ? '(cm)' : '(in)'}
-                      </label>
-                      <input
-                        id="waist"
-                        type="number"
-                        value={waist}
-                        onChange={(e) => setWaist(e.target.value)}
-                        placeholder={unit === 'metric' ? '75' : '30'}
-                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-black transition-colors"
-                        style={{ fontFamily: 'Quicking, sans-serif' }}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="hips" className="block text-xs font-medium mb-2 text-gray-600" style={{ fontFamily: 'Quicking, sans-serif' }}>
-                        Hips {unit === 'metric' ? '(cm)' : '(in)'}
-                      </label>
-                      <input
-                        id="hips"
-                        type="number"
-                        value={hips}
-                        onChange={(e) => setHips(e.target.value)}
-                        placeholder={unit === 'metric' ? '95' : '37'}
-                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-black transition-colors"
-                        style={{ fontFamily: 'Quicking, sans-serif' }}
-                      />
-                    </div>
+                  <div>
+                    <label htmlFor="waist" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-gray-600" style={{ fontFamily: 'Aeonik, sans-serif' }}>
+                      Waist (CM)
+                    </label>
+                    <input
+                      id="waist"
+                      type="number"
+                      value={waist}
+                      onChange={(e) => setWaist(e.target.value)}
+                      placeholder="75"
+                      className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-black transition-colors"
+                      style={{ fontFamily: 'Quicking, sans-serif' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="hips" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-gray-600" style={{ fontFamily: 'Aeonik, sans-serif' }}>
+                      Hips (CM)
+                    </label>
+                    <input
+                      id="hips"
+                      type="number"
+                      value={hips}
+                      onChange={(e) => setHips(e.target.value)}
+                      placeholder="95"
+                      className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-black transition-colors"
+                      style={{ fontFamily: 'Quicking, sans-serif' }}
+                    />
                   </div>
                 </div>
               </div>

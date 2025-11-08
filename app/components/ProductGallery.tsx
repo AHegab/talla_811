@@ -44,15 +44,14 @@ export function ProductGallery({images, productTitle = 'Product'}: ProductGaller
 
   if (!images.length) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div 
-          className="aspect-portrait flex items-center justify-center"
-          style={{backgroundColor: '#DDDEE2'}}
+          className="aspect-[3/4] flex items-center justify-center bg-gray-100"
         >
           <svg 
-            className="w-24 h-24 opacity-40" 
+            className="w-16 h-16 opacity-20" 
             fill="none" 
-            stroke="#6B6C75" 
+            stroke="#9E9E9E" 
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
@@ -69,14 +68,10 @@ export function ProductGallery({images, productTitle = 'Product'}: ProductGaller
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-3 lg:space-y-4">
       {/* Main Image */}
       <div 
-        className="relative aspect-portrait overflow-hidden group cursor-zoom-in"
-        style={{backgroundColor: '#FBFBFB'}}
-        onMouseEnter={() => setIsZoomed(true)}
-        onMouseLeave={() => setIsZoomed(false)}
-        onMouseMove={handleMouseMove}
+        className="relative aspect-[3/4] overflow-hidden bg-gray-50"
         role="img"
         aria-label={currentImage.alt || `${productTitle} - Image ${selectedIndex + 1}`}
       >
@@ -87,11 +82,7 @@ export function ProductGallery({images, productTitle = 'Product'}: ProductGaller
             width: currentImage.width,
             height: currentImage.height,
           }}
-          className="w-full h-full object-cover transition-transform duration-slower"
-          style={{
-            transform: isZoomed ? `scale(1.5)` : 'scale(1)',
-            transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`,
-          }}
+          className="w-full h-full object-cover"
           sizes="(min-width: 1024px) 50vw, 100vw"
           loading="eager"
         />
@@ -99,82 +90,46 @@ export function ProductGallery({images, productTitle = 'Product'}: ProductGaller
         {/* Image counter */}
         {images.length > 1 && (
           <div 
-            className="absolute bottom-4 right-4 px-3 py-1.5 text-xs font-medium tracking-wider bg-white/90 backdrop-blur-sm"
-            style={{color: '#292929', fontFamily: 'var(--font-sans)'}}
+            className="absolute bottom-3 right-3 px-2.5 py-1 text-xs bg-white/80 backdrop-blur-sm"
+            style={{color: '#000000', fontFamily: 'var(--font-sans)'}}
           >
             {selectedIndex + 1} / {images.length}
           </div>
         )}
       </div>
 
-      {/* Thumbnails - Horizontal scroll on mobile, vertical list on desktop */}
+      {/* Thumbnails */}
       {images.length > 1 && (
-        <>
-          {/* Desktop: Vertical Grid */}
-          <div className="hidden lg:grid lg:grid-cols-4 gap-3">
-            {images.slice(0, 8).map((image, index) => (
-              <button
-                key={image.id || index}
-                onClick={() => setSelectedIndex(index)}
-                onFocus={() => setSelectedIndex(index)}
-                className={`aspect-square overflow-hidden transition-all duration-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 ${
-                  selectedIndex === index
-                    ? 'ring-2 ring-gray-800 ring-offset-2 scale-95'
-                    : 'hover:opacity-80 hover:scale-95'
-                }`}
-                style={{
-                  backgroundColor: '#DDDEE2',
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {images.slice(0, 8).map((image, index) => (
+            <button
+              key={image.id || index}
+              onClick={() => setSelectedIndex(index)}
+              className={`flex-shrink-0 w-16 h-20 overflow-hidden transition-all duration-200 ${
+                selectedIndex === index
+                  ? 'ring-2 ring-black'
+                  : 'opacity-60 hover:opacity-100'
+              }`}
+              style={{
+                backgroundColor: '#F5F5F5',
+              }}
+              aria-label={`View image ${index + 1}`}
+              aria-pressed={selectedIndex === index}
+            >
+              <Image
+                data={{
+                  url: image.url,
+                  altText: image.alt || `Thumbnail ${index + 1}`,
+                  width: image.width,
+                  height: image.height,
                 }}
-                aria-label={`View image ${index + 1}`}
-                aria-pressed={selectedIndex === index}
-              >
-                <Image
-                  data={{
-                    url: image.url,
-                    altText: image.alt || `Thumbnail ${index + 1}`,
-                    width: image.width,
-                    height: image.height,
-                  }}
-                  className="w-full h-full object-cover"
-                  sizes="150px"
-                  loading="lazy"
-                />
-              </button>
-            ))}
-          </div>
-
-          {/* Mobile: Horizontal Scroll */}
-          <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-            {images.slice(0, 8).map((image, index) => (
-              <button
-                key={image.id || index}
-                onClick={() => setSelectedIndex(index)}
-                className={`flex-shrink-0 w-20 h-20 overflow-hidden snap-start transition-all duration-base ${
-                  selectedIndex === index
-                    ? 'ring-2 ring-gray-800 ring-offset-2 scale-95'
-                    : 'hover:opacity-80'
-                }`}
-                style={{
-                  backgroundColor: '#DDDEE2',
-                }}
-                aria-label={`View image ${index + 1}`}
-                aria-pressed={selectedIndex === index}
-              >
-                <Image
-                  data={{
-                    url: image.url,
-                    altText: image.alt || `Thumbnail ${index + 1}`,
-                    width: image.width,
-                    height: image.height,
-                  }}
-                  className="w-full h-full object-cover"
-                  sizes="80px"
-                  loading="lazy"
-                />
-              </button>
-            ))}
-          </div>
-        </>
+                className="w-full h-full object-cover"
+                sizes="80px"
+                loading="lazy"
+              />
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -1,9 +1,10 @@
 import { CartForm, Money, type OptimisticCart } from '@shopify/hydrogen';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FetcherWithComponents } from 'react-router';
 import { useFetcher } from 'react-router';
 import type { CartApiQueryFragment } from 'storefrontapi.generated';
 import type { CartLayout } from '~/components/CartMain';
+import { CheckoutForm } from '~/components/CheckoutForm';
 
 type CartSummaryProps = {
   cart: OptimisticCart<CartApiQueryFragment | null>;
@@ -11,44 +12,58 @@ type CartSummaryProps = {
 };
 
 export function CartSummary({cart, layout}: CartSummaryProps) {
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+
   return (
-    <div aria-labelledby="cart-summary" className="border-t border-gray-200 bg-white px-6 py-6 space-y-6">
-      <CartDiscounts discountCodes={cart?.discountCodes} />
-      <CartGiftCard giftCardCodes={cart?.appliedGiftCards} />
-      
-      <div className="pt-4 border-t border-gray-200">
-        <div className="flex justify-between items-baseline mb-6">
-          <dt className="text-sm uppercase tracking-wider text-talla-text/60 font-medium">Subtotal</dt>
-          <dd className="text-2xl font-medium">
-            {cart?.cost?.subtotalAmount?.amount ? (
-              <Money data={cart?.cost?.subtotalAmount} />
-            ) : (
-              '-'
-            )}
-          </dd>
+    <>
+      <div aria-labelledby="cart-summary" className="border-t border-gray-200 bg-white px-6 py-6 space-y-6">
+        <CartDiscounts discountCodes={cart?.discountCodes} />
+        <CartGiftCard giftCardCodes={cart?.appliedGiftCards} />
+        
+        <div className="pt-4 border-t border-gray-200">
+          <div className="flex justify-between items-baseline mb-6">
+            <dt className="text-sm uppercase tracking-wider text-talla-text/60 font-medium">Subtotal</dt>
+            <dd className="text-2xl font-medium">
+              {cart?.cost?.subtotalAmount?.amount ? (
+                <Money data={cart?.cost?.subtotalAmount} />
+              ) : (
+                '-'
+              )}
+            </dd>
+          </div>
+          
+          <button
+            onClick={() => setShowCheckoutForm(true)}
+            disabled={!cart?.checkoutUrl}
+            className="block w-full px-6 py-4 bg-talla-text text-talla-bg text-center text-sm font-semibold uppercase tracking-wider hover:bg-talla-text/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg"
+          >
+            Continue to Checkout
+          </button>
+          
+          <p className="text-xs text-center text-talla-text/50 mt-4">
+            Taxes and shipping calculated at checkout
+          </p>
         </div>
-        
-        <CartCheckoutActions checkoutUrl={cart?.checkoutUrl} />
-        
-        <p className="text-xs text-center text-talla-text/50 mt-4">
-          Taxes and shipping calculated at checkout
-        </p>
       </div>
-    </div>
-  );
-}
 
-function CartCheckoutActions({checkoutUrl}: {checkoutUrl?: string}) {
-  if (!checkoutUrl) return null;
-
-  return (
-    <a 
-      href={checkoutUrl} 
-      target="_self"
-      className="block w-full px-6 py-4 bg-talla-text text-talla-bg text-center text-sm font-semibold uppercase tracking-wider hover:bg-talla-text/90 transition-all duration-200 hover:shadow-lg"
-    >
-      Continue to Checkout
-    </a>
+      {/* Checkout Form Modal */}
+      {showCheckoutForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowCheckoutForm(false)}
+              className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <CheckoutForm cart={cart as CartApiQueryFragment | null} />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

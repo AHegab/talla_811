@@ -1,7 +1,7 @@
 import {
-  type CartViewPayload,
-  useAnalytics,
-  useOptimisticCart,
+    type CartViewPayload,
+    useAnalytics,
+    useOptimisticCart,
 } from '@shopify/hydrogen';
 import { Suspense } from 'react';
 import { Await, NavLink, useAsyncValue } from 'react-router';

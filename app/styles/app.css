@@ -481,6 +481,11 @@ label {
   }
 }
 
+/* Fade-in animation utility */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
 .announcement-nav {
   background: none;
   border: none;

@@ -1,4 +1,3 @@
-import { useLoaderData } from 'react-router';
 
 export const meta = () => {
   return [

@@ -95,7 +95,7 @@ export function Header({
       role="banner"
     >
       <div className="mx-auto w-full max-w-[1920px] px-5 sm:px-8 lg:px-16 xl:px-20">
-        <div className="flex h-16 sm:h-18 lg:h-[88px] items-center justify-center">
+        <div className="flex h-14 sm:h-16 lg:h-[72px] items-center justify-center">
           {/* -------- Mobile (<= lg) -------- */}
           <div className="flex lg:hidden items-center justify-between w-full">
             {/* Left: Burger */}
@@ -109,7 +109,7 @@ export function Header({
                 <img
                   src="/talla-logo-black.svg"
                   alt={shop.name}
-                  className="h-7 sm:h-8 w-auto"
+                  className="h-6 sm:h-7 w-auto"
                   loading="eager"
                   decoding="sync"
                 />
@@ -130,7 +130,7 @@ export function Header({
               <img
                 src="/talla-logo-black.svg"
                 alt={shop.name}
-                className="h-9 w-auto"
+                className="h-8 w-auto"
                 loading="eager"
               />
             </NavLink>

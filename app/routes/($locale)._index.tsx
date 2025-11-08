@@ -46,8 +46,8 @@ export default function Homepage() {
   const data = useLoaderData<typeof loader>();
   return (
     <div className="bg-talla-bg">
-      {/* Hero Section */}
-      <div className="w-full">
+      {/* Hero Section with proper top spacing for fixed header */}
+      <div className="w-full pt-14 sm:pt-16 lg:pt-[72px]">
         <HeroCarousel />
       </div>
       

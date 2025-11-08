@@ -89,7 +89,7 @@ export function HeroCarousel() {
 
   return (
     <div 
-      className="relative w-full h-[400px] sm:h-[500px] md:h-[550px] lg:h-[600px] overflow-hidden bg-talla-text"
+      className="relative w-full h-[250px] sm:h-[300px] md:h-[400px] lg:h-[450px] xl:h-[500px] overflow-hidden bg-gray-100"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -97,7 +97,7 @@ export function HeroCarousel() {
       {slides.map((slide, index) => (
         <div
           key={index}
-          className={`absolute inset-0 transition-opacity duration-1200 ease-in-out ${
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
             index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
           }`}
         >
@@ -106,53 +106,12 @@ export function HeroCarousel() {
             <img
               src={slide.image}
               alt={slide.tagline}
-              loading="lazy"
+              loading={index === 0 ? 'eager' : 'lazy'}
               className="w-full h-full object-cover object-center"
             />
-            {/* Dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
-          </div>
-
-          {/* Content Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center px-6 md:px-12">
-              <h2
-                className={`text-white text-3xl md:text-5xl lg:text-6xl tracking-tight transition-all duration-800 ${
-                  index === currentIndex 
-                    ? 'opacity-100 translate-y-0' 
-                    : 'opacity-0 translate-y-5'
-                }`}
-                style={{ 
-                  fontFamily: 'Aeonik, sans-serif', 
-                  fontWeight: 700,
-                  transitionDelay: index === currentIndex ? '300ms' : '0ms'
-                }}
-              >
-                {slide.tagline}
-              </h2>
-            </div>
           </div>
         </div>
       ))}
-
-      {/* Navigation Arrows - Hidden on Mobile */}
-      {/* Commented out as per user request */}
-
-      {/* Dot Indicators */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            aria-label={`Go to slide ${index + 1}`}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === currentIndex 
-                ? 'bg-white w-8' 
-                : 'bg-white/50 hover:bg-white/70'
-            }`}
-          />
-        ))}
-      </div>
     </div>
   );
 }

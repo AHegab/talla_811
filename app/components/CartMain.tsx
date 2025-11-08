@@ -25,22 +25,26 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
   const cartHasItems = cart?.totalQuantity ? cart.totalQuantity > 0 : false;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col bg-[#FBFBFB]" style={{ height: 'calc(100vh - var(--header-height))' }}>
       <CartEmpty hidden={linesCount} layout={layout} />
       
       {linesCount && (
         <>
-          {/* Cart Items - Scrollable */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
-            <ul className="space-y-6">
+          {/* Cart Items - Scrollable with flex-1 to take available space */}
+          <div className="flex-1 overflow-y-auto px-4 py-4">
+            <ul className="space-y-3">
               {(cart?.lines?.nodes ?? []).map((line) => (
                 <CartLineItem key={line.id} line={line} layout={layout} />
               ))}
             </ul>
           </div>
 
-          {/* Cart Summary - Fixed at bottom */}
-          {cartHasItems && <CartSummary cart={cart} layout={layout} />}
+          {/* Cart Summary - Sticky at bottom */}
+          {cartHasItems && (
+            <div className="flex-shrink-0">
+              <CartSummary cart={cart} layout={layout} />
+            </div>
+          )}
         </>
       )}
     </div>
@@ -56,14 +60,15 @@ function CartEmpty({
   const {close} = useAside();
   return (
     <div hidden={hidden} className="flex flex-col items-center justify-center h-full px-6 text-center">
-      <p className="text-talla-text/60 mb-6">
+      <p className="text-[#292929]/60 mb-6 uppercase tracking-wide text-sm font-semibold" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>
         Your cart is empty
       </p>
       <Link 
         to="/collections" 
         onClick={close} 
         prefetch="viewport"
-        className="inline-block px-8 py-3 bg-talla-text text-talla-bg font-medium hover:bg-talla-text/90 transition-colors"
+        className="inline-block px-8 py-3.5 bg-[#292929] text-[#FBFBFB] font-bold uppercase tracking-[0.15em] text-sm hover:bg-[#1a1a1a] transition-all rounded-xl hover:shadow-lg"
+        style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}
       >
         Continue Shopping
       </Link>

@@ -5,12 +5,12 @@
   --grid-item-width: 320px;
   --header-height: 90px;
   
-  /* Magazine Color Palette - Black, White, Light Grey */
-  --color-black: #000000;
-  --color-white: #FFFFFF;
+  /* TALLA Brand Color Palette - From Moodboard */
+  --color-black: #292929;
+  --color-white: #FBFBFB;
   --color-grey-50: #FAFAFA;
   --color-grey-100: #F5F5F5;
-  --color-grey-200: #EEEEEE;
+  --color-grey-200: #DDDEE2;
   --color-grey-300: #E0E0E0;
   --color-grey-400: #BDBDBD;
   --color-grey-500: #9E9E9E;
@@ -19,11 +19,12 @@
   --color-grey-800: #424242;
   --color-grey-900: #212121;
   
-  /* Typography - Magazine Style */
-  --font-serif: 'Georgia', 'Times New Roman', serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Arial', sans-serif;
+  /* Typography - Editorial Magazine Style (Akzidenz-Grotesk inspired) */
+  --font-serif: 'Playfair Display', 'Georgia', serif;
+  --font-sans: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Arial', sans-serif;
+  --font-display: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, sans-serif;
   
-  /* Spacing - Mobile First */
+  /* Spacing - Magazine Editorial */
   --space-1: 0.25rem;  /* 4px */
   --space-2: 0.5rem;   /* 8px */
   --space-3: 0.75rem;  /* 12px */
@@ -32,8 +33,9 @@
   --space-6: 2rem;     /* 32px */
   --space-8: 3rem;     /* 48px */
   --space-10: 4rem;    /* 64px */
+  --space-12: 5rem;    /* 80px */
   
-  /* Transitions - Simple & Cool */
+  /* Transitions - Smooth & Editorial */
   --transition-fast: 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --transition-base: 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --transition-slow: 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -46,37 +48,45 @@
 body {
   font-family: var(--font-sans);
   color: var(--color-black);
-  line-height: 1.7;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--color-white);
   margin: 0;
   padding: 0;
+  font-weight: 400;
+  font-size: 1rem;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.1;
   margin: 0 0 var(--space-4);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
 }
 
 h1 {
-  font-size: clamp(2rem, 6vw, 4rem);
-  margin-bottom: var(--space-5);
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  margin-bottom: var(--space-6);
+  font-weight: 800;
 }
 
 h2 {
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-weight: 700;
 }
 
 h3 {
-  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  font-weight: 700;
 }
 
 p {
   margin: 0 0 var(--space-4);
+  line-height: 1.7;
+  font-weight: 400;
 }
 
 img {
@@ -220,9 +230,10 @@ aside header {
   border-bottom: 1px solid var(--color-grey-300);
   display: flex;
   height: var(--header-height);
-  justify-content: space-between;
+  justify-content: center;
   padding: 0 var(--space-4);
   background: var(--color-white);
+  position: relative;
 }
 
 aside header h3 {
@@ -248,7 +259,8 @@ aside header .close {
   border-radius: 12px;
   background: transparent;
   color: var(--color-black);
-  position: relative;
+  position: absolute;
+  right: var(--space-4);
   overflow: hidden;
 }
 
@@ -277,9 +289,11 @@ aside header .close:active {
 }
 
 aside main {
-  padding: var(--space-4);
-  overflow-y: auto;
+  padding: 0;
+  overflow-y: hidden;
   max-height: calc(100vh - var(--header-height));
+  display: flex;
+  flex-direction: column;
 }
 
 aside p {
@@ -484,6 +498,14 @@ label {
 /* Fade-in animation utility */
 .animate-fade-in {
   animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-fadein {
+  animation: fadein 0.7s cubic-bezier(.4,0,.2,1);
 }
 
 .announcement-nav {

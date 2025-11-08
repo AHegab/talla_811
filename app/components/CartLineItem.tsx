@@ -1,5 +1,6 @@
 import { CartForm, Image, type OptimisticCartLine } from '@shopify/hydrogen';
 import type { CartLineUpdateInput } from '@shopify/hydrogen/storefront-api-types';
+import { Minus, Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import type { CartApiQueryFragment } from 'storefrontapi.generated';
 import type { CartLayout } from '~/components/CartMain';
@@ -26,7 +27,7 @@ export function CartLineItem({
   const {close} = useAside();
 
   return (
-    <li key={id} className="flex gap-4 pb-6 border-b border-gray-200 last:border-0">
+    <li key={id} className="flex gap-3 pb-4 mb-4 border-b border-[#DDDEE2] last:border-0 last:mb-0">
       {image && (
         <div className="flex-shrink-0">
           <Link
@@ -37,14 +38,15 @@ export function CartLineItem({
                 close();
               }
             }}
+            className="block overflow-hidden rounded-lg hover:opacity-90 transition-opacity"
           >
             <Image
               alt={title}
               aspectRatio="3/4"
               data={image}
-              height={120}
+              height={100}
               loading="lazy"
-              width={90}
+              width={75}
               className="object-cover"
             />
           </Link>
@@ -60,21 +62,21 @@ export function CartLineItem({
               close();
             }
           }}
-          className="block mb-2 hover:text-talla-text/70 transition-colors group"
+          className="block mb-1 hover:text-[#292929]/70 transition-colors group"
         >
-          <h3 className="font-medium text-base leading-tight group-hover:underline">{product.title}</h3>
+          <h3 className="font-bold text-xs leading-tight tracking-wide uppercase group-hover:underline" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>{product.title}</h3>
         </Link>
         
-        <div className="text-sm text-talla-text/60 space-y-0.5 mb-3">
+        <div className="text-[10px] text-[#292929]/60 space-y-0.5 mb-2 font-medium tracking-wide" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>
           {selectedOptions.map((option) => (
-            <div key={option.name}>
-              <span className="font-medium">{option.name}:</span> {option.value}
+            <div key={option.name} className="uppercase">
+              <span className="font-bold">{option.name}:</span> {option.value}
             </div>
           ))}
         </div>
 
         <div className="mt-auto flex items-end justify-between">
-          <div className="font-medium text-lg">
+          <div className="font-bold text-base text-[#292929]" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>
             <ProductPrice price={line?.cost?.totalAmount} />
           </div>
           <CartLineQuantity line={line} />
@@ -96,21 +98,22 @@ function CartLineQuantity({line}: {line: CartLine}) {
   const nextQuantity = Number((quantity + 1).toFixed(0));
 
   return (
-    <div className="flex flex-col items-end gap-2">
-      <div className="flex items-center border border-gray-300 rounded">
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="flex items-center border border-[#DDDEE2] rounded-lg overflow-hidden">
         <CartLineUpdateButton lines={[{id: lineId, quantity: prevQuantity}]}>
           <button
             aria-label="Decrease quantity"
             disabled={quantity <= 1 || !!isOptimistic}
             name="decrease-quantity"
             value={prevQuantity}
-            className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg"
+            className="w-8 h-8 flex items-center justify-center hover:bg-[#292929] hover:text-[#FBFBFB] disabled:opacity-30 disabled:cursor-not-allowed transition-all group"
+            style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}
           >
-            <span>−</span>
+            <Minus size={14} className="text-[#292929] group-hover:text-[#FBFBFB]" />
           </button>
         </CartLineUpdateButton>
         
-        <span className="w-10 text-center text-sm font-medium border-x border-gray-300">{quantity}</span>
+        <span className="w-10 text-center text-xs font-bold border-x border-[#DDDEE2] py-2" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>{quantity}</span>
         
         <CartLineUpdateButton lines={[{id: lineId, quantity: nextQuantity}]}>
           <button
@@ -118,9 +121,10 @@ function CartLineQuantity({line}: {line: CartLine}) {
             name="increase-quantity"
             value={nextQuantity}
             disabled={!!isOptimistic}
-            className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg"
+            className="w-8 h-8 flex items-center justify-center hover:bg-[#292929] hover:text-[#FBFBFB] disabled:opacity-30 disabled:cursor-not-allowed transition-all group"
+            style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}
           >
-            <span>+</span>
+            <Plus size={14} className="text-[#292929] group-hover:text-[#FBFBFB]" />
           </button>
         </CartLineUpdateButton>
       </div>
@@ -152,7 +156,8 @@ function CartLineRemoveButton({
       <button 
         disabled={disabled} 
         type="submit"
-        className="text-xs text-talla-text/50 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors underline underline-offset-2"
+        className="text-[10px] text-[#292929]/50 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors font-semibold uppercase tracking-wider"
+        style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}
       >
         Remove
       </button>

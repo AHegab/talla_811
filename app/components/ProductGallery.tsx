@@ -16,6 +16,7 @@ interface ProductGalleryProps {
 
 export function ProductGallery({images, productTitle = 'Product'}: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [turning, setTurning] = useState<'left' | 'right' | null>(null);
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
 
@@ -25,15 +26,31 @@ export function ProductGallery({images, productTitle = 'Product'}: ProductGaller
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+        handlePrev();
       } else if (e.key === 'ArrowRight') {
-        setSelectedIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+        handleNext();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [images.length]);
+  }, [images.length, selectedIndex]);
+
+  // Carousel navigation handlers with animation
+  const handlePrev = () => {
+    setTurning('left');
+    setTimeout(() => {
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+      setTurning(null);
+    }, 350);
+  };
+  const handleNext = () => {
+    setTurning('right');
+    setTimeout(() => {
+      setSelectedIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+      setTurning(null);
+    }, 350);
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -68,66 +85,25 @@ export function ProductGallery({images, productTitle = 'Product'}: ProductGaller
   }
 
   return (
-    <div className="space-y-3 lg:space-y-4">
-      {/* Main Image */}
-      <div 
-        className="relative aspect-[3/4] overflow-hidden bg-gray-50"
-        role="img"
-        aria-label={currentImage.alt || `${productTitle} - Image ${selectedIndex + 1}`}
-      >
-        <Image
-          data={{
-            url: currentImage.url,
-            altText: currentImage.alt || `${productTitle} - Image ${selectedIndex + 1}`,
-            width: currentImage.width,
-            height: currentImage.height,
-          }}
-          className="w-full h-full object-cover"
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          loading="eager"
-        />
-
-        {/* Image counter */}
-        {images.length > 1 && (
-          <div 
-            className="absolute bottom-3 right-3 px-2.5 py-1 text-xs bg-white/80 backdrop-blur-sm"
-            style={{color: '#000000', fontFamily: 'var(--font-sans)'}}
-          >
-            {selectedIndex + 1} / {images.length}
-          </div>
-        )}
-      </div>
-
-      {/* Thumbnails */}
-      {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {images.slice(0, 8).map((image, index) => (
-            <button
-              key={image.id || index}
-              onClick={() => setSelectedIndex(index)}
-              className={`flex-shrink-0 w-16 h-20 overflow-hidden transition-all duration-200 ${
-                selectedIndex === index
-                  ? 'ring-2 ring-black'
-                  : 'opacity-60 hover:opacity-100'
-              }`}
-              style={{
-                backgroundColor: '#F5F5F5',
-              }}
-              aria-label={`View image ${index + 1}`}
-              aria-pressed={selectedIndex === index}
-            >
+    <div className="space-y-6 lg:space-y-8">
+      {/* Vertical list of all images */}
+      {images.length > 0 && (
+        <div className="flex flex-col gap-6 items-center">
+          {images.map((img, idx) => (
+            <div key={img.id || idx} className="w-full flex items-center justify-center">
               <Image
                 data={{
-                  url: image.url,
-                  altText: image.alt || `Thumbnail ${index + 1}`,
-                  width: image.width,
-                  height: image.height,
+                  url: img.url,
+                  altText: img.alt || `${productTitle} - Image ${idx + 1}`,
+                  width: img.width,
+                  height: img.height,
                 }}
-                className="w-full h-full object-cover"
-                sizes="80px"
-                loading="lazy"
+                className="rounded-xl object-cover"
+                style={{width: '320px', height: '420px', maxWidth: '100%', aspectRatio: '3/4', boxShadow: '0 2px 16px 0 rgba(220,220,230,0.12)'}}
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                loading={idx === 0 ? 'eager' : 'lazy'}
               />
-            </button>
+            </div>
           ))}
         </div>
       )}

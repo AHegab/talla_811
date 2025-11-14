@@ -1,59 +1,70 @@
-import {
-    Analytics,
-    getAdjacentAndFirstAvailableVariants,
-    getSelectedProductOptions,
-    useOptimisticVariant,
-    useSelectedOptionInUrlParam,
-} from '@shopify/hydrogen';
-import { useLoaderData } from 'react-router';
-import { ProductPage } from '~/components/ProductPage';
-import { redirectIfHandleIsLocalized } from '~/lib/redirect';
 import type { Route } from './+types/products.$handle';
 
+import { useLoaderData } from '@remix-run/react';
+import {
+  Analytics,
+  getAdjacentAndFirstAvailableVariants,
+  getSelectedProductOptions,
+  useOptimisticVariant,
+  useSelectedOptionInUrlParam,
+} from '@shopify/hydrogen';
+import { redirect } from '@shopify/remix-oxygen';
+
+import type { ProductQuery } from 'storefrontapi.generated';
+import { ProductPage } from '~/components/ProductPage';
+import { redirectIfHandleIsLocalized } from '~/lib/redirect';
+
 export const meta: Route.MetaFunction = ({data}) => {
+  const title = data?.product?.title ?? 'Product';
+  const handle = data?.product?.handle ?? '';
+
   return [
-    {title: `TALLA | ${data?.product.title ?? ''}`},
+    {title: `TALLA | ${title}`},
     {
       rel: 'canonical',
-      href: `/products/${data?.product.handle}`,
+      // Relative canonical is fine when served from the main domain
+      href: handle ? `/products/${handle}` : '/products',
     },
   ];
 };
 
 export async function loader(args: Route.LoaderArgs) {
-  // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
-
-  // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
   return {...deferredData, ...criticalData};
 }
 
 /**
- * Load data necessary for rendering content above the fold. This is the critical data
- * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
+ * Critical data: product + selected variant.
+ * If this fails, the page should 404 / error.
  */
-async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
+async function loadCriticalData({
+  context,
+  params,
+  request,
+}: Route.LoaderArgs) {
   const {handle} = params;
   const {storefront} = context;
 
   if (!handle) {
-    throw new Error('Expected product handle to be defined');
+    throw redirect('/products');
   }
 
+  const selectedOptions = getSelectedProductOptions(request);
+
   const [{product}] = await Promise.all([
-    storefront.query(PRODUCT_QUERY, {
-      variables: {handle, selectedOptions: getSelectedProductOptions(request)},
+    storefront.query<ProductQuery>(PRODUCT_QUERY, {
+      variables: {handle, selectedOptions},
     }),
-    // Add other queries here, so that they are loaded in parallel
+    // Add other parallel queries here if needed (e.g. recommendations)
   ]);
 
   if (!product?.id) {
-    throw new Response(null, {status: 404});
+    throw new Response('Product not found', {status: 404});
   }
 
-  // The API handle might be localized, so redirect to the localized handle
+  // The API handle might be localized, so redirect if needed
   redirectIfHandleIsLocalized(request, {handle, data: product});
 
   return {
@@ -62,28 +73,28 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 }
 
 /**
- * Load data for rendering content below the fold. This data is deferred and will be
- * fetched after the initial page load. If it's unavailable, the page should still 200.
- * Make sure to not throw any errors here, as it will cause the page to 500.
+ * Deferred data: safe-to-fail, below-the-fold extras.
  */
-function loadDeferredData({context, params}: Route.LoaderArgs) {
-  // Put any API calls that is not critical to be available on first page render
-  // For example: product reviews, product recommendations, social feeds.
-
+function loadDeferredData({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  context,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.LoaderArgs) {
+  // Add non-critical calls later: reviews, recommendations, social, etc.
   return {};
 }
 
 export default function Product() {
   const {product} = useLoaderData<typeof loader>();
 
-  // Optimistically selects a variant with given available variant information
+  // Optimistically select a variant based on availability/adjacent variants
   const selectedVariant = useOptimisticVariant(
     product.selectedOrFirstAvailableVariant,
     getAdjacentAndFirstAvailableVariants(product),
   );
 
-  // Sets the search param to the selected variant without navigation
-  // only when no search params are set in the url
+  // Sync selected options into the URL search params (no navigation)
   useSelectedOptionInUrlParam(selectedVariant.selectedOptions);
 
   return (
@@ -96,10 +107,10 @@ export default function Product() {
             {
               id: product.id,
               title: product.title,
-              price: selectedVariant?.price.amount || '0',
+              price: selectedVariant?.price.amount ?? '0',
               vendor: product.vendor,
-              variantId: selectedVariant?.id || '',
-              variantTitle: selectedVariant?.title || '',
+              variantId: selectedVariant?.id ?? '',
+              variantTitle: selectedVariant?.title ?? '',
               quantity: 1,
             },
           ],
@@ -108,6 +119,8 @@ export default function Product() {
     </>
   );
 }
+
+// ---------------- GraphQL ----------------
 
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
@@ -156,6 +169,12 @@ const PRODUCT_FRAGMENT = `#graphql
     description
     productType
     tags
+    priceRange {
+      minVariantPrice {
+        amount
+        currencyCode
+      }
+    }
     images(first: 10) {
       nodes {
         id
@@ -184,10 +203,14 @@ const PRODUCT_FRAGMENT = `#graphql
         }
       }
     }
-    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {
+    selectedOrFirstAvailableVariant(
+      selectedOptions: $selectedOptions
+      ignoreUnknownOptions: true
+      caseInsensitiveMatch: true
+    ) {
       ...ProductVariant
     }
-    adjacentVariants (selectedOptions: $selectedOptions) {
+    adjacentVariants(selectedOptions: $selectedOptions) {
       ...ProductVariant
     }
     variants(first: 100) {

@@ -1,72 +1,97 @@
-import { useLoaderData } from 'react-router';
-import { HeroCarousel } from '~/components/HeroCarousel';
-import { ProductItem } from '~/components/ProductItem';
-import { Container, ProductGrid, SectionHeading } from '~/components/ui';
-import type { Route } from './+types/_index';
+import type {Route} from './+types/_index';
+import {useLoaderData} from '@remix-run/react';
+
+import {HeroCarousel} from '~/components/HeroCarousel';
+import {ProductItem} from '~/components/ProductItem';
+import {Container, ProductGrid, SectionHeading} from '~/components/ui';
+import type {AllProductsQuery} from 'storefrontapi.generated';
 
 export const meta: Route.MetaFunction = () => {
-  return [{title: 'TALLA | Premium Fashion'}];
+  return [
+    {title: 'TALLA | Premium Fashion'},
+    {
+      name: 'description',
+      content:
+        'Discover curated premium fashion from local brands on TALLA. Shop new arrivals, timeless essentials, and statement pieces.',
+    },
+  ];
 };
 
-export async function loader(args: Route.LoaderArgs) {
-  // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
+type Products = AllProductsQuery['products']['nodes'];
 
-  // Await the critical data required to render initial state of the page
-  const criticalData = await loadCriticalData(args);
+export async function loader({context}: Route.LoaderArgs) {
+  // Critical, above-the-fold data
+  const criticalData = await loadCriticalData({context});
 
-  return {...deferredData, ...criticalData};
+  // Deferred / below-the-fold data placeholder (extend later if needed)
+  const deferredData = loadDeferredData({context});
+
+  return {...criticalData, ...deferredData};
 }
 
 /**
- * Load data necessary for rendering content above the fold. This is the critical data
- * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
+ * Load data necessary for rendering content above the fold.
+ * If this fails, the whole page should error.
  */
-async function loadCriticalData({context}: Route.LoaderArgs) {
-  const [{products}] = await Promise.all([
-    context.storefront.query(ALL_PRODUCTS_QUERY),
-    // Add other queries here, so that they are loaded in parallel
-  ]);
+async function loadCriticalData({
+  context,
+}: {
+  context: Route.LoaderArgs['context'];
+}) {
+  const data = await context.storefront.query<AllProductsQuery>(
+    ALL_PRODUCTS_QUERY,
+  );
 
   return {
-    products: products.nodes,
+    products: data.products?.nodes ?? [],
   };
 }
 
 /**
- * Load data for rendering content below the fold. This data is deferred and will be
- * fetched after the initial page load. If it's unavailable, the page should still 200.
- * Make sure to not throw any errors here, as it will cause the page to 500.
+ * Load data for rendering content below the fold.
+ * This should never throw; the page must still succeed without it.
  */
-function loadDeferredData({context}: Route.LoaderArgs) {
+function loadDeferredData({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  context,
+}: {
+  context: Route.LoaderArgs['context'];
+}) {
+  // Add deferred queries here later (e.g. recommendations, editorials, etc.)
   return {};
 }
 
 export default function Homepage() {
-  const data = useLoaderData<typeof loader>();
+  const {products} = useLoaderData<typeof loader>();
+
   return (
-    <div className="bg-talla-bg">
+    <main className="min-h-screen bg-talla-bg">
       {/* Hero Section with proper top spacing for fixed header */}
-      <div className="w-full pt-14 sm:pt-16 lg:pt-[72px]">
+      <section className="w-full pt-14 sm:pt-16 lg:pt-[72px]">
         <HeroCarousel />
-      </div>
-      
+      </section>
+
       {/* Products Section */}
-      <AllProducts products={data.products} />
-    </div>
+      <AllProducts products={products} />
+    </main>
   );
 }
 
-function AllProducts({products}: {products: any[]}) {
-  if (!products || products.length === 0) {
+function AllProducts({products}: {products: Products}) {
+  const count = products?.length ?? 0;
+
+  if (!products || count === 0) {
     return (
       <Container className="section-padding">
-        <SectionHeading 
+        <SectionHeading
           title="All Products"
           subtitle="No products available"
         />
-        <div className="text-center text-gray-600">
-          <p>No products found. Please make sure your products are published to the Headless sales channel in Shopify.</p>
+        <div className="mt-4 text-center text-sm text-gray-600">
+          <p>
+            No products found. Make sure your products are published to the
+            Headless sales channel in Shopify.
+          </p>
         </div>
       </Container>
     );
@@ -74,14 +99,20 @@ function AllProducts({products}: {products: any[]}) {
 
   return (
     <Container className="section-padding">
-      <SectionHeading 
+      <SectionHeading
         title="All Products"
-        subtitle={`Discover ${products.length} curated ${products.length === 1 ? 'piece' : 'pieces'}`}
+        subtitle={`Discover ${count} curated ${
+          count === 1 ? 'piece' : 'pieces'
+        } from our partner brands`}
       />
-      
+
       <ProductGrid>
         {products.map((product) => (
-          <ProductItem key={product.id} product={product} loading="lazy" />
+          <ProductItem
+            key={product.id}
+            product={product}
+            loading="lazy"
+          />
         ))}
       </ProductGrid>
     </Container>
@@ -118,8 +149,9 @@ const ALL_PRODUCTS_QUERY = `#graphql
       height
     }
   }
-  query AllProducts ($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
+
+  query AllProducts($country: CountryCode, $language: LanguageCode)
+  @inContext(country: $country, language: $language) {
     products(first: 250) {
       nodes {
         ...ProductCard

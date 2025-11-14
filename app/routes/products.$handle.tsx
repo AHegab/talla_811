@@ -157,6 +157,16 @@ const PRODUCT_FRAGMENT = `#graphql
     description
     productType
     tags
+    priceRange {
+      minVariantPrice {
+        amount
+        currencyCode
+      }
+      maxVariantPrice {
+        amount
+        currencyCode
+      }
+    }
     images(first: 10) {
       nodes {
         id

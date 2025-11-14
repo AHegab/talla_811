@@ -142,7 +142,13 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 }
 
 export function Layout({children}: {children?: React.ReactNode}) {
-  const nonce = useNonce();
+  let nonce;
+  try {
+    nonce = useNonce();
+  } catch (e) {
+    // Fallback for SSR or when context is not available
+    nonce = undefined;
+  }
 
   return (
     <html lang="en">

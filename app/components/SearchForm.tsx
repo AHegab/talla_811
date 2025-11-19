@@ -1,5 +1,5 @@
-import {useRef, useEffect} from 'react';
-import {Form, type FormProps} from 'react-router';
+import { useEffect, useRef } from 'react';
+import { Form, type FormProps } from 'react-router';
 
 type SearchFormProps = Omit<FormProps, 'children'> & {
   children: (args: {
@@ -36,7 +36,7 @@ export function SearchForm({children, ...props}: SearchFormProps) {
   }
 
   return (
-    <Form method="get" {...props}>
+    <Form method="get" {...props} data-turbo="false">
       {children({inputRef})}
     </Form>
   );

@@ -57,6 +57,8 @@ export default {
       },
       aspectRatio: {
         portrait: '3 / 4',
+        // Taller poster-style aspect ratio (width / height). Use 9/16 for a taller poster look.
+        poster: '9 / 16',
       },
     },
   },

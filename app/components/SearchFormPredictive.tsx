@@ -1,12 +1,12 @@
+import React, { useEffect, useRef } from 'react';
 import {
-  useFetcher,
-  useNavigate,
-  type FormProps,
-  type Fetcher,
+    useFetcher,
+    useNavigate,
+    type Fetcher,
+    type FormProps,
 } from 'react-router';
-import React, {useRef, useEffect} from 'react';
-import type {PredictiveSearchReturn} from '~/lib/search';
-import {useAside} from './Aside';
+import type { PredictiveSearchReturn } from '~/lib/search';
+import { useAside } from './Aside';
 
 type SearchFormPredictiveChildren = (args: {
   fetchResults: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -52,10 +52,27 @@ export function SearchFormPredictive({
 
   /** Fetch search results based on the input value */
   function fetchResults(event: React.ChangeEvent<HTMLInputElement>) {
-    void fetcher.submit(
-      {q: event.target.value || '', limit: 5, predictive: true},
-      {method: 'GET', action: SEARCH_ENDPOINT},
-    );
+    const value = event.target.value || '';
+    // debounce submissions to avoid excessive requests
+    if ((fetchResults as any)._timer) {
+      clearTimeout((fetchResults as any)._timer);
+    }
+
+    (fetchResults as any)._timer = setTimeout(() => {
+      // only fetch predictive results for queries longer than 3 characters
+      if (value.trim().length > 3) {
+        void fetcher.submit(
+          {q: value, limit: 5, predictive: true},
+          {method: 'GET', action: SEARCH_ENDPOINT},
+        );
+      } else {
+        // clear predictive results when query is too short
+        void fetcher.submit(
+          {q: '', limit: 0, predictive: true},
+          {method: 'GET', action: SEARCH_ENDPOINT},
+        );
+      }
+    }, 220);
   }
 
   // ensure the passed input has a type of search, because SearchResults
@@ -68,8 +85,16 @@ export function SearchFormPredictive({
     return null;
   }
 
+  const formAction = (props as any).action ?? SEARCH_ENDPOINT;
+
   return (
-    <fetcher.Form {...props} className={className} onSubmit={resetInput}>
+    <fetcher.Form
+      {...props}
+      action={formAction}
+      className={className}
+      onSubmit={resetInput}
+      data-turbo="false"
+    >
       {children({inputRef, fetcher, fetchResults, goToSearch})}
     </fetcher.Form>
   );

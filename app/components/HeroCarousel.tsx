@@ -1,28 +1,29 @@
 import { useEffect, useState } from 'react';
 
-const slides = [
-  {
-    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop',
-    tagline: 'Effortless Egyptian Luxury',
-    cta: 'Shop the Edit',
-    link: '/collections/new-arrivals',
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop',
-    tagline: 'Timeless Elegance Redefined',
-    cta: 'Explore Collection',
-    link: '/collections/women',
-  },
   // {
   //   image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2070&auto=format&fit=crop',
   //   tagline: 'Contemporary Cairo Style',
   //   cta: 'Discover Now',
   //   link: '/collections/brands',
   // },
+// Local hero slides. Place your images in `public/hero/` with the filenames below.
+const slides = [
   {
-    image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2070&auto=format&fit=crop',
-    tagline: 'Curated for Connoisseurs',
+    image: '/hero/hero-1.jpeg',
+    tagline: 'Editorial One',
     cta: 'Shop the Edit',
+    link: '/collections/new-arrivals',
+  },
+  {
+    image: '/hero/hero-2.jpeg',
+    tagline: 'Editorial Two',
+    cta: 'Explore Collection',
+    link: '/collections/women',
+  },
+  {
+    image: '/hero/hero-3.jpeg',
+    tagline: 'Editorial Three',
+    cta: 'Discover',
     link: '/collections/accessories',
   },
 ];
@@ -88,30 +89,35 @@ export function HeroCarousel() {
   };
 
   return (
-    <div 
-      className="relative w-full h-[250px] sm:h-[300px] md:h-[400px] lg:h-[450px] xl:h-[500px] overflow-hidden bg-gray-100"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      {slides.map((slide, index) => (
+    // Frame container: centers the hero and gives a border + shadow
+    <div className="w-full px-4 sm:px-6 lg:px-16">
+      <div className="mx-auto max-w-[1400px] rounded-lg overflow-hidden border border-gray-200 shadow-md">
         <div
-          key={index}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-          }`}
+          className="relative w-full h-[380px] sm:h-[440px] md:h-[520px] lg:h-[600px] xl:h-[680px] overflow-hidden bg-gray-100"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
-          {/* Background Image */}
-          <div className="absolute inset-0">
-            <img
-              src={slide.image}
-              alt={slide.tagline}
-              loading={index === 0 ? 'eager' : 'lazy'}
-              className="w-full h-full object-cover object-center"
-            />
-          </div>
+          {slides.map((slide, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
+            >
+              {/* Background Image */}
+              <div className="absolute inset-0">
+                <img
+                  src={slide.image}
+                  alt={slide.tagline}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 }

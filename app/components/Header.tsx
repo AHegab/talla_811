@@ -3,10 +3,12 @@ import {
   useAnalytics,
   useOptimisticCart,
 } from '@shopify/hydrogen';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { Await, NavLink, useAsyncValue } from 'react-router';
 import type { CartApiQueryFragment, HeaderQuery } from 'storefrontapi.generated';
 import { useAside } from '~/components/Aside';
+import { SearchFormPredictive } from '~/components/SearchFormPredictive';
+import { SearchResultsPredictive } from '~/components/SearchResultsPredictive';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -17,9 +19,6 @@ interface HeaderProps {
 
 type Viewport = 'desktop' | 'mobile';
 
-/* --------------------------------- */
-/* Reusable icon button (44x44 tap)  */
-/* --------------------------------- */
 function IconButton({
   onClick,
   label,
@@ -34,13 +33,14 @@ function IconButton({
   type?: 'button' | 'div';
 }) {
   const classes = [
-    'group relative inline-flex items-center justify-center',
+    'group relative flex items-center justify-center flex-shrink-0',
     'h-9 w-9 rounded-xl',
-    '!bg-transparent !text-white !border-none !p-0',
+    'bg-transparent text-white border-none p-0 m-0',
     'transition-all duration-200',
-    'hover:!bg-white/6',
+    'hover:bg-white/10',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
     'active:scale-95',
+    'cursor-pointer',
     className,
   ].join(' ');
 
@@ -83,6 +83,40 @@ export function Header({
   publicStoreDomain,
 }: HeaderProps) {
   const {shop, menu} = header;
+  const {open} = useAside();
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
+  const ticking = useRef(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    function onScroll() {
+      const currentY = window.scrollY || 0;
+      if (!ticking.current) {
+        window.requestAnimationFrame(() => {
+          if (currentY > lastY.current && currentY > 100) {
+            setHidden(true);
+          } else {
+            setHidden(false);
+          }
+          lastY.current = currentY;
+          ticking.current = false;
+        });
+        ticking.current = true;
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, {passive: true});
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (searchOpen) {
+      const t = setTimeout(() => searchInputRef.current?.focus(), 60);
+      return () => clearTimeout(t);
+    }
+  }, [searchOpen]);
 
   return (
     <>
@@ -93,41 +127,66 @@ export function Header({
           'bg-[#2b2b2b] text-white',
           'shadow-[0_2px_8px_rgba(0,0,0,0.15)]',
           'supports-[padding:max(0px)]:pt-[env(safe-area-inset-top)]',
+          'transform transition-transform duration-300 will-change-transform',
+          hidden ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100',
         ].join(' ')}
         role="banner"
       >
         <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-16 xl:px-20">
           <div className="flex h-14 sm:h-16 lg:h-[72px] items-center justify-center">
-            {/* -------- Mobile (<= lg) -------- */}
+            {/* Mobile: minimal icon buttons */}
             <div className="flex lg:hidden items-center w-full relative z-50">
-              {/* Left: Burger */}
               <div className="flex items-center">
-                <HeaderMenuMobileToggle />
+                <button
+                  type="button"
+                  aria-label="Open menu"
+                  onClick={() => open('mobile')}
+                  className="bg-transparent text-white border-0 p-1 flex items-center justify-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 block">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                </button>
               </div>
 
-              {/* Spacer to center */}
               <div className="flex-1" />
 
-              {/* Right: Search & Cart */}
-              <div className="flex items-center gap-1.5">
-                <SearchToggle />
-                <CartToggle cart={cart} />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Search"
+                  onClick={() => setSearchOpen((s) => !s)}
+                  className="bg-transparent text-white border-0 p-1 flex items-center justify-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 block">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="M21 21l-4.35-4.35" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="Cart"
+                  onClick={() => open('cart')}
+                  className="bg-transparent text-white border-0 p-1 flex items-center justify-center relative"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 block">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                </button>
               </div>
             </div>
 
-            {/* -------- Desktop (>= lg) -------- */}
+            {/* Desktop */}
             <div className="hidden lg:flex items-center justify-between w-full">
-              {/* Left: Logo */}
               <NavLink prefetch="intent" to="/" end className="relative z-10 flex-shrink-0">
-                <img
-                  src="/talla-logo-white.svg"
-                  alt={shop.name}
-                  className="h-8 w-auto"
-                  loading="eager"
-                />
-              </NavLink>
+                        <img src="/talla-logo-white.svg" alt={shop.name} className="h-8 w-auto block" loading="eager" />
+                      </NavLink>
 
-              {/* Center: Nav */}
               <HeaderMenu
                 menu={menu}
                 viewport="desktop"
@@ -135,14 +194,13 @@ export function Header({
                 publicStoreDomain={publicStoreDomain}
               />
 
-              {/* Right: CTAs */}
-              <HeaderCtas isLoggedIn={isLoggedIn} cart={cart} />
+              <HeaderCtas isLoggedIn={isLoggedIn} cart={cart} onSearchToggle={() => setSearchOpen((s) => !s)} />
             </div>
           </div>
         </div>
       </header>
 
-      {/* Mobile: Transparent logo overlay (below dark header) */}
+      {/* Mobile logo overlay */}
       <div className="lg:hidden fixed top-14 sm:top-16 left-0 right-0 z-40 bg-transparent">
         <NavLink prefetch="intent" to="/" end className="block">
           <div className="flex items-center justify-center h-[120px] w-full overflow-hidden bg-transparent">
@@ -160,8 +218,100 @@ export function Header({
           </div>
         </NavLink>
       </div>
-      {/* spacer so content (hero) is pushed below fixed header only; logo overlays the hero (transparent) */}
+
       <div className="lg:hidden h-14 sm:h-16" aria-hidden />
+
+      {/* Inline header search (centered, compact) */}
+      {searchOpen && (
+        <div className="fixed inset-x-0 top-0 z-40 mt-14 sm:mt-16 lg:mt-[72px]">
+          <div className="mx-auto max-w-[980px] px-4 sm:px-6 lg:px-16 xl:px-20 flex justify-center">
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 w-full max-w-[600px] mx-auto relative">
+              <SearchFormPredictive action="/search">
+                {({inputRef, fetchResults, goToSearch}) => (
+                  <div className="flex items-center gap-2 p-2">
+                    <div className="flex items-center flex-1 bg-white rounded-md px-3 py-2">
+                      <img src="/icons/search.svg" alt="" aria-hidden="true" className="h-4 w-4 mr-2 flex-shrink-0 object-contain block" />
+                      <input
+                        ref={(el) => {
+                          try {
+                            (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
+                          } catch (e) {
+                            // ignore
+                          }
+                          searchInputRef.current = el;
+                        }}
+                        name="q"
+                        defaultValue=""
+                        aria-label="Search"
+                        placeholder="Search products, articles..."
+                        onChange={fetchResults}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            goToSearch();
+                            setSearchOpen(false);
+                          }
+                          if (e.key === 'Escape') setSearchOpen(false);
+                        }}
+                        className="w-full bg-transparent outline-none text-sm text-gray-800 placeholder:text-gray-400 text-center px-3"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      aria-label="Submit search"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        goToSearch();
+                        setSearchOpen(false);
+                      }}
+                      className="flex items-center justify-center flex-shrink-0 w-9 h-9 rounded-md bg-gray-800 text-white border border-gray-800 hover:bg-gray-900 transition-colors p-0 m-0 cursor-pointer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.6} className="h-4 w-4 block">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="M21 21l-4.5-4.5" />
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSearchOpen(false);
+                      }}
+                      aria-label="Close search"
+                      className="flex items-center justify-center flex-shrink-0 w-9 h-9 rounded-md bg-gray-800 text-white border border-gray-800 hover:bg-gray-900 transition-colors p-0 m-0 cursor-pointer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8} className="h-3.5 w-3.5 block">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </SearchFormPredictive>
+
+              <div className="mt-2 absolute left-1/2 -translate-x-1/2 top-full w-full max-w-[520px]">
+                <SearchResultsPredictive>
+                  {({items, total, inputRef, closeSearch, state, term}) => (
+                    <div className="max-h-56 overflow-auto bg-white border border-gray-100 rounded-md shadow-sm text-sm">
+                      <div className="p-2">
+                        <SearchResultsPredictive.Products term={term} products={items.products ?? []} closeSearch={closeSearch} />
+                        <SearchResultsPredictive.Collections term={term} collections={items.collections ?? []} closeSearch={closeSearch} />
+                        <SearchResultsPredictive.Articles term={term} articles={items.articles ?? []} closeSearch={closeSearch} />
+                        <SearchResultsPredictive.Pages term={term} pages={items.pages ?? []} closeSearch={closeSearch} />
+                        {total === 0 && <SearchResultsPredictive.Empty term={term} />}
+                      </div>
+                    </div>
+                  )}
+                </SearchResultsPredictive>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -255,10 +405,11 @@ export function HeaderMenu({
 function HeaderCtas({
   isLoggedIn,
   cart,
-}: Pick<HeaderProps, 'isLoggedIn' | 'cart'>) {
+  onSearchToggle,
+}: Pick<HeaderProps, 'isLoggedIn' | 'cart'> & {onSearchToggle?: () => void}) {
   return (
     <nav className="relative z-10 flex items-center gap-1.5">
-      <SearchToggle />
+      <SearchToggle onToggle={onSearchToggle} />
       <AccountLink />
       <CartToggle cart={cart} />
     </nav>
@@ -270,18 +421,8 @@ function AccountLink() {
     <NavLink prefetch="intent" to="/account" aria-label="Account">
       {({isActive}) => (
         <IconButton label="Account" type="div">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-        </IconButton>
+              <img src="/icons/account.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+            </IconButton>
       )}
     </NavLink>
   );
@@ -291,43 +432,24 @@ function HeaderMenuMobileToggle() {
   const {open} = useAside();
   return (
     <IconButton label="Open menu" onClick={() => open('mobile')}>
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      >
-        <line x1="3" y1="6" x2="21" y2="6" />
-        <line x1="3" y1="12" x2="21" y2="12" />
-        <line x1="3" y1="18" x2="21" y2="18" />
-      </svg>
+      <img src="/icons/menu.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
     </IconButton>
   );
 }
 
-function SearchToggle() {
+function SearchToggle({onToggle}: {onToggle?: () => void}) {
   const {open} = useAside();
+  function handle() {
+    if (onToggle) return onToggle();
+    open('search');
+  }
+
   return (
-    <IconButton label="Search" onClick={() => open('search')}>
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="transition-transform duration-200 group-hover:rotate-12"
-      >
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.35-4.35" />
-      </svg>
+    <IconButton label="Search" onClick={handle}>
+      <img src="/icons/search.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain transition-transform duration-200 group-hover:rotate-12" />
     </IconButton>
   );
 }
-
-/* --------------- CART ---------------- */
 
 function CartBadge({count}: {count: number | null}) {
   const {open} = useAside();
@@ -347,19 +469,7 @@ function CartBadge({count}: {count: number | null}) {
         } as CartViewPayload);
       }}
     >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="transition-transform duration-200 group-hover:-rotate-12"
-      >
-        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-        <line x1="3" y1="6" x2="21" y2="6" />
-        <path d="M16 10a4 4 0 0 1-8 0" />
-      </svg>
+      <img src="/icons/cart.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain transition-transform duration-200 group-hover:-rotate-12" />
 
       {typeof count === 'number' && count > 0 && (
         <span

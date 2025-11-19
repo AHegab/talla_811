@@ -1,7 +1,7 @@
 import {
-    type CartViewPayload,
-    useAnalytics,
-    useOptimisticCart,
+  type CartViewPayload,
+  useAnalytics,
+  useOptimisticCart,
 } from '@shopify/hydrogen';
 import { Suspense } from 'react';
 import { Await, NavLink, useAsyncValue } from 'react-router';
@@ -36,10 +36,10 @@ function IconButton({
   const classes = [
     'group relative inline-flex items-center justify-center',
     'h-9 w-9 rounded-xl',
-    '!bg-transparent !text-black !border-none !p-0',
+    '!bg-transparent !text-white !border-none !p-0',
     'transition-all duration-200',
-    'hover:!bg-black/5',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20',
+    'hover:!bg-white/6',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
     'active:scale-95',
     className,
   ].join(' ');
@@ -85,70 +85,84 @@ export function Header({
   const {shop, menu} = header;
 
   return (
-    <header
-      className={[
-        'fixed inset-x-0 top-0 z-50',
-        'bg-white/95 backdrop-blur-md',
-        'shadow-[0_6px_20px_-10px_rgba(0,0,0,0.25)]',
-        'supports-[padding:max(0px)]:pt-[env(safe-area-inset-top)]',
-      ].join(' ')}
-      role="banner"
-    >
-      <div className="mx-auto w-full max-w-[1920px] px-5 sm:px-8 lg:px-16 xl:px-20">
-        <div className="flex h-14 sm:h-16 lg:h-[72px] items-center justify-center">
-          {/* -------- Mobile (<= lg) -------- */}
-          <div className="flex lg:hidden items-center justify-between w-full">
-            {/* Left: Burger */}
-            <div className="flex items-center">
-              <HeaderMenuMobileToggle />
+    <>
+      {/* Dark header bar */}
+      <header
+        className={[
+          'fixed inset-x-0 top-0 z-50',
+          'bg-[#2b2b2b] text-white',
+          'shadow-[0_2px_8px_rgba(0,0,0,0.15)]',
+          'supports-[padding:max(0px)]:pt-[env(safe-area-inset-top)]',
+        ].join(' ')}
+        role="banner"
+      >
+        <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-16 xl:px-20">
+          <div className="flex h-14 sm:h-16 lg:h-[72px] items-center justify-center">
+            {/* -------- Mobile (<= lg) -------- */}
+            <div className="flex lg:hidden items-center w-full relative z-50">
+              {/* Left: Burger */}
+              <div className="flex items-center">
+                <HeaderMenuMobileToggle />
+              </div>
+
+              {/* Spacer to center */}
+              <div className="flex-1" />
+
+              {/* Right: Search & Cart */}
+              <div className="flex items-center gap-1.5">
+                <SearchToggle />
+                <CartToggle cart={cart} />
+              </div>
             </div>
 
-            {/* Center: Logo */}
-            <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
-              <NavLink prefetch="intent" to="/" end className="flex items-center">
+            {/* -------- Desktop (>= lg) -------- */}
+            <div className="hidden lg:flex items-center justify-between w-full">
+              {/* Left: Logo */}
+              <NavLink prefetch="intent" to="/" end className="relative z-10 flex-shrink-0">
                 <img
-                  src="/talla-logo-black.svg"
+                  src="/talla-logo-white.svg"
                   alt={shop.name}
-                  className="h-6 sm:h-7 w-auto"
+                  className="h-8 w-auto"
                   loading="eager"
-                  decoding="sync"
                 />
               </NavLink>
-            </div>
 
-            {/* Right: Search & Cart */}
-            <div className="flex items-center gap-1.5">
-              <SearchToggle />
-              <CartToggle cart={cart} />
-            </div>
-          </div>
-
-          {/* -------- Desktop (>= lg) -------- */}
-          <div className="hidden lg:flex items-center justify-between w-full">
-            {/* Left: Logo */}
-            <NavLink prefetch="intent" to="/" end className="relative z-10 flex-shrink-0">
-              <img
-                src="/talla-logo-black.svg"
-                alt={shop.name}
-                className="h-8 w-auto"
-                loading="eager"
+              {/* Center: Nav */}
+              <HeaderMenu
+                menu={menu}
+                viewport="desktop"
+                primaryDomainUrl={header.shop.primaryDomain.url}
+                publicStoreDomain={publicStoreDomain}
               />
-            </NavLink>
 
-            {/* Center: Nav */}
-            <HeaderMenu
-              menu={menu}
-              viewport="desktop"
-              primaryDomainUrl={header.shop.primaryDomain.url}
-              publicStoreDomain={publicStoreDomain}
-            />
-
-            {/* Right: CTAs */}
-            <HeaderCtas isLoggedIn={isLoggedIn} cart={cart} />
+              {/* Right: CTAs */}
+              <HeaderCtas isLoggedIn={isLoggedIn} cart={cart} />
+            </div>
           </div>
         </div>
+      </header>
+
+      {/* Mobile: Transparent logo overlay (below dark header) */}
+      <div className="lg:hidden fixed top-14 sm:top-16 left-0 right-0 z-40 bg-transparent">
+        <NavLink prefetch="intent" to="/" end className="block">
+          <div className="flex items-center justify-center h-[120px] w-full overflow-hidden bg-transparent">
+            <div
+              role="img"
+              aria-label={shop.name}
+              className="w-full h-full"
+              style={{
+                backgroundImage: "url('/talla-logo-black.svg')",
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '60% auto',
+              }}
+            />
+          </div>
+        </NavLink>
       </div>
-    </header>
+      {/* spacer so content (hero) is pushed below fixed header only; logo overlays the hero (transparent) */}
+      <div className="lg:hidden h-14 sm:h-16" aria-hidden />
+    </>
   );
 }
 
@@ -223,7 +237,7 @@ export function HeaderMenu({
           className={({isActive}) =>
             [
               'text-[13px] xl:text-sm tracking-wide transition-all duration-200 relative group',
-              isActive ? 'text-[#00F4D2]' : 'text-black hover:text-[#00F4D2]',
+              isActive ? 'text-[#00F4D2]' : 'text-white hover:text-[#00F4D2]',
             ].join(' ')
           }
           style={{fontFamily: 'Aeonik, sans-serif', fontWeight: 700, letterSpacing: '0.05em'}}
@@ -324,8 +338,6 @@ function CartBadge({count}: {count: number | null}) {
       label={`Cart with ${count || 0} items`}
       onClick={(e?: any) => {
         e?.preventDefault?.();
-        // Only open cart when explicitly clicking the cart icon
-        // Don't auto-open when adding items
         open('cart');
         publish('cart_viewed', {
           cart,

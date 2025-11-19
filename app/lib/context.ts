@@ -1,7 +1,7 @@
-import {createHydrogenContext} from '@shopify/hydrogen';
-import {AppSession} from '~/lib/session';
-import {CART_QUERY_FRAGMENT} from '~/lib/fragments';
-import {getLocaleFromRequest} from '~/lib/i18n';
+import { createHydrogenContext } from '@shopify/hydrogen';
+import { CART_QUERY_FRAGMENT } from '~/lib/fragments';
+import { getLocaleFromRequest } from '~/lib/i18n';
+import { AppSession } from '~/lib/session';
 
 // Define the additional context object
 const additionalContext = {
@@ -16,7 +16,7 @@ const additionalContext = {
 type AdditionalContextType = typeof additionalContext;
 
 declare global {
-  interface HydrogenAdditionalContext extends AdditionalContextType {}
+  interface HydrogenAdditionalContext extends AdditionalContextType { }
 }
 
 /**
@@ -30,15 +30,25 @@ export async function createHydrogenRouterContext(
 ) {
   /**
    * Open a cache instance in the worker and a custom session instance.
+   *
+   * For local development we provide a safe fallback session secret so the
+   * app doesn't crash when env vars are not present. In production we still
+   * require `SESSION_SECRET` to be explicitly set and will throw if missing.
    */
-  if (!env?.SESSION_SECRET) {
+  const isProduction =
+    (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') ||
+    (env as any)?.NODE_ENV === 'production';
+
+  const sessionSecret = env?.SESSION_SECRET ?? (isProduction ? undefined : 'dev-session-secret');
+
+  if (!sessionSecret) {
     throw new Error('SESSION_SECRET environment variable is not set');
   }
 
   const waitUntil = executionContext.waitUntil.bind(executionContext);
   const [cache, session] = await Promise.all([
     caches.open('hydrogen'),
-    AppSession.init(request, [env.SESSION_SECRET]),
+    AppSession.init(request, [sessionSecret]),
   ]);
 
   const hydrogenContext = createHydrogenContext(

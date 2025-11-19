@@ -49,8 +49,8 @@ export function PageLayout({
           />
         )}
         
-        {/* Main content - offset for fixed header */}
-        <main className="flex-1 pt-16 sm:pt-18 lg:pt-22">
+        {/* Main content - offset for fixed header + mobile logo band */}
+        <main className="flex-1 pt-[7.5rem] sm:pt-[8.5rem] lg:pt-[4.5rem]">
           {children}
         </main>
         

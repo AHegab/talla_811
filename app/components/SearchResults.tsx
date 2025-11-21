@@ -1,6 +1,6 @@
-import {Link} from 'react-router';
-import {Image, Money, Pagination} from '@shopify/hydrogen';
-import {urlWithTrackingParams, type RegularSearchReturn} from '~/lib/search';
+import { Image, Money, Pagination } from '@shopify/hydrogen';
+import { Link } from 'react-router';
+import { urlWithTrackingParams, type RegularSearchReturn } from '~/lib/search';
 
 type SearchItems = RegularSearchReturn['result']['items'];
 type PartialSearchResult<ItemType extends keyof SearchItems> = Pick<
@@ -105,7 +105,7 @@ function SearchResultsProducts({
     <div className="search-result">
       <h2>Products</h2>
       <Pagination connection={products}>
-        {({nodes, isLoading, NextLink, PreviousLink}) => {
+        {({nodes, isLoading, NextLink}) => {
           const ItemsMarkup = nodes.map((product) => {
             const productUrl = urlWithTrackingParams({
               baseUrl: `/products/${product.handle}`,
@@ -133,18 +133,25 @@ function SearchResultsProducts({
 
           return (
             <div>
-              <div>
-                <PreviousLink>
-                  {isLoading ? 'Loading...' : <span>↑ Load previous</span>}
-                </PreviousLink>
-              </div>
+              {/* PreviousLink removed intentionally for search results pagination */}
               <div>
                 {ItemsMarkup}
                 <br />
               </div>
               <div>
-                <NextLink>
-                  {isLoading ? 'Loading...' : <span>Load more ↓</span>}
+                <NextLink className="load-more-btn" aria-label="Load more">
+                  {isLoading ? (
+                    <span className="load-btn-spinner" aria-hidden />
+                  ) : (
+                    <span className="load-btn">
+                      <span className="load-btn-text">Load more</span>
+                      <span className="load-btn-icon" aria-hidden>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="block">
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
+                      </span>
+                    </span>
+                  )}
                 </NextLink>
               </div>
             </div>

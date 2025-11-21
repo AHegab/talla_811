@@ -4,7 +4,7 @@ import {
   useOptimisticCart,
 } from '@shopify/hydrogen';
 import { Suspense, useEffect, useRef, useState } from 'react';
-import { Await, NavLink, useAsyncValue } from 'react-router';
+import { Await, NavLink, useAsyncValue, useLocation } from 'react-router';
 import type { CartApiQueryFragment, HeaderQuery } from 'storefrontapi.generated';
 import { useAside } from '~/components/Aside';
 import { SearchFormPredictive } from '~/components/SearchFormPredictive';
@@ -330,6 +330,8 @@ export function HeaderMenu({
   publicStoreDomain: HeaderProps['publicStoreDomain'];
 }) {
   const {close} = useAside();
+  const location = useLocation();
+  const maleActive = location?.pathname?.includes('/collections/men');
 
   const navItems = [
     {title: 'Women', url: '/collections/women'},
@@ -393,7 +395,9 @@ export function HeaderMenu({
           style={{fontFamily: 'Aeonik, sans-serif', fontWeight: 700, letterSpacing: '0.05em'}}
         >
           {item.title}
-          <span className="absolute -bottom-1 left-0 w-0 h-px bg-[#00F4D2] transition-all duration-200 group-hover:w-full" />
+          <span
+            className="absolute -bottom-1 left-0 w-0 h-px bg-[#00F4D2] transition-all duration-200 group-hover:w-full"
+          />
         </NavLink>
       ))}
     </nav>

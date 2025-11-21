@@ -82,6 +82,10 @@ export default function Collection() {
   const [sortBy, setSortBy] = useState<'featured' | 'price-low-high' | 'price-high-low' | 'newest' | 'best-selling'>('featured');
 
   const products = collection.products?.nodes ?? [];
+  const isMenCollection = collection.handle === 'men';
+  const isWomenCollection = collection.handle === 'women';
+
+  const accentColor = isWomenCollection ? '#00F4D2' : '#000000';
 
   return (
     <div className="min-h-screen bg-white">
@@ -105,30 +109,33 @@ export default function Collection() {
 
       {/* Header with title + controls */}
       <div className="mx-auto max-w-[1920px] px-6 pb-8 sm:px-8 lg:px-16 xl:px-20">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          {/* Title + description */}
-          <div>
+        <div className="mb-6 flex flex-col gap-6">
+          {/* Title + description - Centered */}
+          <div className="text-center">
             <h1
-              className="mb-2 text-3xl font-light tracking-tight text-black sm:text-4xl lg:text-5xl"
-              style={{fontFamily: 'Georgia, serif'}}
+              className="mb-3 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl uppercase text-black"
+              style={{
+                fontFamily: 'Aeonik, sans-serif',
+                letterSpacing: '0.05em'
+              }}
             >
               {collection.title}
             </h1>
             {collection.description && (
-              <p className="max-w-2xl text-sm text-gray-600">
+              <p className="mx-auto max-w-2xl text-base text-gray-600" style={{fontFamily: 'Quicking, sans-serif'}}>
                 {collection.description}
               </p>
             )}
           </div>
 
-          {/* Filters + sort */}
-          <div className="flex items-center gap-4">
+          {/* Filters + sort - Centered */}
+          <div className="flex items-center justify-center gap-4">
             <button
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl border-2 border-gray-300 px-6 py-3 text-xs font-medium uppercase tracking-[0.18em] transition-all duration-200 hover:border-black hover:shadow-md active:scale-95"
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg border border-gray-300 px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-gray-800 hover:shadow-md active:scale-95"
+              style={{fontFamily: 'Aeonik, sans-serif'}}
             >
-              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-gray-100 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
               <svg
                 className="relative z-10 h-4 w-4"
                 fill="none"
@@ -150,7 +157,8 @@ export default function Collection() {
               onChange={(e) =>
                 setSortBy(e.target.value as typeof sortBy)
               }
-              className="cursor-pointer rounded-xl border-2 border-gray-300 bg-white px-6 py-3 text-xs font-medium uppercase tracking-[0.18em] transition-all duration-200 hover:border-black hover:shadow-md focus:outline-none focus:ring-2 focus:ring-black/20"
+              className="cursor-pointer rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-gray-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+              style={{fontFamily: 'Aeonik, sans-serif'}}
             >
               <option value="featured">Featured</option>
               <option value="price-low-high">Price: Low to High</option>
@@ -177,7 +185,7 @@ export default function Collection() {
           <div className="absolute inset-y-0 left-0 flex w-full max-w-md flex-col bg-white shadow-xl">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-200 p-6">
-              <h2 className="text-base font-semibold uppercase tracking-[0.18em]">
+              <h2 className="text-base font-bold uppercase tracking-[0.12em]" style={{fontFamily: 'Aeonik, sans-serif', color: accentColor}}>
                 Filters
               </h2>
               <button
@@ -212,9 +220,19 @@ export default function Collection() {
                       <button
                         key={size}
                         type="button"
-                        className="group relative overflow-hidden rounded-xl border-2 border-gray-300 px-3 py-2 text-sm font-medium transition-all duration-200 hover:border-black hover:bg-black hover:text-white active:scale-95"
+                        className="group relative overflow-hidden rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium transition-all duration-200 hover:text-white active:scale-95"
+                        style={{
+                          fontFamily: 'Aeonik, sans-serif',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = accentColor;
+                          e.currentTarget.style.backgroundColor = accentColor;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '';
+                          e.currentTarget.style.backgroundColor = '';
+                        }}
                       >
-                        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                         <span className="relative z-10">{size}</span>
                       </button>
                     ),
@@ -236,12 +254,18 @@ export default function Collection() {
                     <button
                       key={color.name}
                       type="button"
-                      className="group relative h-12 w-12 rounded-full border-2 border-gray-300 shadow-sm transition-all duration-200 hover:scale-110 hover:border-black hover:shadow-md active:scale-95"
+                      className="group relative h-12 w-12 rounded-full border-2 border-gray-300 shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95"
                       style={{backgroundColor: color.color}}
                       aria-label={color.name}
                       title={color.name}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = accentColor;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '';
+                      }}
                     >
-                      <span className="absolute inset-0 rounded-full ring-2 ring-transparent transition-all duration-200 group-hover:ring-black/20" />
+                      <span className="absolute inset-0 rounded-full ring-2 ring-transparent transition-all duration-200" />
                     </button>
                   ))}
                 </div>
@@ -263,9 +287,12 @@ export default function Collection() {
                     >
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+                        className="h-4 w-4 rounded border-gray-300 focus:ring-2"
+                        style={{
+                          accentColor: accentColor,
+                        }}
                       />
-                      <span className="text-sm transition-colors group-hover:text-black">
+                      <span className="text-sm transition-colors group-hover:text-black" style={{fontFamily: 'Quicking, sans-serif'}}>
                         {brand}
                       </span>
                     </label>
@@ -280,13 +307,31 @@ export default function Collection() {
                     <input
                       type="number"
                       placeholder="Min"
-                      className="flex-1 border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                      className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                      style={{
+                        fontFamily: 'Quicking, sans-serif',
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = accentColor;
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = '';
+                      }}
                     />
                     <span className="text-gray-500">—</span>
                     <input
                       type="number"
                       placeholder="Max"
-                      className="flex-1 border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                      className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                      style={{
+                        fontFamily: 'Quicking, sans-serif',
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = accentColor;
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = '';
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -299,9 +344,12 @@ export default function Collection() {
                           <input
                             type="radio"
                             name="price"
-                            className="h-4 w-4 border-gray-300 text-black focus:ring-black"
+                            className="h-4 w-4 border-gray-300 focus:ring-2"
+                            style={{
+                              accentColor: accentColor,
+                            }}
                           />
-                          <span className="text-sm transition-colors group-hover:text-black">
+                          <span className="text-sm transition-colors group-hover:text-black" style={{fontFamily: 'Quicking, sans-serif'}}>
                             {range}
                           </span>
                         </label>
@@ -317,16 +365,20 @@ export default function Collection() {
               <button
                 type="button"
                 onClick={() => setFiltersOpen(false)}
-                className="flex-1 rounded-xl border-2 border-gray-300 py-3 text-xs font-semibold uppercase tracking-[0.18em] transition-all duration-200 hover:border-black hover:bg-gray-50 active:scale-95"
+                className="flex-1 rounded-lg border border-gray-300 py-3 text-xs font-semibold uppercase tracking-[0.12em] transition-all duration-200 hover:border-gray-800 hover:bg-gray-50 active:scale-95"
+                style={{fontFamily: 'Aeonik, sans-serif'}}
               >
                 Clear All
               </button>
               <button
                 type="button"
                 onClick={() => setFiltersOpen(false)}
-                className="group relative flex-1 overflow-hidden rounded-xl bg-black py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-all duration-200 hover:bg-gray-900 hover:shadow-lg active:scale-95"
+                className="group relative flex-1 overflow-hidden rounded-lg py-3 text-xs font-semibold uppercase tracking-[0.12em] text-white transition-all duration-200 hover:shadow-lg active:scale-95"
+                style={{
+                  fontFamily: 'Aeonik, sans-serif',
+                  backgroundColor: accentColor,
+                }}
               >
-                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <span className="relative z-10">Apply</span>
               </button>
             </div>
@@ -376,7 +428,7 @@ function FilterSection({
 }) {
   return (
     <section className="space-y-4">
-      <h3 className="mb-1 text-xs font-semibold uppercase tracking-[0.18em]">
+      <h3 className="mb-1 text-xs font-semibold uppercase tracking-[0.12em]" style={{fontFamily: 'Aeonik, sans-serif'}}>
         {title}
       </h3>
       {children}

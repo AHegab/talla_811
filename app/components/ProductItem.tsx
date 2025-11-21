@@ -1,9 +1,9 @@
 import { Image, Money } from '@shopify/hydrogen';
 import { Link } from 'react-router';
 import type {
-  CollectionItemFragment,
-  ProductItemFragment,
-  RecommendedProductFragment,
+    CollectionItemFragment,
+    ProductItemFragment,
+    RecommendedProductFragment,
 } from 'storefrontapi.generated';
 import { useVariantUrl } from '~/lib/variants';
 
@@ -29,7 +29,7 @@ export function ProductItem({
     <Link
       to={variantUrl}
       prefetch="intent"
-      className="group block w-full sm:w-1/2 md:w-1/3 lg:w-1/4"
+      className="group product-item block w-full sm:w-1/2 md:w-1/3 lg:w-1/4"
     >
       {/* Image - taller poster with overlay bookmark */}
       <div className="relative image-zoom-container aspect-poster bg-gray-100 mb-4 overflow-hidden rounded-md">
@@ -51,20 +51,22 @@ export function ProductItem({
         )}
 
         {/* Bookmark icon (visual only) */}
-        <span className="absolute top-2 left-2 bg-white/90 dark:bg-black/60 rounded-full p-1 shadow-sm">
+        <span className="product-bookmark absolute top-2 left-2 bg-white/90 dark:bg-black/60 rounded-full p-1 shadow-sm">
           <svg className="w-4 h-4 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v16l7-5 7 5V3z" />
           </svg>
         </span>
+        {/* Theme-aware badge - visible on male-theme */}
+        <span className="product-badge">Men</span>
       </div>
 
       {/* Product Info */}
-      <div className="space-y-1">
-        <h4 className="text-[11px] font-normal leading-4 text-talla-text group-hover:opacity-70 transition-opacity duration-fast line-clamp-1">
+      <div className="space-y-1 product-item-info">
+        <h4 className="product-item-title text-[11px] font-normal leading-4 text-talla-text group-hover:opacity-70 transition-opacity duration-fast line-clamp-1">
           {product.title}
         </h4>
 
-        <div className="text-[11px] font-medium text-gray-700">
+        <div className="product-item-price text-[11px] font-medium text-gray-700">
           <Money data={product.priceRange.minVariantPrice} />
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { Analytics, getPaginationVariables } from '@shopify/hydrogen';
+import { useEffect } from 'react';
 import { redirect, useLoaderData } from 'react-router';
 import type { ProductItemFragment } from 'storefrontapi.generated';
 import { PaginatedResourceSection } from '~/components/PaginatedResourceSection';
@@ -67,10 +68,23 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 
 export default function Collection() {
   const {collection} = useLoaderData<typeof loader>();
+  const isMale = Boolean(
+    collection?.handle?.toLowerCase?.().includes('men') ||
+    /\bmen|male\b/i.test(collection?.title || ''),
+  );
+
+  // Set a body class to allow header styling for the male collection
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isMale) document.body.classList.add('male-theme-header');
+    else document.body.classList.remove('male-theme-header');
+    return () => document.body.classList.remove('male-theme-header');
+  }, [isMale]);
 
   return (
-    <div className="collection">
-      <h1>{collection.title}</h1>
+    <div className={['collection', isMale ? 'male-theme' : ''].join(' ')}>
+      <h1 className="collection-title">{collection.title}</h1>
+      {isMale && <p className="collection-subtitle">Shop our edit curated for men</p>}
       <p className="collection-description">{collection.description}</p>
       <PaginatedResourceSection<ProductItemFragment>
         connection={collection.products}

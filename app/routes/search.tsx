@@ -1,9 +1,11 @@
 import {
   useLoaderData,
+  useSearchParams,
 } from 'react-router';
 import type {Route} from './+types/search';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/SearchForm';
+import SearchFilters from '~/components/SearchFilters';
 import {SearchResults} from '~/components/SearchResults';
 import {
   type RegularSearchReturn,
@@ -37,6 +39,7 @@ export async function loader({request, context}: Route.LoaderArgs) {
  */
 export default function SearchPage() {
   const {type, term, result, error} = useLoaderData<typeof loader>();
+  const [searchParams] = useSearchParams();
   if (type === 'predictive') return null;
 
   return (
@@ -45,19 +48,36 @@ export default function SearchPage() {
       <SearchForm>
         {({inputRef}) => (
           <>
-            <input
-              defaultValue={term}
-              name="q"
-              placeholder="Search…"
-              ref={inputRef}
-              type="search"
-            />
-            &nbsp;
-            <button type="submit">Search</button>
+            <div className="search-form-row">
+              <input
+                defaultValue={term}
+                name="q"
+                placeholder="Search…"
+                ref={inputRef}
+                type="search"
+                className="search-input"
+              />
+              &nbsp;
+              <button type="submit" className="button">Search</button>
+            </div>
+            <SearchFilters />
           </>
         )}
       </SearchForm>
       {error && <p style={{color: 'red'}}>{error}</p>}
+      {/* Active filters */}
+      <div className="search-active-filters">
+        {[...searchParams.keys()].length > 0 && (
+          <div className="search-active-chips">
+            {searchParams.getAll('color').map((c) => (
+              <span className="filter-chip" key={`color-${c}`}>Color: {c}</span>
+            ))}
+            {searchParams.get('type') && <span className="filter-chip">Type: {searchParams.get('type')}</span>}
+            {searchParams.get('minPrice') && <span className="filter-chip">Min: {searchParams.get('minPrice')}</span>}
+            {searchParams.get('maxPrice') && <span className="filter-chip">Max: {searchParams.get('maxPrice')}</span>}
+          </div>
+        )}
+      </div>
       {!term || !result?.total ? (
         <SearchResults.Empty />
       ) : (
@@ -223,10 +243,23 @@ async function regularSearch({
   const url = new URL(request.url);
   const variables = getPaginationVariables(request, {pageBy: 8});
   const term = String(url.searchParams.get('q') || '');
+  const types = String(url.searchParams.get('type') || '');
+  const colors = url.searchParams.getAll('color').map((c) => String(c));
+  const minPrice = url.searchParams.get('minPrice');
+  const maxPrice = url.searchParams.get('maxPrice');
+
+  const filters: string[] = [];
+  if (types) filters.push(`product_type:${types}`);
+  colors.forEach((c) => {
+    if (c) filters.push(`tag:${c}`);
+  });
+  if (minPrice) filters.push(`price:>=${minPrice}`);
+  if (maxPrice) filters.push(`price:<=${maxPrice}`);
+  const combinedTerm = [term, ...filters].filter(Boolean).join(' ');
 
   // Search articles, pages, and products for the `q` term
   const {errors, ...items}: {errors?: Array<{message: string}>} & RegularSearchQuery = await storefront.query(SEARCH_QUERY, {
-    variables: {...variables, term},
+    variables: {...variables, term: combinedTerm},
   });
 
   if (!items) {

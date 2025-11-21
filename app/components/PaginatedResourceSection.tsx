@@ -28,7 +28,8 @@ export function PaginatedResourceSection<NodesType>({
             ) : (
               resourcesMarkup
             )}
-            <NextLink className="load-more-btn" aria-label="Load more">
+            <div className="load-more-wrap">
+              <NextLink className="load-more-btn" aria-label="Load more">
               {isLoading ? (
                 <span className="load-btn-spinner" aria-hidden />
               ) : (
@@ -41,7 +42,8 @@ export function PaginatedResourceSection<NodesType>({
                   </span>
                 </span>
               )}
-            </NextLink>
+              </NextLink>
+            </div>
           </div>
         );
       }}

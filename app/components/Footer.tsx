@@ -37,7 +37,7 @@ export function Footer({
                   {/* Social Icons */}
                   <div className="flex items-center gap-4">
                     <a 
-                      href="https://instagram.com" 
+                      href="https://www.instagram.com/talla.online?igsh=NTJ0bGZqeHBkbGZ5"
                       aria-label="Instagram" 
                       className="group inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-700 hover:border-[#00F4D2] hover:bg-[#00F4D2]/10 transition-all duration-200" 
                       target="_blank" 
@@ -50,7 +50,7 @@ export function Footer({
                       </svg>
                     </a>
                     <a 
-                      href="https://tiktok.com" 
+                      href="https://www.tiktok.com/@talla.online?_r=1&_t=ZS-91VfnEIL6Uq"
                       aria-label="TikTok" 
                       className="group inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-700 hover:border-[#00F4D2] hover:bg-[#00F4D2]/10 transition-all duration-200" 
                       target="_blank" 

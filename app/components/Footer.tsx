@@ -63,7 +63,7 @@ export function Footer({
                   </div>
                 </div>
 
-                {/* Shop Links */}
+                {/* Shop Links */} 
                 <div>
                   <h3 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ fontFamily: 'Aeonik, sans-serif' }}>
                     Shop

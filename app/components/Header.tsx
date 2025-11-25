@@ -123,17 +123,37 @@ export function Header({
       {/* Dark header bar */}
       <header
         className={[
-          'fixed inset-x-0 top-0 z-50',
-          'bg-[#2b2b2b] text-white',
-          'shadow-[0_2px_8px_rgba(0,0,0,0.15)]',
+          'fixed inset-x-0 top-0 z-50 transition-colors duration-300',
+          hidden
+            ? 'bg-transparent shadow-none border-none'
+            : 'bg-[#2b2b2b] text-white shadow-[0_2px_8px_rgba(0,0,0,0.15)]',
           'supports-[padding:max(0px)]:pt-[env(safe-area-inset-top)]',
-          'transform transition-transform duration-300 will-change-transform',
-          hidden ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100',
         ].join(' ')}
         role="banner"
       >
         <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-16 xl:px-20">
-          <div className="flex h-14 sm:h-16 lg:h-[72px] items-center justify-center">
+          {/* Pinned desktop logo (always visible on lg+) */}
+          <NavLink
+            prefetch="intent"
+            to="/"
+            end
+            className="hidden lg:flex fixed left-6 -top-2 z-[80] items-center justify-center pointer-events-auto"
+            aria-label={`${shop.name} home`}
+            style={{ paddingTop: 'env(safe-area-inset-top)' }}
+          >
+            <img
+              src="/talla-logo-black.svg"
+              alt={shop.name}
+              className="h-20 md:h-28 lg:h-40 xl:h-48 w-auto object-contain block"
+              loading="eager"
+                 style={{ maxHeight: '280px', transform: 'translateY(-12px) scale(1.06)' }}
+            />
+          </NavLink>
+            <div className={[
+            'flex h-14 sm:h-16 lg:h-[72px] items-center justify-center',
+            'transform transition-transform duration-300 will-change-transform',
+            hidden ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100',
+          ].join(' ')}>
             {/* Mobile: minimal icon buttons */}
             <div className="flex lg:hidden items-center w-full relative z-50">
               <div className="flex items-center">
@@ -183,9 +203,8 @@ export function Header({
 
             {/* Desktop */}
             <div className="hidden lg:flex items-center justify-between w-full">
-              <NavLink prefetch="intent" to="/" end className="relative z-10 flex-shrink-0">
-                        <img src="/talla-logo-white.svg" alt={shop.name} className="h-8 w-auto block" loading="eager" />
-                      </NavLink>
+              {/* inset placeholder preserves spacing for centered nav */}
+              <div className="flex-shrink-0 w-36 lg:w-44" aria-hidden />
 
               <HeaderMenu
                 menu={menu}
@@ -201,7 +220,7 @@ export function Header({
       </header>
 
       {/* Mobile logo overlay */}
-      <div className="lg:hidden fixed top-14 sm:top-16 left-0 right-0 z-40 bg-transparent">
+      <div className="lg:hidden fixed top-14 sm:top-16 left-0 right-0 z-40 bg-transparent pointer-events-none">
         <NavLink prefetch="intent" to="/" end className="block">
           <div className="flex items-center justify-center h-[120px] w-full overflow-hidden bg-transparent">
             <div
@@ -380,13 +399,13 @@ export function HeaderMenu({
   }
 
   return (
-    <nav className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center space-x-7 xl:space-x-8">
+    <nav className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center space-x-7 xl:space-x-8 z-0">
       {navItems.map((item) => (
         <NavLink
           key={item.url}
           to={item.url}
           prefetch="intent"
-          className={({isActive}) =>
+            className={({isActive}) =>
             [
               'text-[13px] xl:text-sm tracking-wide transition-all duration-200 relative group',
               isActive ? 'text-[#00F4D2]' : 'text-white hover:text-[#00F4D2]',

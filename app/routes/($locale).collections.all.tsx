@@ -51,11 +51,14 @@ export default function Collection() {
   const {products} = useLoaderData<typeof loader>();
 
   return (
-    <div className="collection">
-      <h1>Products</h1>
+    <div className="container-talla section-padding">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl md:text-5xl font-serif mb-4">ALL PRODUCTS</h1>
+        <p className="text-base text-talla-text/70">Discover 20 curated pieces from our partner brands</p>
+      </div>
       <PaginatedResourceSection<CollectionItemFragment>
         connection={products}
-        resourcesClassName="products-grid"
+        resourcesClassName="grid-products"
       >
         {({node: product, index}) => (
           <ProductItem

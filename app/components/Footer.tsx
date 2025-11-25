@@ -27,7 +27,9 @@ export function Footer({
                     <img 
                       src="/talla-logo-white.svg" 
                       alt={header.shop.name}
-                      className="h-8 w-auto"
+                      className="h-8 w-auto object-contain"
+                      width={128}
+                      height={32}
                     />
                   </NavLink>
                   <p className="text-sm text-gray-400 mb-6" style={{ fontFamily: 'Quicking, sans-serif' }}>

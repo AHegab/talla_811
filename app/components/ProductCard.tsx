@@ -36,39 +36,49 @@ export function ProductCard({
     <Link
       to={variantUrl}
       prefetch="intent"
-      className={`group block ${className}`}
+      className={`group block h-full flex flex-col ${className}`}
     >
-      {/* Image Container with 3:4 aspect ratio */}
-      <div className="relative overflow-hidden bg-gray-50 mb-3 sm:mb-4">
-        <div className="aspect-portrait">
+      {/* Image Container - Gallery-style premium frame */}
+      <div className="relative flex-1 bg-white transition-all duration-500 group-hover:shadow-2xl"
+           style={{
+             padding: 'clamp(10px, 1.8vw, 20px)',
+             border: '1px solid #E5E7EB',
+             borderRadius: '8px',
+             boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03)',
+             display: 'flex',
+             flexDirection: 'column'
+           }}>
+        {/* Inner shadow frame for depth */}
+        <div className="relative flex-1 overflow-hidden"
+             style={{
+               borderRadius: '4px',
+               boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.04)'
+             }}>
           {image && (
             <Image
               alt={image.altText || product.title}
-              aspectRatio="3/4"
+              aspectRatio="9/16"
               data={image}
               loading={loading}
-              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-              className="w-full h-full object-cover transition-all duration-slow group-hover:scale-105"
+              sizes="(min-width: 1280px) 30vw, (min-width: 1024px) 32vw, (min-width: 768px) 33vw, 50vw"
+              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
             />
           )}
         </div>
-        
-        {/* Quick view overlay (optional - can be added later) */}
-        <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-base pointer-events-none" />
       </div>
 
       {/* Product Info */}
-      <div className="space-y-1">
+      <div className="px-1 pt-3 pb-1">
         {/* Product Title */}
-        <h3 
-          className="text-sm font-sans font-normal leading-tight tracking-wide text-talla-text line-clamp-2 group-hover:opacity-70 transition-opacity duration-fast"
+        <h3
+          className="text-sm font-sans font-normal leading-tight tracking-wide text-talla-text line-clamp-2 group-hover:opacity-70 transition-opacity duration-fast mb-1"
           style={{ fontFamily: 'var(--font-sans)' }}
         >
           {product.title}
         </h3>
 
         {/* Price */}
-        <p 
+        <p
           className="text-sm font-medium text-talla-text/80"
           style={{ fontFamily: 'var(--font-sans)' }}
         >

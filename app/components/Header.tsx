@@ -137,17 +137,21 @@ export function Header({
             prefetch="intent"
             to="/"
             end
-            className="hidden lg:flex fixed left-6 -top-2 z-[80] items-center justify-center pointer-events-auto"
+            className="hidden lg:flex fixed left-6 top-6 lg:top-[72px] z-40 items-center justify-center pointer-events-auto"
             aria-label={`${shop.name} home`}
             style={{ paddingTop: 'env(safe-area-inset-top)' }}
           >
-            <img
-              src="/talla-logo-black.svg"
-              alt={shop.name}
-              className="h-20 md:h-28 lg:h-40 xl:h-48 w-auto object-contain block"
-              loading="eager"
-                 style={{ maxHeight: '280px', transform: 'translateY(-12px) scale(1.06)' }}
-            />
+            {/* cropped container so the visible vertical space matches text height */}
+            <div className="overflow-hidden inline-flex items-center justify-center w-[220px] h-[100px]">
+              <img
+                src="/talla-logo-black.svg"
+                alt={shop.name}
+                className="w-full h-auto object-contain block transform translate-y-0 lg:-translate-y-1"
+                loading="eager"
+                width={220}
+                height={100}
+              />
+            </div>
           </NavLink>
             <div className={[
             'flex h-14 sm:h-16 lg:h-[72px] items-center justify-center',
@@ -401,23 +405,56 @@ export function HeaderMenu({
   return (
     <nav className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center space-x-7 xl:space-x-8 z-0">
       {navItems.map((item) => (
-        <NavLink
-          key={item.url}
-          to={item.url}
-          prefetch="intent"
+        // For the 'Women' item, render a small list icon button next to the nav link
+        item.title === 'Women' ? (
+          <div key={item.url} className="flex items-center gap-2">
+            <NavLink
+              to={`${item.url}?view=list`}
+              prefetch="intent"
+              aria-label="List view for Women"
+              className="group"
+            >
+              <IconButton label="List view" className="h-7 w-7">
+                <img src="/icons/menu.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+              </IconButton>
+            </NavLink>
+
+            <NavLink
+              to={item.url}
+              prefetch="intent"
+              className={({isActive}) =>
+                [
+                  'text-[13px] xl:text-sm tracking-wide transition-all duration-200 relative group',
+                  isActive ? 'text-[#00F4D2]' : 'text-white hover:text-[#00F4D2]',
+                ].join(' ')
+              }
+              style={{fontFamily: 'Aeonik, sans-serif', fontWeight: 700, letterSpacing: '0.05em'}}
+            >
+              {item.title}
+              <span
+                className="absolute -bottom-1 left-0 w-0 h-px bg-[#00F4D2] transition-all duration-200 group-hover:w-full"
+              />
+            </NavLink>
+          </div>
+        ) : (
+          <NavLink
+            key={item.url}
+            to={item.url}
+            prefetch="intent"
             className={({isActive}) =>
-            [
-              'text-[13px] xl:text-sm tracking-wide transition-all duration-200 relative group',
-              isActive ? 'text-[#00F4D2]' : 'text-white hover:text-[#00F4D2]',
-            ].join(' ')
-          }
-          style={{fontFamily: 'Aeonik, sans-serif', fontWeight: 700, letterSpacing: '0.05em'}}
-        >
-          {item.title}
-          <span
-            className="absolute -bottom-1 left-0 w-0 h-px bg-[#00F4D2] transition-all duration-200 group-hover:w-full"
-          />
-        </NavLink>
+              [
+                'text-[13px] xl:text-sm tracking-wide transition-all duration-200 relative group',
+                isActive ? 'text-[#00F4D2]' : 'text-white hover:text-[#00F4D2]',
+              ].join(' ')
+            }
+            style={{fontFamily: 'Aeonik, sans-serif', fontWeight: 700, letterSpacing: '0.05em'}}
+          >
+            {item.title}
+            <span
+              className="absolute -bottom-1 left-0 w-0 h-px bg-[#00F4D2] transition-all duration-200 group-hover:w-full"
+            />
+          </NavLink>
+        )
       ))}
     </nav>
   );

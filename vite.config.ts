@@ -1,16 +1,17 @@
-import {defineConfig} from 'vite';
-import {hydrogen} from '@shopify/hydrogen/vite';
-import {oxygen} from '@shopify/mini-oxygen/vite';
-import {reactRouter} from '@react-router/dev/vite';
-import tsconfigPaths from 'vite-tsconfig-paths';
+import { reactRouter } from '@react-router/dev/vite';
+import { hydrogen } from '@shopify/hydrogen/vite';
+import { oxygen } from '@shopify/mini-oxygen/vite';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
+import { defineConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   // Resolve paths to prevent URL encoding issues with spaces
   resolve: {
     alias: {
       '~': path.resolve(__dirname, './app'),
+      'react-router-dom/server': 'react-router',
     },
   },
   plugins: [
@@ -37,8 +38,11 @@ export default defineConfig({
        * Include 'example-dep' in the array below.
        * @see https://vitejs.dev/config/dep-optimization-options
        */
-      include: ['set-cookie-parser', 'cookie', 'react-router', 'react-router-dom'],
+      include: ['set-cookie-parser', 'cookie', 'react-router'],
     },
+    // Force Vite to bundle these ESM-only packages for SSR which avoids
+    // issues with CommonJS/exports resolution and missing subpath specifiers
+    noExternal: ['react-router', 'react-router-dom', '@remix-run/react'],
   },
   server: {
     allowedHosts: ['.tryhydrogen.dev'],

@@ -30,8 +30,10 @@ export async function loader(args: Route.LoaderArgs) {
 async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   const {handle} = params;
   const {storefront} = context;
+  const isLargeCollection = Boolean(handle?.toLowerCase?.().includes('men') || handle?.toLowerCase?.().includes('women'));
   const paginationVariables = getPaginationVariables(request, {
-    pageBy: 8,
+    // Use a larger page size for Men/Women collections to show more of the catalog
+    pageBy: isLargeCollection ? 250 : 8,
   });
 
   if (!handle) {
@@ -70,18 +72,24 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 
 export default function Collection() {
   const {collection} = useLoaderData<typeof loader>();
-  const isMale = Boolean(
-    collection?.handle?.toLowerCase?.().includes('men') ||
-    /\bmen|male\b/i.test(collection?.title || ''),
-  );
+  const handleLower = collection?.handle?.toLowerCase?.() ?? '';
+  const isMale = Boolean(handleLower === 'men' || /\bmen\b/i.test(collection?.title || ''));
+  const isFemale = Boolean(handleLower === 'women' || /\bwomen\b/i.test(collection?.title || ''));
 
   // Set a body class to allow header styling for the male collection
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (isMale) document.body.classList.add('male-theme-header');
     else document.body.classList.remove('male-theme-header');
-    return () => document.body.classList.remove('male-theme-header');
-  }, [isMale]);
+
+    if (isFemale) document.body.classList.add('female-theme-header');
+    else document.body.classList.remove('female-theme-header');
+
+    return () => {
+      document.body.classList.remove('male-theme-header');
+      document.body.classList.remove('female-theme-header');
+    };
+  }, [isMale, isFemale]);
 
   const productsArray = collection?.products?.nodes ?? [];
 
@@ -90,16 +98,14 @@ export default function Collection() {
     return <MenCollectionPage collection={collection} products={productsArray as ProductItemFragment[]} />;
   }
 
-  const isFemale = Boolean(
-    collection?.handle?.toLowerCase?.().includes('women') || /\bwom|female\b/i.test(collection?.title || ''),
-  );
+  // isFemale is computed earlier using `handleLower` and regex
   if (isFemale) {
-    return <WomenCollectionPage collection={collection as any} products={productsArray as any} />;
+    return <WomenCollectionPage collection={collection as any} products={productsArray as ProductItemFragment[]} />;
   }
 
   // Default collection UI (non-men/non-women)
   return (
-    <div className={['collection', isMale ? 'male-theme' : ''].join(' ')}>
+    <div className={['collection', isMale ? 'male-theme' : isFemale ? 'female-theme' : ''].join(' ')}>
       <h1 className="collection-title">{collection.title}</h1>
       {isMale && <p className="collection-subtitle">Shop our edit curated for men</p>}
       <p className="collection-description">{collection.description}</p>

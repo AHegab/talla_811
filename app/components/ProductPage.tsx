@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ProductQuery } from 'storefrontapi.generated';
 import {
   ProductBuyBox,
@@ -156,7 +156,37 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
   // You can later call calculateRecommendedSize + setRecommendedSize
   // whenever userMeasurements changes.
 
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Keyboard handlers for navigation and closing modal
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+      if (e.key === 'ArrowLeft') setSelectedImageIndex((i) => (i > 0 ? i - 1 : images.length - 1));
+      if (e.key === 'ArrowRight') setSelectedImageIndex((i) => (i < images.length - 1 ? i + 1 : 0));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [images.length]);
+
+  // Prevent body scroll while modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isModalOpen]);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
   return (
+    <>
     <div className="min-h-screen bg-[#FAFAFA]">
       <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-2 lg:px-12 lg:py-14">
         {/* Gallery: main image + vertical thumbnails below */}
@@ -164,29 +194,42 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
           {/* Main image */}
           {images.length > 0 && (
             <div className="mb-5 flex items-center justify-center md:justify-start">
-              <img
-                src={images[0].url}
-                alt={images[0].alt || product.title}
-                className="aspect-[3/4] max-w-full rounded-xl object-cover shadow-[0_2px_16px_rgba(220,220,230,0.12)]"
+              <button
+                type="button"
+                aria-label="Open image viewer"
+                onClick={openModal}
+                className="aspect-[3/4] max-w-full rounded-xl overflow-hidden p-0 border-none bg-transparent"
                 style={{width: '340px', height: '440px'}}
-              />
+              >
+                <img
+                  src={images[selectedImageIndex]?.url ?? images[0].url}
+                  alt={images[selectedImageIndex]?.alt || product.title}
+                  className="w-full h-full object-cover rounded-xl"
+                />
+              </button>
             </div>
           )}
 
           {/* Thumbnails grid below main image */}
           {images.length > 1 && (
             <div className="mt-2 grid w-full max-w-md grid-cols-3 gap-4 md:max-w-none md:grid-cols-4">
-              {images.slice(1).map((img, idx) => (
-                <div
+              {images.map((img, idx) => (
+                <button
                   key={img.id ?? idx}
-                  className="flex h-[110px] w-[80px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50 shadow-[0_1px_4px_rgba(220,220,230,0.07)] md:h-[120px] md:w-[90px]"
+                  type="button"
+                  onClick={() => setSelectedImageIndex(idx)}
+                  aria-label={`Select image ${idx + 1}`}
+                  aria-pressed={selectedImageIndex === idx}
+                    className={`cursor-pointer flex h-[110px] w-[80px] items-center justify-center rounded-lg md:h-[120px] md:w-[90px] ${
+                      selectedImageIndex === idx ? 'ring-2 ring-[#111111] ring-offset-2 bg-white' : 'border border-gray-200 bg-white'
+                    }`}
                 >
                   <img
                     src={img.url}
                     alt={img.alt || product.title}
                     className="h-full w-full rounded-lg object-cover"
                   />
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -246,5 +289,53 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
         </div>
       </div>
     </div>
+      {/* Fullscreen modal viewer */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-6"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            // close modal when clicking on background
+            if (e.target === e.currentTarget) closeModal();
+          }}
+        >
+          <button
+            type="button"
+            onClick={closeModal}
+            aria-label="Close image viewer"
+            className="absolute right-6 top-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-black"
+          >
+            ✕
+          </button>
+
+          <button
+            type="button"
+            aria-label="Previous image"
+            onClick={() => setSelectedImageIndex((i) => (i > 0 ? i - 1 : images.length - 1))}
+            className="absolute left-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/90 p-2"
+          >
+            ‹
+          </button>
+
+          <div className="max-h-full max-w-full flex items-center justify-center">
+            <img
+              src={images[selectedImageIndex]?.url}
+              alt={images[selectedImageIndex]?.alt || product.title}
+              className="max-h-[90vh] max-w-[90vw] object-contain rounded"
+            />
+          </div>
+
+          <button
+            type="button"
+            aria-label="Next image"
+            onClick={() => setSelectedImageIndex((i) => (i < images.length - 1 ? i + 1 : 0))}
+            className="absolute right-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/90 p-2"
+          >
+            ›
+          </button>
+        </div>
+      )}
+    </>
   );
 }

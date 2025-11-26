@@ -111,7 +111,7 @@ export function SimilarItems({
                   className="flex-shrink-0 w-64 snap-start group block"
                 >
                   <div className="space-y-3">
-                    <div className="relative aspect-portrait overflow-hidden">
+                    <div className="relative aspect-portrait overflow-hidden bg-white rounded-[8px] shadow-[0_6px_18px_rgba(0,0,0,0.04)] p-4">
                       <img
                         src={product.image}
                         alt={product.title}
@@ -148,7 +148,7 @@ export function SimilarItems({
                 >
                   <div className="space-y-3">
                     {/* Image */}
-                    <div className="aspect-portrait overflow-hidden">
+                    <div className="aspect-portrait overflow-hidden bg-white rounded-[8px] shadow-[0_6px_18px_rgba(0,0,0,0.04)] p-4">
                       <img
                         src={product.image}
                         alt={product.title}

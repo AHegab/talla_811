@@ -4,7 +4,8 @@ import type { MoneyV2 } from '@shopify/hydrogen/storefront-api-types';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import type { ProductItemFragment } from 'storefrontapi.generated';
-import { ProductGrid } from '../ProductGrid';
+import { ProductItem } from '~/components/ProductItem';
+import { ProductGrid } from '~/components/ui';
 import CollectionFilters from './CollectionFilters';
 
 type ProductType = {
@@ -286,7 +287,7 @@ export function WomenCollectionPage({
                     className="snap-center flex-shrink-0 w-[min(840px,calc(100vw-160px))] block"
                     role="listitem"
                   >
-                    <div className="relative overflow-hidden">
+                    <div className="relative overflow-hidden rounded-[18px] bg-white shadow-[0_10px_35px_rgba(0,0,0,0.05)]">
                       <Image
                         data={p.featuredImage as any}
                         alt={p.title}
@@ -332,7 +333,11 @@ export function WomenCollectionPage({
           <div className="lg:grid lg:grid-cols-[1fr,320px] gap-8">
             <div>
               {/* ProductGrid draws its own responsive grid; no extra grid wrapper */}
-              <ProductGrid products={filteredProducts} />
+              <ProductGrid>
+                {filteredProducts.map((p) => (
+                  <ProductItem key={p.id} product={p as any} />
+                ))}
+              </ProductGrid>
             </div>
             <div className="hidden lg:block">
               <div className={`transition-all duration-200 ${showFilters ? 'fixed right-6 top-[110px] w-80' : 'invisible opacity-0'}`}>

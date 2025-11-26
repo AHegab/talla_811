@@ -1,14 +1,15 @@
-import type {Route} from './+types/collections.$handle';
+import type { Route } from './+types/collections.$handle';
 
-import {redirect} from '@shopify/remix-oxygen';
-import {Link, useLoaderData} from '@remix-run/react';
-import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
-import {useState, type ReactNode} from 'react';
+import { Link, useLoaderData } from '@remix-run/react';
+import { Analytics, getPaginationVariables } from '@shopify/hydrogen';
+import { redirect } from '@shopify/remix-oxygen';
+import { useState, type ReactNode } from 'react';
 
-import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
-import {ProductGrid} from '~/components/ProductGrid';
-import {redirectIfHandleIsLocalized} from '~/lib/redirect';
-import type {ProductItemFragment} from 'storefrontapi.generated';
+import type { ProductItemFragment } from 'storefrontapi.generated';
+import { PaginatedResourceSection } from '~/components/PaginatedResourceSection';
+import { ProductItem } from '~/components/ProductItem';
+import { ProductGrid } from '~/components/ui';
+import { redirectIfHandleIsLocalized } from '~/lib/redirect';
 
 export const meta: Route.MetaFunction = ({data}) => {
   const title = data?.collection?.title ?? 'Collection';
@@ -396,10 +397,11 @@ export default function Collection() {
             // Render a single ProductGrid for the first node using all products
             if (index === 0) {
               return (
-                <ProductGrid
-                  key="product-grid"
-                  products={products}
-                />
+                <ProductGrid key="product-grid">
+                  {products.map((p: any) => (
+                    <ProductItem key={p.id} product={p as any} loading="lazy" />
+                  ))}
+                </ProductGrid>
               );
             }
             return null;

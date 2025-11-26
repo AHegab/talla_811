@@ -1,6 +1,7 @@
 import { Pagination } from '@shopify/hydrogen';
 import { Link } from 'react-router';
-import { ProductGrid } from '~/components/ProductGrid';
+import { ProductItem } from '~/components/ProductItem';
+import { ProductGrid } from '~/components/ui';
 import { urlWithTrackingParams, type RegularSearchReturn } from '~/lib/search';
 
 type SearchItems = RegularSearchReturn['result']['items'];
@@ -113,12 +114,23 @@ function SearchResultsProducts({
             handle: product.handle,
             featuredImage: product?.selectedOrFirstAvailableVariant?.image,
             priceRange: { minVariantPrice: product?.selectedOrFirstAvailableVariant?.price },
+            trackingParameters: product.trackingParameters,
           }));
 
           const ItemsMarkup = (
-            <div>
-              <ProductGrid products={mapped as any} />
-            </div>
+            <ProductGrid>
+              {mapped.map((mp) => {
+                const productUrl = urlWithTrackingParams({
+                  baseUrl: `/products/${mp.handle}`,
+                  trackingParams: (mp as any).trackingParameters,
+                  term,
+                });
+
+                return (
+                  <ProductItem key={mp.id} product={mp as any} to={productUrl} />
+                );
+              })}
+            </ProductGrid>
           );
 
           return (

@@ -8,6 +8,8 @@ import type {
     RecommendedProductsQuery
 } from 'storefrontapi.generated';
 import { HeroCarousel } from '~/components/HeroCarousel';
+import { ProductItem } from '~/components/ProductItem';
+import { ProductGrid } from '~/components/ui';
 import type { Route } from './+types/_index';
 
 export const meta: Route.MetaFunction = () => {
@@ -217,7 +219,13 @@ function RecommendedProducts({
                   }))
                 : [];
 
-              return <ProductGrid products={recProducts as any} />;
+              return (
+                <ProductGrid>
+                  {recProducts.map((p) => (
+                    <ProductItem key={p.id} product={p as any} />
+                  ))}
+                </ProductGrid>
+              );
             }}
           </Await>
         </Suspense>

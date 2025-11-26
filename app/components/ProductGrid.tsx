@@ -1,6 +1,5 @@
 import {Link} from 'react-router';
 import {Image, Money} from '@shopify/hydrogen';
-import {useState} from 'react';
 import type {MoneyV2} from '@shopify/hydrogen/storefront-api-types';
 
 type ProductType = {
@@ -34,7 +33,7 @@ export function ProductGrid({products}: ProductGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
       {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
@@ -43,24 +42,28 @@ export function ProductGrid({products}: ProductGridProps) {
 }
 
 function ProductCard({product}: {product: ProductType}) {
-  const [isHovered, setIsHovered] = useState(false);
+  const image = product.featuredImage;
 
   return (
-    <div
-      className="group relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <Link
+      to={`/products/${product.handle}`}
+      prefetch="intent"
+      className="group block h-full"
     >
-      <Link to={`/products/${product.handle}`} className="block">
-        {/* Image Container */}
-        <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-4">
-          {product.featuredImage ? (
+      {/* Outer light-grey block, like Zara */}
+      <div className="relative w-full bg-[#f5f5f5]">
+        {/* 3:4 aspect ratio (4/3 ≈ 133%) */}
+        <div className="pt-[133%]" />
+
+        {/* Centered image */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {image ? (
             <Image
-              data={product.featuredImage}
-              alt={product.featuredImage.altText || product.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              sizes="(min-width: 1024px) 33vw, 50vw"
+              data={image}
+              alt={image.altText || product.title}
               loading="lazy"
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              className="max-h-[80%] max-w-[80%] object-contain transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-200">
@@ -79,52 +82,27 @@ function ProductCard({product}: {product: ProductType}) {
               </svg>
             </div>
           )}
-
-          {/* Quick View Button - Shows on Hover */}
-          <div
-            className={`absolute inset-x-0 bottom-0 p-4 transition-all duration-300 ${
-              isHovered
-                ? 'translate-y-0 opacity-100'
-                : 'translate-y-4 opacity-0'
-            }`}
-          >
-            <button
-              type="button"
-              className="w-full bg-white text-black py-3 px-6 text-sm font-semibold uppercase tracking-wider hover:bg-gray-100 transition-colors duration-200 shadow-lg"
-              onClick={(e) => {
-                e.preventDefault();
-                // Quick view functionality can be added here
-                window.location.href = `/products/${product.handle}`;
-              }}
-            >
-              Quick View
-            </button>
-          </div>
         </div>
+      </div>
 
-        {/* Product Info */}
-        <div className="space-y-1">
-          {/* Brand Name */}
-          {product.vendor && (
-            <p className="text-xs uppercase tracking-widest text-gray-500">
-              {product.vendor}
-            </p>
-          )}
+      {/* Text block under image */}
+      <div className="mt-3 px-1">
+        {/* Title */}
+        <h3
+          className="text-[11px] leading-snug tracking-wide uppercase text-[#111111] group-hover:opacity-70 transition-opacity line-clamp-2"
+          style={{fontFamily: 'var(--font-sans)'}}
+        >
+          {product.title}
+        </h3>
 
-          {/* Product Title */}
-          <h3 className="text-base font-normal text-black group-hover:text-gray-600 transition-colors duration-200 line-clamp-2">
-            {product.title}
-          </h3>
-
-          {/* Price */}
-          <div className="pt-1">
-            <Money
-              data={product.priceRange.minVariantPrice}
-              className="text-sm font-medium text-black"
-            />
-          </div>
-        </div>
-      </Link>
-    </div>
+        {/* Price */}
+        <p
+          className="mt-1 text-[11px] text-[#111111]"
+          style={{fontFamily: 'var(--font-sans)'}}
+        >
+          <Money data={product.priceRange.minVariantPrice} />
+        </p>
+      </div>
+    </Link>
   );
 }

@@ -1,15 +1,15 @@
-import { Image, Money } from '@shopify/hydrogen';
-import { Link } from 'react-router';
+// app/components/ui/ProductItem.tsx
+import {Image, Money} from '@shopify/hydrogen';
+import {Link} from 'react-router';
 import type {
-    CollectionItemFragment,
-    ProductItemFragment,
-    RecommendedProductFragment,
+  CollectionItemFragment,
+  ProductItemFragment,
+  RecommendedProductFragment,
 } from 'storefrontapi.generated';
-import { useVariantUrl } from '~/lib/variants';
+import {useVariantUrl} from '~/lib/variants';
 
 /**
- * TALLA Premium Product Card
- * Clean, minimal design with smooth hover transitions
+ * Same Zara-style layout as ProductCard
  */
 export function ProductItem({
   product,
@@ -28,50 +28,40 @@ export function ProductItem({
     <Link
       to={variantUrl}
       prefetch="intent"
-      className="group product-item block h-full flex flex-col"
+      className="group block h-full"
     >
-      {/* Image Container - Gallery-style premium frame */}
-      <div className="relative flex-1 bg-white transition-all duration-500 group-hover:shadow-2xl"
-           style={{
-             padding: 'clamp(10px, 1.8vw, 20px)',
-             border: '1px solid #E5E7EB',
-             borderRadius: '8px',
-             boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03)',
-             display: 'flex',
-             flexDirection: 'column'
-           }}>
-        {/* Inner shadow frame for depth */}
-        <div className="relative flex-1 overflow-hidden"
-             style={{
-               borderRadius: '4px',
-               boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.04)'
-             }}>
+      {/* Image area */}
+      <div className="relative w-full bg-[#f5f5f5]">
+        <div className="pt-[133%]" />
+        <div className="absolute inset-0 flex items-center justify-center">
           {image ? (
             <Image
               alt={image.altText || product.title}
-              aspectRatio="9/16"
               data={image}
               loading={loading}
-              sizes="(min-width: 1280px) 30vw, (min-width: 1024px) 32vw, (min-width: 768px) 33vw, 50vw"
-              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+              className="max-h-[80%] max-w-[80%] object-contain transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100">
-              <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+            <div className="flex h-full w-full items-center justify-center">
+              <div className="w-16 h-16 border border-dashed border-gray-300" />
             </div>
           )}
         </div>
       </div>
 
-      {/* Product Info */}
-      <div className="px-1 pt-3 pb-1">
-        <h4 className="text-sm font-normal leading-tight text-talla-text group-hover:opacity-70 transition-opacity duration-fast line-clamp-2 mb-1">
+      {/* Text block */}
+      <div className="mt-3 px-1">
+        <h4
+          className="text-[11px] leading-snug tracking-wide uppercase text-[#111111] group-hover:opacity-70 transition-opacity"
+          style={{fontFamily: 'var(--font-sans)'}}
+        >
           {product.title}
         </h4>
 
-        <div className="text-sm font-medium text-talla-text/80">
+        <div
+          className="mt-1 text-[11px] text-[#111111]"
+          style={{fontFamily: 'var(--font-sans)'}}
+        >
           <Money data={product.priceRange.minVariantPrice} />
         </div>
       </div>

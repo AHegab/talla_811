@@ -4,6 +4,8 @@ import { redirect, useLoaderData } from 'react-router';
 import type { ProductItemFragment } from 'storefrontapi.generated';
 import { PaginatedResourceSection } from '~/components/PaginatedResourceSection';
 import { ProductItem } from '~/components/ProductItem';
+import { MenCollectionPage } from '~/components/ui/MenCollectionPage';
+import { WomenCollectionPage } from '~/components/ui/WomenCollectionPage';
 import { redirectIfHandleIsLocalized } from '~/lib/redirect';
 import type { Route } from './+types/collections.$handle';
 
@@ -81,6 +83,21 @@ export default function Collection() {
     return () => document.body.classList.remove('male-theme-header');
   }, [isMale]);
 
+  const productsArray = collection?.products?.nodes ?? [];
+
+  // Render dedicated collection pages for Men and Women
+  if (isMale) {
+    return <MenCollectionPage collection={collection} products={productsArray as ProductItemFragment[]} />;
+  }
+
+  const isFemale = Boolean(
+    collection?.handle?.toLowerCase?.().includes('women') || /\bwom|female\b/i.test(collection?.title || ''),
+  );
+  if (isFemale) {
+    return <WomenCollectionPage collection={collection as any} products={productsArray as any} />;
+  }
+
+  // Default collection UI (non-men/non-women)
   return (
     <div className={['collection', isMale ? 'male-theme' : ''].join(' ')}>
       <h1 className="collection-title">{collection.title}</h1>
@@ -150,6 +167,7 @@ const COLLECTION_QUERY = `#graphql
     $endCursor: String
   ) @inContext(country: $country, language: $language) {
     collection(handle: $handle) {
+      image { id url altText width height }
       id
       handle
       title

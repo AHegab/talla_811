@@ -3,12 +3,12 @@ import {
   useAnalytics,
   useOptimisticCart,
 } from '@shopify/hydrogen';
-import { Suspense, useEffect, useRef, useState } from 'react';
-import { Await, NavLink, useAsyncValue, useLocation } from 'react-router';
-import type { CartApiQueryFragment, HeaderQuery } from 'storefrontapi.generated';
-import { useAside } from '~/components/Aside';
-import { SearchFormPredictive } from '~/components/SearchFormPredictive';
-import { SearchResultsPredictive } from '~/components/SearchResultsPredictive';
+import {Suspense, useEffect, useRef, useState} from 'react';
+import {Await, NavLink, useAsyncValue, useLocation} from 'react-router';
+import type {CartApiQueryFragment, HeaderQuery} from 'storefrontapi.generated';
+import {useAside} from '~/components/Aside';
+import {SearchFormPredictive} from '~/components/SearchFormPredictive';
+import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -82,7 +82,7 @@ export function Header({
   cart,
   publicStoreDomain,
 }: HeaderProps) {
-  const {shop, menu} = header;
+  const {shop} = header;
   const {open} = useAside();
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
@@ -131,17 +131,17 @@ export function Header({
         ].join(' ')}
         role="banner"
       >
-        <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-16 xl:px-20">
-          {/* Pinned desktop logo (always visible on lg+) */}
+        {/* make padding small so icons sit close to edges, like your screenshot */}
+        <div className="w-full px-4 sm:px-4 lg:px-6 xl:px-6">
+          {/* Desktop pinned logo (unchanged) */}
           <NavLink
             prefetch="intent"
             to="/"
             end
             className="hidden lg:flex fixed left-6 top-6 lg:top-[72px] z-40 items-center justify-center pointer-events-auto"
             aria-label={`${shop.name} home`}
-            style={{ paddingTop: 'env(safe-area-inset-top)' }}
+            style={{paddingTop: 'env(safe-area-inset-top)'}}
           >
-            {/* cropped container so the visible vertical space matches text height */}
             <div className="overflow-hidden inline-flex items-center justify-center w-[220px] h-[100px]">
               <img
                 src="/talla-logo-black.svg"
@@ -153,71 +153,97 @@ export function Header({
               />
             </div>
           </NavLink>
-            <div className={[
-            'flex h-14 sm:h-16 lg:h-[72px] items-center justify-center',
-            'transform transition-transform duration-300 will-change-transform',
-            hidden ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100',
-          ].join(' ')}>
-            {/* Mobile: minimal icon buttons */}
-            <div className="flex lg:hidden items-center w-full relative z-50">
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  aria-label="Open menu"
-                  onClick={() => open('mobile')}
-                  className="bg-transparent text-white border-0 p-1 flex items-center justify-center"
+
+          {/* Compact nav bar (same on mobile & desktop) */}
+          <div
+            className={[
+              'flex h-14 sm:h-16 lg:h-[52px] items-center',
+              'transform transition-transform duration-300 will-change-transform',
+              hidden
+                ? '-translate-y-full opacity-0'
+                : 'translate-y-0 opacity-100',
+            ].join(' ')}
+          >
+            <div className="flex items-center justify-between w-full relative z-50">
+              {/* Left: hamburger */}
+              <button
+                type="button"
+                aria-label="Open menu"
+                onClick={() => open('mobile')}
+                className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  className="h-5 w-5 block"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 block">
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="3" y1="18" x2="21" y2="18" />
-                  </svg>
-                </button>
-              </div>
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
 
-              <div className="flex-1" />
-
-              <div className="flex items-center gap-2">
+              {/* Right: search, account, cart */}
+              <div className="flex items-center gap-4">
+                {/* Search */}
                 <button
                   type="button"
                   aria-label="Search"
                   onClick={() => setSearchOpen((s) => !s)}
-                  className="bg-transparent text-white border-0 p-1 flex items-center justify-center"
+                  className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 block">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    className="h-4 w-4 block"
+                  >
                     <circle cx="11" cy="11" r="8" />
                     <path d="M21 21l-4.35-4.35" />
                   </svg>
                 </button>
 
+                {/* Account */}
+                <NavLink
+                  prefetch="intent"
+                  to="/account"
+                  aria-label="Account"
+                  className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center"
+                >
+                  <img
+                    src="/icons/account.svg"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-4 w-4 object-contain block"
+                  />
+                </NavLink>
+
+                {/* Cart */}
                 <button
                   type="button"
                   aria-label="Cart"
                   onClick={() => open('cart')}
-                  className="bg-transparent text-white border-0 p-1 flex items-center justify-center relative"
+                  className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center relative"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 block">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    className="h-4 w-4 block"
+                  >
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                     <line x1="3" y1="6" x2="21" y2="6" />
                     <path d="M16 10a4 4 0 0 1-8 0" />
                   </svg>
                 </button>
               </div>
-            </div>
-
-            {/* Desktop */}
-            <div className="hidden lg:flex items-center justify-between w-full">
-              {/* inset placeholder preserves spacing for centered nav */}
-              <div className="flex-shrink-0 w-36 lg:w-44" aria-hidden />
-
-              <HeaderMenu
-                menu={menu}
-                viewport="desktop"
-                primaryDomainUrl={header.shop.primaryDomain.url}
-                publicStoreDomain={publicStoreDomain}
-              />
-
-              <HeaderCtas isLoggedIn={isLoggedIn} cart={cart} onSearchToggle={() => setSearchOpen((s) => !s)} />
             </div>
           </div>
         </div>
@@ -246,18 +272,25 @@ export function Header({
 
       {/* Inline header search (centered, compact) */}
       {searchOpen && (
-        <div className="fixed inset-x-0 top-0 z-40 mt-14 sm:mt-16 lg:mt-[72px]">
+        <div className="fixed inset-x-0 top-0 z-40 mt-14 sm:mt-16 lg:mt-[52px]">
           <div className="mx-auto max-w-[980px] px-4 sm:px-6 lg:px-16 xl:px-20 flex justify-center">
             <div className="bg-white rounded-lg shadow-lg border border-gray-200 w-full max-w-[600px] mx-auto relative">
               <SearchFormPredictive action="/search">
                 {({inputRef, fetchResults, goToSearch}) => (
                   <div className="flex items-center gap-2 p-2">
                     <div className="flex items-center flex-1 bg-white rounded-md px-3 py-2">
-                      <img src="/icons/search.svg" alt="" aria-hidden="true" className="h-4 w-4 mr-2 flex-shrink-0 object-contain block" />
+                      <img
+                        src="/icons/search.svg"
+                        alt=""
+                        aria-hidden="true"
+                        className="h-4 w-4 mr-2 flex-shrink-0 object-contain block"
+                      />
                       <input
                         ref={(el) => {
                           try {
-                            (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
+                            (inputRef as React.MutableRefObject<
+                              HTMLInputElement | null
+                            >).current = el;
                           } catch (e) {
                             // ignore
                           }
@@ -291,7 +324,14 @@ export function Header({
                       }}
                       className="flex items-center justify-center flex-shrink-0 w-9 h-9 rounded-md bg-gray-800 text-white border border-gray-800 hover:bg-gray-900 transition-colors p-0 m-0 cursor-pointer"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.6} className="h-4 w-4 block">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth={1.6}
+                        className="h-4 w-4 block"
+                      >
                         <circle cx="11" cy="11" r="7" />
                         <path d="M21 21l-4.5-4.5" />
                       </svg>
@@ -307,7 +347,14 @@ export function Header({
                       aria-label="Close search"
                       className="flex items-center justify-center flex-shrink-0 w-9 h-9 rounded-md bg-gray-800 text-white border border-gray-800 hover:bg-gray-900 transition-colors p-0 m-0 cursor-pointer"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8} className="h-3.5 w-3.5 block">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth={1.8}
+                        className="h-3.5 w-3.5 block"
+                      >
                         <line x1="18" y1="6" x2="6" y2="18" />
                         <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
@@ -321,11 +368,29 @@ export function Header({
                   {({items, total, inputRef, closeSearch, state, term}) => (
                     <div className="max-h-56 overflow-auto bg-white border border-gray-100 rounded-md shadow-sm text-sm">
                       <div className="p-2">
-                        <SearchResultsPredictive.Products term={term} products={items.products ?? []} closeSearch={closeSearch} />
-                        <SearchResultsPredictive.Collections term={term} collections={items.collections ?? []} closeSearch={closeSearch} />
-                        <SearchResultsPredictive.Articles term={term} articles={items.articles ?? []} closeSearch={closeSearch} />
-                        <SearchResultsPredictive.Pages term={term} pages={items.pages ?? []} closeSearch={closeSearch} />
-                        {total === 0 && <SearchResultsPredictive.Empty term={term} />}
+                        <SearchResultsPredictive.Products
+                          term={term}
+                          products={items.products ?? []}
+                          closeSearch={closeSearch}
+                        />
+                        <SearchResultsPredictive.Collections
+                          term={term}
+                          collections={items.collections ?? []}
+                          closeSearch={closeSearch}
+                        />
+                        <SearchResultsPredictive.Articles
+                          term={term}
+                          articles={items.articles ?? []}
+                          closeSearch={closeSearch}
+                        />
+                        <SearchResultsPredictive.Pages
+                          term={term}
+                          pages={items.pages ?? []}
+                          closeSearch={closeSearch}
+                        />
+                        {total === 0 && (
+                          <SearchResultsPredictive.Empty term={term} />
+                        )}
                       </div>
                     </div>
                   )}
@@ -339,7 +404,7 @@ export function Header({
   );
 }
 
-/* ---------------- NAV ---------------- */
+/* ---------------- NAV (for Aside menu) ---------------- */
 
 export function HeaderMenu({
   menu,
@@ -354,7 +419,6 @@ export function HeaderMenu({
 }) {
   const {close} = useAside();
   const location = useLocation();
-  const maleActive = location?.pathname?.includes('/collections/men');
 
   const navItems = [
     {title: 'Women', url: '/collections/women'},
@@ -378,7 +442,9 @@ export function HeaderMenu({
               className={({isActive}) =>
                 [
                   'block py-3 text-base tracking-tight transition-colors',
-                  isActive ? 'text-[#00F4D2]' : 'text-black hover:text-[#00F4D2]',
+                  isActive
+                    ? 'text-[#00F4D2]'
+                    : 'text-black hover:text-[#00F4D2]',
                 ].join(' ')
               }
               style={{fontFamily: 'Aeonik, sans-serif', fontWeight: 700}}
@@ -403,64 +469,33 @@ export function HeaderMenu({
   }
 
   return (
-    <nav className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center space-x-7 xl:space-x-8 z-0">
+    <nav className="flex items-center space-x-7 xl:space-x-8">
       {navItems.map((item) => (
-        // For the 'Women' item, render a small list icon button next to the nav link
-        item.title === 'Women' ? (
-          <div key={item.url} className="flex items-center gap-2">
-            <NavLink
-              to={`${item.url}?view=list`}
-              prefetch="intent"
-              aria-label="List view for Women"
-              className="group"
-            >
-              <IconButton label="List view" className="h-7 w-7">
-                <img src="/icons/menu.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
-              </IconButton>
-            </NavLink>
-
-            <NavLink
-              to={item.url}
-              prefetch="intent"
-              className={({isActive}) =>
-                [
-                  'text-[13px] xl:text-sm tracking-wide transition-all duration-200 relative group',
-                  isActive ? 'text-[#00F4D2]' : 'text-white hover:text-[#00F4D2]',
-                ].join(' ')
-              }
-              style={{fontFamily: 'Aeonik, sans-serif', fontWeight: 700, letterSpacing: '0.05em'}}
-            >
-              {item.title}
-              <span
-                className="absolute -bottom-1 left-0 w-0 h-px bg-[#00F4D2] transition-all duration-200 group-hover:w-full"
-              />
-            </NavLink>
-          </div>
-        ) : (
-          <NavLink
-            key={item.url}
-            to={item.url}
-            prefetch="intent"
-            className={({isActive}) =>
-              [
-                'text-[13px] xl:text-sm tracking-wide transition-all duration-200 relative group',
-                isActive ? 'text-[#00F4D2]' : 'text-white hover:text-[#00F4D2]',
-              ].join(' ')
-            }
-            style={{fontFamily: 'Aeonik, sans-serif', fontWeight: 700, letterSpacing: '0.05em'}}
-          >
-            {item.title}
-            <span
-              className="absolute -bottom-1 left-0 w-0 h-px bg-[#00F4D2] transition-all duration-200 group-hover:w-full"
-            />
-          </NavLink>
-        )
+        <NavLink
+          key={item.url}
+          to={item.url}
+          prefetch="intent"
+          className={({isActive}) =>
+            [
+              'text-[13px] xl:text-sm tracking-wide transition-all duration-200 relative group',
+              isActive ? 'text-[#00F4D2]' : 'text-white hover:text-[#00F4D2]',
+            ].join(' ')
+          }
+          style={{
+            fontFamily: 'Aeonik, sans-serif',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+          }}
+        >
+          {item.title}
+          <span className="absolute -bottom-1 left-0 w-0 h-px bg-[#00F4D2] transition-all duration-200 group-hover:w-full" />
+        </NavLink>
       ))}
     </nav>
   );
 }
 
-/* --------------- CTAs ---------------- */
+/* --------------- CTAs (kept for compatibility) ---------------- */
 
 function HeaderCtas({
   isLoggedIn,
@@ -479,10 +514,15 @@ function HeaderCtas({
 function AccountLink() {
   return (
     <NavLink prefetch="intent" to="/account" aria-label="Account">
-      {({isActive}) => (
+      {() => (
         <IconButton label="Account" type="div">
-              <img src="/icons/account.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
-            </IconButton>
+          <img
+            src="/icons/account.svg"
+            alt=""
+            aria-hidden="true"
+            className="h-4 w-4 object-contain"
+          />
+        </IconButton>
       )}
     </NavLink>
   );
@@ -492,7 +532,12 @@ function HeaderMenuMobileToggle() {
   const {open} = useAside();
   return (
     <IconButton label="Open menu" onClick={() => open('mobile')}>
-      <img src="/icons/menu.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+      <img
+        src="/icons/menu.svg"
+        alt=""
+        aria-hidden="true"
+        className="h-4 w-4 object-contain"
+      />
     </IconButton>
   );
 }
@@ -506,7 +551,12 @@ function SearchToggle({onToggle}: {onToggle?: () => void}) {
 
   return (
     <IconButton label="Search" onClick={handle}>
-      <img src="/icons/search.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain transition-transform duration-200 group-hover:rotate-12" />
+      <img
+        src="/icons/search.svg"
+        alt=""
+        aria-hidden="true"
+        className="h-4 w-4 object-contain transition-transform duration-200 group-hover:rotate-12"
+      />
     </IconButton>
   );
 }
@@ -529,7 +579,12 @@ function CartBadge({count}: {count: number | null}) {
         } as CartViewPayload);
       }}
     >
-      <img src="/icons/cart.svg" alt="" aria-hidden="true" className="h-4 w-4 object-contain transition-transform duration-200 group-hover:-rotate-12" />
+      <img
+        src="/icons/cart.svg"
+        alt=""
+        aria-hidden="true"
+        className="h-4 w-4 object-contain transition-transform duration-200 group-hover:-rotate-12"
+      />
 
       {typeof count === 'number' && count > 0 && (
         <span

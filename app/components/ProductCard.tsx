@@ -1,22 +1,17 @@
-/**
- * TALLA Premium Product Card
- * 
- * Features:
- * - 3:4 aspect ratio for product images
- * - Smooth hover transitions
- * - Clean typography using brand fonts
- * - Minimal design with focus on imagery
- */
-
-import { Image, Money } from '@shopify/hydrogen';
-import { Link } from 'react-router';
+// app/components/ui/ProductCard.tsx
+import {Image, Money} from '@shopify/hydrogen';
+import {Link} from 'react-router';
 import type {
-    CollectionItemFragment,
-    ProductItemFragment,
-    RecommendedProductFragment,
+  CollectionItemFragment,
+  ProductItemFragment,
+  RecommendedProductFragment,
 } from 'storefrontapi.generated';
-import { useVariantUrl } from '~/lib/variants';
+import {useVariantUrl} from '~/lib/variants';
 
+/**
+ * Zara-style product card
+ * Tall centered image on light background, title + price below
+ */
 export function ProductCard({
   product,
   loading,
@@ -36,51 +31,37 @@ export function ProductCard({
     <Link
       to={variantUrl}
       prefetch="intent"
-      className={`group block h-full flex flex-col ${className}`}
+      className={`group block h-full ${className}`}
     >
-      {/* Image Container - Gallery-style premium frame */}
-      <div className="relative flex-1 bg-white transition-all duration-500 group-hover:shadow-2xl"
-           style={{
-             padding: 'clamp(10px, 1.8vw, 20px)',
-             border: '1px solid #E5E7EB',
-             borderRadius: '8px',
-             boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03)',
-             display: 'flex',
-             flexDirection: 'column'
-           }}>
-        {/* Inner shadow frame for depth */}
-        <div className="relative flex-1 overflow-hidden"
-             style={{
-               borderRadius: '4px',
-               boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.04)'
-             }}>
+      {/* Image area: light grey background, centered product, 3:4 ratio */}
+      <div className="relative w-full bg-[#f5f5f5]">
+        {/* aspect-ratio shim: 4/3 ≈ 133% */}
+        <div className="pt-[133%]" />
+        <div className="absolute inset-0 flex items-center justify-center">
           {image && (
             <Image
               alt={image.altText || product.title}
-              aspectRatio="9/16"
               data={image}
               loading={loading}
-              sizes="(min-width: 1280px) 30vw, (min-width: 1024px) 32vw, (min-width: 768px) 33vw, 50vw"
-              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              className="max-h-[80%] max-w-[80%] object-contain transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
           )}
         </div>
       </div>
 
-      {/* Product Info */}
-      <div className="px-1 pt-3 pb-1">
-        {/* Product Title */}
+      {/* Text block – title then price, like the screenshot */}
+      <div className="mt-3 px-1">
         <h3
-          className="text-sm font-sans font-normal leading-tight tracking-wide text-talla-text line-clamp-2 group-hover:opacity-70 transition-opacity duration-fast mb-1"
-          style={{ fontFamily: 'var(--font-sans)' }}
+          className="text-[11px] leading-snug tracking-wide uppercase text-[#111111] group-hover:opacity-70 transition-opacity"
+          style={{fontFamily: 'var(--font-sans)'}}
         >
           {product.title}
         </h3>
 
-        {/* Price */}
         <p
-          className="text-sm font-medium text-talla-text/80"
-          style={{ fontFamily: 'var(--font-sans)' }}
+          className="mt-1 text-[11px] text-[#111111]"
+          style={{fontFamily: 'var(--font-sans)'}}
         >
           <Money data={product.priceRange.minVariantPrice} />
         </p>
@@ -90,18 +71,19 @@ export function ProductCard({
 }
 
 /**
- * Product Grid Container
- * Responsive grid that adjusts columns based on screen size
+ * Product Grid Container – 4 per row on large screens
  */
-export function ProductGrid({ 
+export function ProductGrid({
   children,
-  className = '' 
-}: { 
+  className = '',
+}: {
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <div className={`grid-products ${className}`}>
+    <div
+      className={`grid gap-y-12 gap-x-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ${className}`}
+    >
       {children}
     </div>
   );

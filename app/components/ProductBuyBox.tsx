@@ -1,27 +1,27 @@
+import type { FetcherWithComponents } from '@remix-run/react';
 import {
-  CartForm,
-  Money,
-  type OptimisticCartLineInput,
+    CartForm,
+    Money,
+    type OptimisticCartLineInput,
 } from '@shopify/hydrogen';
 import {
-  Flame,
-  Hash,
-  Heart,
-  Leaf,
-  Shirt,
-  Sparkle,
-  Star,
-  Sun,
-  Tag,
-  Tags,
-  TrendingUp,
-  User,
+    Flame,
+    Hash,
+    Heart,
+    Leaf,
+    Shirt,
+    Sparkle,
+    Star,
+    Sun,
+    Tag,
+    Tags,
+    TrendingUp,
+    User,
 } from 'lucide-react';
-import {useEffect, useState} from 'react';
-import type {FetcherWithComponents} from '@remix-run/react';
+import { useEffect, useState } from 'react';
 
-import {SizeRecommendation} from './SizeRecommendation';
-import {SizeRecommendationPrompt} from './SizeRecommendationPrompt';
+import { SizeRecommendation } from './SizeRecommendation';
+import { SizeRecommendationPrompt } from './SizeRecommendationPrompt';
 
 export interface PDPVariant {
   id: string;
@@ -150,7 +150,7 @@ export function ProductBuyBox({
               <img
                 src={img.url}
                 alt={img.altText || product.title}
-                className="h-full w-full rounded-lg object-contain"
+                className="h-full w-full rounded-lg object-cover"
               />
             </div>
           ))}

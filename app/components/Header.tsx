@@ -3,12 +3,12 @@ import {
   useAnalytics,
   useOptimisticCart,
 } from '@shopify/hydrogen';
-import {Suspense, useEffect, useRef, useState} from 'react';
-import {Await, NavLink, useAsyncValue, useLocation} from 'react-router';
-import type {CartApiQueryFragment, HeaderQuery} from 'storefrontapi.generated';
-import {useAside} from '~/components/Aside';
-import {SearchFormPredictive} from '~/components/SearchFormPredictive';
-import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { Await, NavLink, useAsyncValue, useLocation } from 'react-router';
+import type { CartApiQueryFragment, HeaderQuery } from 'storefrontapi.generated';
+import { useAside } from '~/components/Aside';
+import { SearchFormPredictive } from '~/components/SearchFormPredictive';
+import { SearchResultsPredictive } from '~/components/SearchResultsPredictive';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -82,7 +82,7 @@ export function Header({
   cart,
   publicStoreDomain,
 }: HeaderProps) {
-  const {shop} = header;
+  const {shop, menu} = header;
   const {open} = useAside();
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
@@ -165,29 +165,43 @@ export function Header({
             ].join(' ')}
           >
             <div className="flex items-center justify-between w-full relative z-50">
-              {/* Left: hamburger */}
-              <button
-                type="button"
-                aria-label="Open menu"
-                onClick={() => open('mobile')}
-                className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  className="h-5 w-5 block"
+              {/* Left: hamburger (mobile only) */}
+              <div className="lg:hidden">
+                <button
+                  type="button"
+                  aria-label="Open menu"
+                  onClick={() => open('mobile')}
+                  className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center"
                 >
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    className="h-5 w-5 block"
+                  >
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Center: Desktop nav */}
+              {menu && (
+                <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 max-w-[980px] w-full justify-center pointer-events-auto">
+                  <HeaderMenu
+                    menu={menu}
+                    viewport="desktop"
+                    primaryDomainUrl={shop.primaryDomain?.url ?? ''}
+                    publicStoreDomain={publicStoreDomain}
+                  />
+                </div>
+              )}
 
               {/* Right: search, account, cart */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 ml-auto">
                 {/* Search */}
                 <button
                   type="button"
@@ -469,7 +483,7 @@ export function HeaderMenu({
   }
 
   return (
-    <nav className="flex items-center space-x-7 xl:space-x-8">
+    <nav className="flex items-center space-x-7 xl:space-x-8 uppercase">
       {navItems.map((item) => (
         <NavLink
           key={item.url}

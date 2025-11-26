@@ -322,7 +322,7 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
             <img
               src={images[selectedImageIndex]?.url}
               alt={images[selectedImageIndex]?.alt || product.title}
-              className="max-h-[90vh] max-w-[90vw] object-contain rounded"
+              className="max-h-[90vh] max-w-[90vw] object-cover rounded"
             />
           </div>
 

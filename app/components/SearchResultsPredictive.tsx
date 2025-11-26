@@ -1,12 +1,12 @@
-import {Link, useFetcher, type Fetcher} from 'react-router';
-import {Image, Money} from '@shopify/hydrogen';
-import React, {useRef, useEffect} from 'react';
+import { Image, Money } from '@shopify/hydrogen';
+import React, { useEffect, useRef } from 'react';
+import { Link, useFetcher, type Fetcher } from 'react-router';
 import {
-  getEmptyPredictiveSearchResult,
-  urlWithTrackingParams,
-  type PredictiveSearchReturn,
+    getEmptyPredictiveSearchResult,
+    urlWithTrackingParams,
+    type PredictiveSearchReturn,
 } from '~/lib/search';
-import {useAside} from './Aside';
+import { useAside } from './Aside';
 
 type PredictiveSearchItems = PredictiveSearchReturn['result']['items'];
 
@@ -107,6 +107,7 @@ function SearchResultsPredictiveArticles({
                     src={article.image.url}
                     width={50}
                     height={50}
+                    className="w-[50px] h-[50px] object-cover rounded"
                   />
                 )}
                 <div>
@@ -148,6 +149,7 @@ function SearchResultsPredictiveCollections({
                     src={collection.image.url}
                     width={50}
                     height={50}
+                    className="w-[50px] h-[50px] object-cover rounded"
                   />
                 )}
                 <div>
@@ -224,6 +226,7 @@ function SearchResultsPredictiveProducts({
                     src={image.url}
                     width={50}
                     height={50}
+                    className="w-[50px] h-[50px] object-cover rounded"
                   />
                 )}
                 <div>

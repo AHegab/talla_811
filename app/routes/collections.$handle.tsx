@@ -95,7 +95,7 @@ export default function Collection() {
 
   // Render dedicated collection pages for Men and Women
   if (isMale) {
-    return <MenCollectionPage collection={collection} products={productsArray as ProductItemFragment[]} />;
+    return <MenCollectionPage collection={collection as any} products={productsArray as ProductItemFragment[]} />;
   }
 
   // isFemale is computed earlier using `handleLower` and regex

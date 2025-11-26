@@ -1,5 +1,6 @@
-import { Image, Money, Pagination } from '@shopify/hydrogen';
+import { Pagination } from '@shopify/hydrogen';
 import { Link } from 'react-router';
+import { ProductGrid } from '~/components/ProductGrid';
 import { urlWithTrackingParams, type RegularSearchReturn } from '~/lib/search';
 
 type SearchItems = RegularSearchReturn['result']['items'];
@@ -106,30 +107,19 @@ function SearchResultsProducts({
       <h2>Products</h2>
       <Pagination connection={products}>
         {({nodes, isLoading, NextLink}) => {
-          const ItemsMarkup = nodes.map((product) => {
-            const productUrl = urlWithTrackingParams({
-              baseUrl: `/products/${product.handle}`,
-              trackingParams: product.trackingParameters,
-              term,
-            });
+          const mapped = nodes.map((product) => ({
+            id: product.id,
+            title: product.title,
+            handle: product.handle,
+            featuredImage: product?.selectedOrFirstAvailableVariant?.image,
+            priceRange: { minVariantPrice: product?.selectedOrFirstAvailableVariant?.price },
+          }));
 
-            const price = product?.selectedOrFirstAvailableVariant?.price;
-            const image = product?.selectedOrFirstAvailableVariant?.image;
-
-            return (
-              <div className="search-results-item" key={product.id}>
-                <Link prefetch="intent" to={productUrl}>
-                  {image && (
-                    <Image data={image} alt={product.title} width={50} />
-                  )}
-                  <div>
-                    <p>{product.title}</p>
-                    <small>{price && <Money data={price} />}</small>
-                  </div>
-                </Link>
-              </div>
-            );
-          });
+          const ItemsMarkup = (
+            <div>
+              <ProductGrid products={mapped as any} />
+            </div>
+          );
 
           return (
             <div>

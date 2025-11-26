@@ -1,12 +1,12 @@
 // app/components/ui/ProductCard.tsx
-import {Image, Money} from '@shopify/hydrogen';
-import {Link} from 'react-router';
+import { Image, Money } from '@shopify/hydrogen';
+import { Link } from 'react-router';
 import type {
   CollectionItemFragment,
   ProductItemFragment,
   RecommendedProductFragment,
 } from 'storefrontapi.generated';
-import {useVariantUrl} from '~/lib/variants';
+import { useVariantUrl } from '~/lib/variants';
 
 /**
  * Zara-style product card
@@ -44,25 +44,22 @@ export function ProductCard({
               data={image}
               loading={loading}
               sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-              className="max-h-[80%] max-w-[80%] object-contain transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
           )}
         </div>
       </div>
 
       {/* Text block – title then price, like the screenshot */}
-      <div className="mt-3 px-1">
+      <div className="mt-4 px-1">
         <h3
-          className="text-[11px] leading-snug tracking-wide uppercase text-[#111111] group-hover:opacity-70 transition-opacity"
+          className="text-base font-semibold line-clamp-2 uppercase text-black group-hover:text-gray-600 transition-colors duration-200"
           style={{fontFamily: 'var(--font-sans)'}}
         >
           {product.title}
         </h3>
 
-        <p
-          className="mt-1 text-[11px] text-[#111111]"
-          style={{fontFamily: 'var(--font-sans)'}}
-        >
+        <p className="mt-1 text-sm font-medium text-black" style={{fontFamily: 'var(--font-sans)'}}>
           <Money data={product.priceRange.minVariantPrice} />
         </p>
       </div>

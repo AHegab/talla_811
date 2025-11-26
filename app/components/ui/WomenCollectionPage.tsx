@@ -1,9 +1,11 @@
 // app/components/ui/WomenCollectionPage.tsx
-import {Image} from '@shopify/hydrogen';
-import type {MoneyV2} from '@shopify/hydrogen/storefront-api-types';
-import {useEffect, useRef, useState} from 'react';
-import type {ProductItemFragment} from 'storefrontapi.generated';
-import {ProductGrid} from '../ProductGrid';
+import { Image, Money } from '@shopify/hydrogen';
+import type { MoneyV2 } from '@shopify/hydrogen/storefront-api-types';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router';
+import type { ProductItemFragment } from 'storefrontapi.generated';
+import { ProductGrid } from '../ProductGrid';
+import CollectionFilters from './CollectionFilters';
 
 type ProductType = {
   id: string;
@@ -64,16 +66,35 @@ export function WomenCollectionPage({
 
   // Carousel refs and state
   const carouselRef = useRef<HTMLDivElement | null>(null);
+  const autoplayTimer = useRef<number | null>(null);
+  const currentIndexRef = useRef(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const AUTOPLAY_INTERVAL_MS = 3000;
 
   const slides = gridProducts.filter((g) => g.featuredImage);
+  const loopSlides = [...slides, ...slides];
+  const slideCount = slides.length;
+  const startRawIndex = slideCount; // start in the middle copy
+  const [filters, setFilters] = useState<{vendors: string[]; minPrice?: number | null; maxPrice?: number | null}>({vendors: [], minPrice: null, maxPrice: null});
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const vendors = Array.from(new Set(gridProducts.map((p) => p.vendor).filter(Boolean))) as string[];
+  const filteredProducts = gridProducts.filter((p) => {
+    const price = p.priceRange?.minVariantPrice?.amount ? Number(p.priceRange.minVariantPrice.amount) : 0;
+    if (filters.vendors.length > 0 && (!p.vendor || !filters.vendors.includes(p.vendor))) return false;
+    if (typeof filters.minPrice === 'number' && price < filters.minPrice) return false;
+    if (typeof filters.maxPrice === 'number' && price > filters.maxPrice) return false;
+    return true;
+  });
 
   useEffect(() => {
     const el = carouselRef.current;
     if (!el) return;
 
     const onScroll = () => {
-      const children = Array.from(el.children) as HTMLElement[];
+      const inner = el.firstElementChild as HTMLElement | null;
+      const children = inner ? (Array.from(inner.children) as HTMLElement[]) : [];
       const center = el.scrollLeft + el.offsetWidth / 2;
       let active = 0;
       let minDistance = Number.POSITIVE_INFINITY;
@@ -87,20 +108,107 @@ export function WomenCollectionPage({
         }
       });
 
-      setCurrentIndex(active);
+      // active is raw index into loopSlides
+      const raw = active;
+      currentIndexRef.current = raw;
+      // displayed index is raw % slideCount
+      setCurrentIndex(raw % Math.max(1, slideCount));
+
+      // Reset position to the middle copy when at ends
+      if (slideCount > 1) {
+        if (raw <= 0) {
+          const newRaw = raw + slideCount;
+          const child = children[newRaw];
+          if (child) {
+            el.scrollTo({left: child.offsetLeft - (el.offsetWidth - child.offsetWidth) / 2, behavior: 'auto'});
+            currentIndexRef.current = newRaw;
+            setCurrentIndex(newRaw % slideCount);
+          }
+        } else if (raw >= loopSlides.length - 1) {
+          const newRaw = raw - slideCount;
+          const child = children[newRaw];
+          if (child) {
+            el.scrollTo({left: child.offsetLeft - (el.offsetWidth - child.offsetWidth) / 2, behavior: 'auto'});
+            currentIndexRef.current = newRaw;
+            setCurrentIndex(newRaw % slideCount);
+          }
+        }
+      }
     };
 
     el.addEventListener('scroll', onScroll, {passive: true});
     return () => el.removeEventListener('scroll', onScroll);
   }, [slides.length]);
 
+  // Ensure the active slide is centered initially
+  useEffect(() => {
+    if (!carouselRef.current || slides.length === 0) return;
+    // Center current index - start at loop middle
+    currentIndexRef.current = startRawIndex;
+    scrollToIndex(startRawIndex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slides.length]);
+
+  // Autoplay: advance the carousel every AUTOPLAY_INTERVAL_MS when not paused
+  useEffect(() => {
+    if (!carouselRef.current || slides.length === 0) return;
+
+    // Clear any existing timer
+    if (autoplayTimer.current) {
+      clearInterval(autoplayTimer.current);
+      autoplayTimer.current = null;
+    }
+
+    if (!isPaused && slideCount > 0) {
+      autoplayTimer.current = window.setInterval(() => {
+        // increment raw index
+        let nextRaw = currentIndexRef.current + 1;
+        // if moving past the end, prefer to keep continuity; scrollToIndex will be followed by onScroll reset
+        scrollToIndex(nextRaw);
+      }, AUTOPLAY_INTERVAL_MS);
+    }
+
+    return () => {
+      if (autoplayTimer.current) {
+        clearInterval(autoplayTimer.current);
+        autoplayTimer.current = null;
+      }
+    };
+  }, [isPaused, slides.length]);
+
+  // toggle filter visibility when user scrolls past the carousel sentinel
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        setShowFilters(!entry.isIntersecting);
+      },
+      {threshold: 0},
+    );
+    obs.observe(sentinel);
+    return () => obs.disconnect();
+  }, []);
+
   function scrollToIndex(i: number) {
     const el = carouselRef.current;
     if (!el) return;
-    const children = Array.from(el.children) as HTMLElement[];
-    const child = children[i];
+    const inner = el.firstElementChild as HTMLElement | null;
+    const children = inner ? (Array.from(inner.children) as HTMLElement[]) : [];
+    let rawIndex = i;
+    // wrap rawIndex into loopSlides range
+    if (children.length === 0) return;
+    if (i < 0) {
+      rawIndex = ((i % children.length) + children.length) % children.length;
+    } else if (i >= children.length) {
+      rawIndex = i % children.length;
+    }
+    const child = children[rawIndex];
     if (child) {
-      el.scrollTo({left: child.offsetLeft, behavior: 'smooth'});
+      const left = child.offsetLeft - (el.offsetWidth - child.offsetWidth) / 2;
+      el.scrollTo({left, behavior: 'smooth'});
     }
   }
 
@@ -161,33 +269,41 @@ export function WomenCollectionPage({
 
             <div
               ref={carouselRef}
-              className="overflow-x-auto snap-x snap-mandatory scroll-smooth -mx-4 px-4 sm:-mx-8 sm:px-8"
+              className="overflow-x-auto snap-x snap-mandatory scroll-smooth -mx-4 px-4 sm:-mx-8 sm:px-8 scrollbar-hide"
               role="list"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+              onTouchStart={() => setIsPaused(true)}
+              onTouchEnd={() => setIsPaused(false)}
+              onPointerDown={() => setIsPaused(true)}
+              onPointerUp={() => setIsPaused(false)}
             >
               <div className="flex gap-4 sm:gap-6">
-                {slides.map((p, i) => (
-                  <div
-                    key={p.id}
-                    className="snap-start flex-shrink-0 w-[min(960px,calc(100vw-64px))]"
+                {loopSlides.map((p, i) => (
+                  <Link
+                    key={`${p.id}-${i}`}
+                    to={`/products/${p.handle}`}
+                    className="snap-center flex-shrink-0 w-[min(840px,calc(100vw-160px))] block"
                     role="listitem"
                   >
-                    <div className="relative overflow-hidden rounded-[18px] bg-white shadow-[0_10px_35px_rgba(0,0,0,0.05)]">
+                    <div className="relative overflow-hidden">
                       <Image
                         data={p.featuredImage as any}
                         alt={p.title}
                         className="w-full h-[260px] sm:h-[320px] lg:h-[360px] object-cover"
                         sizes="100vw"
                       />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent px-5 pb-4 pt-10 text-left">
-                        <p className="text-xs uppercase tracking-[0.2em] text-white/80">
-                          Featured
-                        </p>
-                        <p className="mt-1 text-sm sm:text-base font-medium text-white line-clamp-2">
-                          {p.title}
-                        </p>
-                      </div>
                     </div>
-                  </div>
+                    {/* Title and price under the card like product tiles */}
+                    <div className="mt-4 px-1">
+                      <h3 className="text-[11px] leading-snug tracking-wide uppercase text-[#111111] group-hover:opacity-70 transition-opacity line-clamp-2" style={{ fontFamily: 'var(--font-sans)' }}>
+                        {p.title}
+                      </h3>
+                      <p className="mt-1 text-[11px] text-[#111111]" style={{ fontFamily: 'var(--font-sans)' }}>
+                        <Money data={p.priceRange.minVariantPrice as any} />
+                      </p>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -200,6 +316,7 @@ export function WomenCollectionPage({
       )}
 
       {/* GRID – use ProductGrid directly (it already handles columns) */}
+      <div ref={sentinelRef} />
       <section className="px-4 sm:px-8 lg:px-16 pb-20">
         <div className="mx-auto max-w-[1440px]">
           <div className="mb-5 flex items-center justify-between">
@@ -209,20 +326,20 @@ export function WomenCollectionPage({
             >
               All womenswear
             </h2>
-            <span
-              className="inline-flex items-center gap-1 rounded-full border border-[#EAD4D8] bg-white/60 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#8A6A6F]"
-              style={{fontFamily: 'Quicking, sans-serif'}}
-            >
-              <span
-                className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{backgroundColor: accent}}
-              />
-              {products.length} items
-            </span>
+            {/* items pill removed per request */}
           </div>
 
-          {/* ProductGrid draws its own responsive grid; no extra grid wrapper */}
-          <ProductGrid products={gridProducts} />
+          <div className="lg:grid lg:grid-cols-[1fr,320px] gap-8">
+            <div>
+              {/* ProductGrid draws its own responsive grid; no extra grid wrapper */}
+              <ProductGrid products={filteredProducts} />
+            </div>
+            <div className="hidden lg:block">
+              <div className={`transition-all duration-200 ${showFilters ? 'fixed right-6 top-[110px] w-80' : 'invisible opacity-0'}`}>
+                <CollectionFilters vendors={vendors} initial={{vendors: filters.vendors, minPrice: filters.minPrice ?? null, maxPrice: filters.maxPrice ?? null}} onChange={(f) => setFilters({vendors: f.vendors, minPrice: f.minPrice, maxPrice: f.maxPrice})} />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>

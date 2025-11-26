@@ -111,8 +111,7 @@ export function SimilarItems({
                   className="flex-shrink-0 w-64 snap-start group block"
                 >
                   <div className="space-y-3">
-                    {/* Image */}
-                    <div className="aspect-portrait overflow-hidden">
+                    <div className="relative aspect-portrait overflow-hidden">
                       <img
                         src={product.image}
                         alt={product.title}
@@ -121,31 +120,16 @@ export function SimilarItems({
                         style={{backgroundColor: '#DDDEE2'}}
                       />
                     </div>
-
-                    {/* Info */}
                     <div className="space-y-1">
                       {product.vendor && (
-                        <p
-                          className="text-xs uppercase tracking-widest"
-                          style={{
-                            color: '#9A9BA3',
-                            fontFamily: 'var(--font-sans)',
-                            letterSpacing: '0.1em',
-                          }}
-                        >
+                        <p className="text-xs uppercase tracking-widest text-[#9A9BA3]" style={{fontFamily: 'var(--font-sans)'}}>
                           {product.vendor}
                         </p>
                       )}
-                      <h3
-                        className="text-base font-normal line-clamp-2 group-hover:opacity-70 transition-opacity"
-                        style={{fontFamily: 'var(--font-sans)', color: '#292929'}}
-                      >
+                      <h3 className="text-base font-semibold line-clamp-2 uppercase text-black group-hover:text-gray-600 transition-colors duration-200" style={{fontFamily: 'var(--font-sans)'}}>
                         {product.title}
                       </h3>
-                      <p
-                        className="text-sm font-medium pt-1"
-                        style={{fontFamily: 'var(--font-sans)', color: '#6B6C75'}}
-                      >
+                      <p className="text-sm font-medium pt-1 text-black" style={{fontFamily: 'var(--font-sans)'}}>
                         {product.price.currencyCode} {product.price.amount}
                       </p>
                     </div>
@@ -155,7 +139,7 @@ export function SimilarItems({
             </div>
 
             {/* Desktop: Grid */}
-            <div className="hidden lg:grid lg:grid-cols-4 xl:grid-cols-5 gap-6 lg:gap-8">
+              <div className="hidden lg:grid lg:grid-cols-4 xl:grid-cols-5 gap-6 lg:gap-8">
               {products.map((product) => (
                 <Link
                   key={product.handle}
@@ -177,27 +161,14 @@ export function SimilarItems({
                     {/* Info */}
                     <div className="space-y-1">
                       {product.vendor && (
-                        <p
-                          className="text-xs uppercase tracking-widest"
-                          style={{
-                            color: '#9A9BA3',
-                            fontFamily: 'var(--font-sans)',
-                            letterSpacing: '0.1em',
-                          }}
-                        >
+                        <p className="text-xs uppercase tracking-widest text-[#9A9BA3]" style={{fontFamily: 'var(--font-sans)'}}>
                           {product.vendor}
                         </p>
                       )}
-                      <h3
-                        className="text-base font-normal line-clamp-2 group-hover:opacity-70 transition-opacity"
-                        style={{fontFamily: 'var(--font-sans)', color: '#292929'}}
-                      >
+                      <h3 className="text-base font-normal line-clamp-2 uppercase text-black group-hover:text-gray-600 transition-colors duration-200" style={{fontFamily: 'var(--font-sans)'}}>
                         {product.title}
                       </h3>
-                      <p
-                        className="text-sm font-medium pt-1"
-                        style={{fontFamily: 'var(--font-sans)', color: '#6B6C75'}}
-                      >
+                      <p className="text-sm font-medium pt-1 text-black" style={{fontFamily: 'var(--font-sans)'}}>
                         {product.price.currencyCode} {product.price.amount}
                       </p>
                     </div>

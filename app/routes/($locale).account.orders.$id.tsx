@@ -1,11 +1,11 @@
-import {redirect, useLoaderData} from 'react-router';
-import type {Route} from './+types/account.orders.$id';
-import {Money, Image} from '@shopify/hydrogen';
+import { Image, Money } from '@shopify/hydrogen';
 import type {
-  OrderLineItemFullFragment,
-  OrderQuery,
+    OrderLineItemFullFragment,
+    OrderQuery,
 } from 'customer-accountapi.generated';
-import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
+import { redirect, useLoaderData } from 'react-router';
+import { CUSTOMER_ORDER_QUERY } from '~/graphql/customer-account/CustomerOrderQuery';
+import type { Route } from './+types/account.orders.$id';
 
 export const meta: Route.MetaFunction = ({data}) => {
   return [{title: `Order ${data?.order?.name}`}];
@@ -199,9 +199,9 @@ function OrderLineRow({lineItem}: {lineItem: OrderLineItemFullFragment}) {
     <tr key={lineItem.id}>
       <td>
         <div>
-          {lineItem?.image && (
+              {lineItem?.image && (
             <div>
-              <Image data={lineItem.image} width={96} height={96} />
+              <Image data={lineItem.image} width={96} height={96} className="object-cover" />
             </div>
           )}
           <div>

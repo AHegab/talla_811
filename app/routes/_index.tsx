@@ -1,17 +1,14 @@
+import { Suspense } from 'react';
 import {
-  Await,
-  useLoaderData,
-  Link,
+    Await,
+    Link,
+    useLoaderData,
 } from 'react-router';
-import type {Route} from './+types/_index';
-import {Suspense} from 'react';
-import {Image} from '@shopify/hydrogen';
 import type {
-  FeaturedCollectionFragment,
-  RecommendedProductsQuery,
+    RecommendedProductsQuery
 } from 'storefrontapi.generated';
-import {ProductItem} from '~/components/ProductItem';
-import {HeroCarousel} from '~/components/HeroCarousel';
+import { HeroCarousel } from '~/components/HeroCarousel';
+import type { Route } from './+types/_index';
 
 export const meta: Route.MetaFunction = () => {
   return [{title: 'Hydrogen | Home'}];
@@ -209,15 +206,19 @@ function RecommendedProducts({
           </div>
         }>
           <Await resolve={products}>
-            {(response) => (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
-                {response
-                  ? response.products.nodes.map((product) => (
-                      <ProductItem key={product.id} product={product} />
-                    ))
-                  : null}
-              </div>
-            )}
+            {(response) => {
+              const recProducts = response
+                ? response.products.nodes.map((product) => ({
+                    id: product.id,
+                    title: product.title,
+                    handle: product.handle,
+                    featuredImage: product.featuredImage,
+                    priceRange: { minVariantPrice: product.priceRange.minVariantPrice },
+                  }))
+                : [];
+
+              return <ProductGrid products={recProducts as any} />;
+            }}
           </Await>
         </Suspense>
       </div>

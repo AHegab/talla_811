@@ -1,11 +1,12 @@
-import {useEffect, useState} from 'react';
-import type {ProductQuery} from 'storefrontapi.generated';
+import { useState } from 'react';
+import type { ProductQuery } from 'storefrontapi.generated';
 import {
   ProductBuyBox,
   type PDPProduct,
   type PDPVariant,
 } from './ProductBuyBox';
-import type {PDPImage} from './ProductGallery';
+import type { PDPImage } from './ProductGallery';
+import { ProductGallery } from './ProductGallery';
 
 interface UserMeasurements {
   gender: 'male' | 'female';
@@ -169,88 +170,16 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
   void setUserMeasurements;
   void setRecommendedSize;
 
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Keyboard handlers for navigation and closing modal
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsModalOpen(false);
-      if (e.key === 'ArrowLeft')
-        setSelectedImageIndex((i) => (i > 0 ? i - 1 : images.length - 1));
-      if (e.key === 'ArrowRight')
-        setSelectedImageIndex((i) => (i < images.length - 1 ? i + 1 : 0));
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [images.length]);
-
-  // Prevent body scroll while modal is open
-  useEffect(() => {
-    if (isModalOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isModalOpen]);
-
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  // Image gallery handled by ProductGallery
 
   return (
     <>
       {/* MAIN PAGE */}
       <div className="min-h-screen bg-white">
         <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-2 lg:px-12 lg:py-14">
-          {/* Gallery: main image + thumbnails below */}
+          {/* Gallery: product gallery with hero image and static thumbnail carousel */}
           <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start">
-            {/* Main image */}
-            {images.length > 0 && (
-              <div className="mb-5 flex items-center justify-center md:justify-start">
-                <button
-                  type="button"
-                  aria-label="Open image viewer"
-                  onClick={openModal}
-                  className="aspect-[3/4] max-w-full rounded-xl overflow-hidden p-0 border-none bg-transparent"
-                  style={{width: '340px', height: '440px'}}
-                >
-                  <img
-                    src={images[selectedImageIndex]?.url ?? images[0].url}
-                    alt={images[selectedImageIndex]?.alt || product.title}
-                    className="w-full h-full object-cover rounded-xl"
-                  />
-                </button>
-              </div>
-            )}
-
-            {/* Thumbnails grid below main image */}
-            {images.length > 1 && (
-              <div className="mt-2 grid w-full max-w-md grid-cols-3 gap-4 md:max-w-none md:grid-cols-4">
-                {images.map((img, idx) => (
-                  <button
-                    key={img.id ?? idx}
-                    type="button"
-                    onClick={() => setSelectedImageIndex(idx)}
-                    aria-label={`Select image ${idx + 1}`}
-                    aria-pressed={selectedImageIndex === idx}
-                    className={`cursor-pointer flex h-[110px] w-[80px] items-center justify-center rounded-lg md:h-[120px] md:w-[90px] ${
-                      selectedImageIndex === idx
-                        ? 'ring-2 ring-[#111111] ring-offset-2 bg-white'
-                        : 'border border-gray-300 bg-white'
-                    }`}
-                  >
-                    <img
-                      src={img.url}
-                      alt={img.alt || product.title}
-                      className="h-full w-full rounded-lg object-contain p-1"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+            <ProductGallery images={images} productTitle={product.title} />
           </div>
 
           {/* Details (right side) */}
@@ -308,61 +237,7 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
         </div>
       </div>
 
-      {/* FULLSCREEN MODAL VIEWER */}
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-6"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => {
-            // close modal when clicking on background
-            if (e.target === e.currentTarget) closeModal();
-          }}
-        >
-          <button
-            type="button"
-            onClick={closeModal}
-            aria-label="Close image viewer"
-            className="absolute right-6 top-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-black"
-          >
-            ✕
-          </button>
-
-          <button
-            type="button"
-            aria-label="Previous image"
-            onClick={() =>
-              setSelectedImageIndex((i) =>
-                i > 0 ? i - 1 : images.length - 1,
-              )
-            }
-            className="absolute left-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/90 p-2"
-          >
-            ‹
-          </button>
-
-          <div className="max-h-full max-w-full flex items-center justify-center">
-            <img
-              src={images[selectedImageIndex]?.url}
-              alt={images[selectedImageIndex]?.alt || product.title}
-              className="max-h-[90vh] max-w-[90vw] object-cover rounded"
-            />
-          </div>
-
-          <button
-            type="button"
-            aria-label="Next image"
-            onClick={() =>
-              setSelectedImageIndex((i) =>
-                i < images.length - 1 ? i + 1 : 0,
-              )
-            }
-            className="absolute right-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/90 p-2"
-          >
-            ›
-          </button>
-        </div>
-      )}
+      {/* Product gallery handles its own modal viewer */}
     </>
   );
 }

@@ -265,7 +265,8 @@ export function Header({
 
       {/* Mobile logo overlay */}
       <div className="lg:hidden fixed top-14 sm:top-16 left-0 right-0 z-40 bg-transparent pointer-events-none">
-        <NavLink prefetch="intent" to="/" end className="block">
+        {/* pointer-events-none on the parent prevents interactions; add pointer-events-auto to the link so logo stays decorative but is clickable */}
+        <NavLink prefetch="intent" to="/" end className="block pointer-events-auto" aria-label={`${shop.name} home`}>
           <div className="flex items-center justify-center h-[120px] w-full overflow-hidden bg-transparent">
             <div
               role="img"

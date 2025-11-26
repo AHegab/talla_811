@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import type { ProductQuery } from 'storefrontapi.generated';
+import {useEffect, useState} from 'react';
+import type {ProductQuery} from 'storefrontapi.generated';
 import {
   ProductBuyBox,
   type PDPProduct,
   type PDPVariant,
 } from './ProductBuyBox';
-import type { PDPImage } from './ProductGallery';
+import type {PDPImage} from './ProductGallery';
 
 interface UserMeasurements {
   gender: 'male' | 'female';
@@ -27,17 +27,23 @@ interface ProductPageProps {
 
 export function ProductPage({product, selectedVariant}: ProductPageProps) {
   // Transform selectedVariant to PDPVariant
-  const transformVariant = (v: NonNullable<ShopifyProduct['selectedOrFirstAvailableVariant']>): PDPVariant => ({
+  const transformVariant = (
+    v: NonNullable<ShopifyProduct['selectedOrFirstAvailableVariant']>,
+  ): PDPVariant => ({
     id: v.id,
     title: v.title,
     availableForSale: v.availableForSale,
-    selectedOptions: v.selectedOptions.map(o => ({name: o.name, value: o.value})),
+    selectedOptions: v.selectedOptions.map((o) => ({
+      name: o.name,
+      value: o.value,
+    })),
     price: {amount: v.price.amount, currencyCode: v.price.currencyCode},
     sku: v.sku || undefined,
   });
 
   const initialVariant = selectedVariant ? transformVariant(selectedVariant) : null;
-  const [currentVariant, setCurrentVariant] = useState<PDPVariant | null>(initialVariant);
+  const [currentVariant, setCurrentVariant] =
+    useState<PDPVariant | null>(initialVariant);
   const [userMeasurements, setUserMeasurements] =
     useState<UserMeasurements | null>(null);
   const [recommendedSize, setRecommendedSize] = useState<string | null>(null);
@@ -69,7 +75,10 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
       id: v.id,
       title: v.title,
       availableForSale: v.availableForSale,
-      selectedOptions: v.selectedOptions.map(o => ({name: o.name, value: o.value})),
+      selectedOptions: v.selectedOptions.map((o) => ({
+        name: o.name,
+        value: o.value,
+      })),
       price: {amount: v.price.amount, currencyCode: v.price.currencyCode},
       sku: v.sku || undefined,
     })) ?? [];
@@ -155,6 +164,10 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
 
   // You can later call calculateRecommendedSize + setRecommendedSize
   // whenever userMeasurements changes.
+  void calculateRecommendedSize;
+  void userMeasurements;
+  void setUserMeasurements;
+  void setRecommendedSize;
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -163,8 +176,10 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsModalOpen(false);
-      if (e.key === 'ArrowLeft') setSelectedImageIndex((i) => (i > 0 ? i - 1 : images.length - 1));
-      if (e.key === 'ArrowRight') setSelectedImageIndex((i) => (i < images.length - 1 ? i + 1 : 0));
+      if (e.key === 'ArrowLeft')
+        setSelectedImageIndex((i) => (i > 0 ? i - 1 : images.length - 1));
+      if (e.key === 'ArrowRight')
+        setSelectedImageIndex((i) => (i < images.length - 1 ? i + 1 : 0));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -187,109 +202,113 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
 
   return (
     <>
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-2 lg:px-12 lg:py-14">
-        {/* Gallery: main image + vertical thumbnails below */}
-        <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start">
-          {/* Main image */}
-          {images.length > 0 && (
-            <div className="mb-5 flex items-center justify-center md:justify-start">
-              <button
-                type="button"
-                aria-label="Open image viewer"
-                onClick={openModal}
-                className="aspect-[3/4] max-w-full rounded-xl overflow-hidden p-0 border-none bg-transparent"
-                style={{width: '340px', height: '440px'}}
-              >
-                <img
-                  src={images[selectedImageIndex]?.url ?? images[0].url}
-                  alt={images[selectedImageIndex]?.alt || product.title}
-                  className="w-full h-full object-cover rounded-xl"
-                />
-              </button>
-            </div>
-          )}
-
-          {/* Thumbnails grid below main image */}
-          {images.length > 1 && (
-            <div className="mt-2 grid w-full max-w-md grid-cols-3 gap-4 md:max-w-none md:grid-cols-4">
-              {images.map((img, idx) => (
+      {/* MAIN PAGE */}
+      <div className="min-h-screen bg-white">
+        <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-2 lg:px-12 lg:py-14">
+          {/* Gallery: main image + thumbnails below */}
+          <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start">
+            {/* Main image */}
+            {images.length > 0 && (
+              <div className="mb-5 flex items-center justify-center md:justify-start">
                 <button
-                  key={img.id ?? idx}
                   type="button"
-                  onClick={() => setSelectedImageIndex(idx)}
-                  aria-label={`Select image ${idx + 1}`}
-                  aria-pressed={selectedImageIndex === idx}
-                    className={`cursor-pointer flex h-[110px] w-[80px] items-center justify-center rounded-lg md:h-[120px] md:w-[90px] ${
-                      selectedImageIndex === idx ? 'ring-2 ring-[#111111] ring-offset-2 bg-white' : 'border border-gray-200 bg-white'
-                    }`}
+                  aria-label="Open image viewer"
+                  onClick={openModal}
+                  className="aspect-[3/4] max-w-full rounded-xl overflow-hidden p-0 border-none bg-transparent"
+                  style={{width: '340px', height: '440px'}}
                 >
                   <img
-                    src={img.url}
-                    alt={img.alt || product.title}
-                    className="h-full w-full rounded-lg object-cover"
+                    src={images[selectedImageIndex]?.url ?? images[0].url}
+                    alt={images[selectedImageIndex]?.alt || product.title}
+                    className="w-full h-full object-cover rounded-xl"
                   />
                 </button>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
 
-        {/* Details (right side) */}
-        <div className="product-details flex w-full flex-col justify-start md:items-start">
-          {currentVariant && (
-            <ProductBuyBox
-              product={pdpProduct}
-              selectedVariant={currentVariant}
-              onVariantChange={setCurrentVariant}
-              recommendedSize={recommendedSize}
-            />
-          )}
+            {/* Thumbnails grid below main image */}
+            {images.length > 1 && (
+              <div className="mt-2 grid w-full max-w-md grid-cols-3 gap-4 md:max-w-none md:grid-cols-4">
+                {images.map((img, idx) => (
+                  <button
+                    key={img.id ?? idx}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(idx)}
+                    aria-label={`Select image ${idx + 1}`}
+                    aria-pressed={selectedImageIndex === idx}
+                    className={`cursor-pointer flex h-[110px] w-[80px] items-center justify-center rounded-lg md:h-[120px] md:w-[90px] ${
+                      selectedImageIndex === idx
+                        ? 'ring-2 ring-[#111111] ring-offset-2 bg-white'
+                        : 'border border-gray-300 bg-white'
+                    }`}
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.alt || product.title}
+                      className="h-full w-full rounded-lg object-contain p-1"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-          {/* Info sections */}
-          <div className="mt-8 flex flex-col gap-6">
-            {/* Description Panel */}
-            <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-              <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-                <span className="tracking-wide">Description</span>
-              </div>
-              <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
-                {product.description || 'No description available.'}
-              </div>
-            </div>
+          {/* Details (right side) */}
+          <div className="product-details flex w-full flex-col justify-start md:items-start">
+            {currentVariant && (
+              <ProductBuyBox
+                product={pdpProduct}
+                selectedVariant={currentVariant}
+                onVariantChange={setCurrentVariant}
+                recommendedSize={recommendedSize}
+              />
+            )}
 
-            {/* Details & Care Panel */}
-            <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-              <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-                <span className="tracking-wide">Details &amp; Care</span>
+            {/* Info sections */}
+            <div className="mt-8 flex flex-col gap-6">
+              {/* Description Panel */}
+              <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
+                <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
+                  <span className="tracking-wide">Description</span>
+                </div>
+                <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
+                  {product.description || 'No description available.'}
+                </div>
               </div>
-              <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
-                <ul className="list-disc pl-4">
-                  <li>Premium materials for comfort</li>
-                  <li>Machine washable</li>
-                  <li>Made with care for the environment</li>
-                </ul>
-              </div>
-            </div>
 
-            {/* Shipping & Returns Panel */}
-            <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-              <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-                <span className="tracking-wide">Shipping &amp; Returns</span>
+              {/* Details & Care Panel */}
+              <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
+                <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
+                  <span className="tracking-wide">Details &amp; Care</span>
+                </div>
+                <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
+                  <ul className="list-disc pl-4">
+                    <li>Premium materials for comfort</li>
+                    <li>Machine washable</li>
+                    <li>Made with care for the environment</li>
+                  </ul>
+                </div>
               </div>
-              <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
-                <ul className="list-disc pl-4">
-                  <li>Free shipping on orders over $100</li>
-                  <li>Easy 30-day returns</li>
-                  <li>Fast delivery (2–5 business days)</li>
-                </ul>
+
+              {/* Shipping & Returns Panel */}
+              <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
+                <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
+                  <span className="tracking-wide">Shipping &amp; Returns</span>
+                </div>
+                <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
+                  <ul className="list-disc pl-4">
+                    <li>Free shipping on orders over $100</li>
+                    <li>Easy 30-day returns</li>
+                    <li>Fast delivery (2–5 business days)</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-      {/* Fullscreen modal viewer */}
+
+      {/* FULLSCREEN MODAL VIEWER */}
       {isModalOpen && (
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-6"
@@ -312,7 +331,11 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
           <button
             type="button"
             aria-label="Previous image"
-            onClick={() => setSelectedImageIndex((i) => (i > 0 ? i - 1 : images.length - 1))}
+            onClick={() =>
+              setSelectedImageIndex((i) =>
+                i > 0 ? i - 1 : images.length - 1,
+              )
+            }
             className="absolute left-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/90 p-2"
           >
             ‹
@@ -329,7 +352,11 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
           <button
             type="button"
             aria-label="Next image"
-            onClick={() => setSelectedImageIndex((i) => (i < images.length - 1 ? i + 1 : 0))}
+            onClick={() =>
+              setSelectedImageIndex((i) =>
+                i < images.length - 1 ? i + 1 : 0,
+              )
+            }
             className="absolute right-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/90 p-2"
           >
             ›

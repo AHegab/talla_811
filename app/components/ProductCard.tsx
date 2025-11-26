@@ -1,5 +1,5 @@
 // app/components/ProductCard.tsx
-import { Image, Money } from '@shopify/hydrogen';
+import { Image } from '@shopify/hydrogen';
 import { Link } from 'react-router';
 import type {
   CollectionItemFragment,

@@ -113,13 +113,13 @@ export function ProductGallery({
     <div className="space-y-6 lg:space-y-8">
       {/* Hero image with thumbnails carousel below */}
       <div className="w-full flex flex-col items-center">
-        <div className="mb-5 flex items-center justify-center">
+        {/* Main Image - Responsive */}
+        <div className="mb-6 flex items-center justify-center w-full">
           <button
             type="button"
             aria-label="Open image viewer"
             onClick={openModal}
-            className="aspect-[3/4] max-w-full rounded-xl overflow-hidden p-0 border-none bg-white"
-            style={{width: '340px', height: '440px'}}
+            className="relative aspect-[3/4] w-full max-w-[480px] rounded-2xl overflow-hidden p-0 border-none bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 group"
           >
             <Image
               data={{
@@ -130,20 +130,31 @@ export function ProductGallery({
                 width: currentImage.width,
                 height: currentImage.height,
               }}
-              className="w-full h-full object-cover rounded-xl"
+              className="w-full h-full object-cover"
               loading="eager"
               sizes="(min-width: 1024px) 50vw, 100vw"
-              style={{boxShadow: '0 2px 16px 0 rgba(220,220,230,0.12)'}}
             />
+            {/* Zoom indicator on hover */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 flex items-center justify-center">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 rounded-full p-3 shadow-lg">
+                <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                </svg>
+              </div>
+            </div>
           </button>
         </div>
 
-        {/* Thumbnails */}
-        <div className="w-full max-w-[420px]">
+        {/* Thumbnails - Enhanced */}
+        <div className="w-full max-w-[520px]">
           <div className="relative">
             <div
               ref={thumbRef}
-              className="flex gap-3 items-center justify-center overflow-x-auto py-2 px-3"
+              className="flex gap-3 items-center justify-start overflow-x-auto py-3 px-1 scrollbar-hide"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }}
             >
               {images.map((img, idx) => {
                 const isSelected = idx === selectedIndex;
@@ -155,14 +166,23 @@ export function ProductGallery({
                     aria-label={`Select image ${idx + 1}`}
                     aria-pressed={isSelected}
                     onClick={() => setSelectedIndex(idx)}
-                    className={`cursor-pointer flex h-[96px] w-[96px] items-center justify-center rounded-lg bg-white border ${
-                      isSelected ? 'border-gray-500' : 'border-gray-300'
-                    }`}
+                    className={`
+                      flex-shrink-0 cursor-pointer rounded-xl overflow-hidden
+                      transition-all duration-300 ease-out
+                      ${isSelected
+                        ? 'ring-2 ring-gray-800 ring-offset-2 scale-105 shadow-md'
+                        : 'ring-1 ring-gray-200 hover:ring-gray-400 hover:shadow-md opacity-70 hover:opacity-100'
+                      }
+                    `}
+                    style={{
+                      width: '72px',
+                      height: '96px',
+                    }}
                   >
                     <img
                       src={img.url}
                       alt={img.alt || `${productTitle} ${idx + 1}`}
-                      className="h-full w-full rounded-md object-contain p-1"
+                      className="h-full w-full object-cover"
                     />
                   </button>
                 );
@@ -171,26 +191,16 @@ export function ProductGallery({
           </div>
         </div>
 
-        {/* Modal viewer */}
+        {/* Modal viewer - Fullscreen */}
         {isModalOpen && (
           <div
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-transparent p-6"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-md animate-fadeIn cursor-pointer"
             role="dialog"
             aria-modal="true"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) closeModal();
-            }}
+            onClick={closeModal}
           >
-            <button
-              type="button"
-              onClick={closeModal}
-              aria-label="Close image viewer"
-              className="absolute right-6 top-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-black"
-            >
-              ✕
-            </button>
-
-            <div className="max-h-full max-w-full flex items-center justify-center">
+            {/* Main image - Fullscreen */}
+            <div className="w-full h-full flex items-center justify-center p-4">
               <Image
                 data={{
                   url: images[selectedIndex]?.url,
@@ -198,7 +208,7 @@ export function ProductGallery({
                   width: images[selectedIndex]?.width,
                   height: images[selectedIndex]?.height,
                 }}
-                className="max-h-[90vh] max-w-[90vw] object-cover rounded"
+                className="max-h-full max-w-full object-contain"
               />
             </div>
           </div>

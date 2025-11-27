@@ -2815,3 +2815,28 @@ label {
   gap: var(--space-3);
   flex-wrap: wrap;
 }
+
+/*
+* --------------------------------------------------
+* Product Gallery Enhancements
+* --------------------------------------------------
+*/
+
+/* Hide scrollbar for thumbnails */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fade in animation for modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}

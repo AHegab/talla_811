@@ -23,8 +23,6 @@ export function ProductGallery({
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
   const thumbRef = useRef<HTMLDivElement | null>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const currentImage = images[selectedIndex] || images[0];
 
@@ -86,43 +84,10 @@ export function ProductGallery({
       inline: 'center',
       block: 'nearest',
     });
-    // ensure arrow state updates on change
-    setTimeout(() => {
-      const el = thumbRef.current;
-      if (!el) return;
-      setCanScrollLeft(el.scrollLeft > 1);
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
-    }, 120);
+    // nothing extra needed when a thumbnail is selected (scrollIntoView handles layout)
   }, [selectedIndex]);
 
-  // Helper to update availability of arrows
-  const updateThumbArrows = () => {
-    const el = thumbRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 1);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
-  };
-
-  // Scroll thumbnail strip
-  const scrollThumbs = (direction: 'left' | 'right') => {
-    const el = thumbRef.current;
-    if (!el) return;
-    const amount = Math.round(el.clientWidth * 0.6);
-    el.scrollBy({left: direction === 'left' ? -amount : amount, behavior: 'smooth'});
-  };
-
-  useEffect(() => {
-    const el = thumbRef.current;
-    if (!el) return;
-    const handler = () => updateThumbArrows();
-    el.addEventListener('scroll', handler, {passive: true});
-    window.addEventListener('resize', handler);
-    updateThumbArrows();
-    return () => {
-      el.removeEventListener('scroll', handler);
-      window.removeEventListener('resize', handler);
-    };
-  }, [thumbRef.current]);
+  // No arrow buttons or event listeners needed for thumbnail strip.
 
   if (!images.length) {
     return (
@@ -186,9 +151,10 @@ export function ProductGallery({
         {/* Thumbnails - Enhanced */}
         <div className="w-full max-w-[520px]">
           <div className="relative">
+            {/* Left scroll button removed */}
             <div
               ref={thumbRef}
-                    className="flex flex-wrap gap-3 items-center justify-start overflow-hidden py-3 px-1 scrollbar-hide"
+              className="flex gap-3 items-center justify-start overflow-x-auto py-3 px-1 snap-x snap-mandatory scrollbar-hide"
               style={{
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
@@ -204,14 +170,7 @@ export function ProductGallery({
                     aria-label={`Select image ${idx + 1}`}
                     aria-pressed={isSelected}
                     onClick={() => setSelectedIndex(idx)}
-                    className={`
-                      flex-shrink-0 cursor-pointer rounded-xl overflow-hidden
-                      transition-all duration-300 ease-out
-                      ${isSelected
-                        ? 'ring-2 ring-gray-800 ring-offset-2 scale-105 shadow-md'
-                        : 'ring-1 ring-gray-200 hover:ring-gray-400 hover:shadow-md opacity-70 hover:opacity-100'
-                      }
-                    `}
+                    className={`snap-center flex-shrink-0 cursor-pointer rounded-xl overflow-hidden transition-all duration-300 ease-out ${isSelected ? 'ring-2 ring-gray-800 ring-offset-2 scale-105 shadow-md' : 'ring-1 ring-gray-200 hover:ring-gray-400 hover:shadow-md opacity-70 hover:opacity-100'}`}
                     style={{
                       width: '72px',
                       height: '96px',
@@ -226,6 +185,7 @@ export function ProductGallery({
                 );
               })}
             </div>
+            {/* Right scroll button removed */}
           </div>
         </div>
 

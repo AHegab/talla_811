@@ -7,7 +7,7 @@ export async function action({request, context}: Route.ActionArgs) {
     const body = (await request.json()) as {imageUrl: string; tags?: string[]; currentHandle?: string; vendor?: string; productType?: string};
     const {imageUrl, tags = [], currentHandle, vendor, productType} = body;
     const config = getSimilarProductsConfig();
-    console.log('request body', JSON.stringify(body));
+    // debug: console.log('request body', JSON.stringify(body));
     const configOverlap = config.overlap;
 
     // TODO: Implement actual visual search using AI/ML

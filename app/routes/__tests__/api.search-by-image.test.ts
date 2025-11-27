@@ -43,7 +43,7 @@ describe('api.search-by-image action', () => {
         const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c', vendor: 'Talla' });
         const res = await action({ request, context: mockContext } as any);
         const json = (await res.json()) as any;
-        console.log('vendor fallback json:', JSON.stringify(json, null, 2));
+        // console.log('vendor fallback json:', JSON.stringify(json, null, 2));
         expect(json.products.length).toBe(1);
         expect(json.products[0].vendor).toBe('Talla');
     });
@@ -85,7 +85,7 @@ describe('api.search-by-image action', () => {
         const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c', allowOneTagFallback: false });
         const res = await action({ request, context: mockContext } as any);
         const json = (await res.json()) as any;
-        console.log('1-tag overlap disabled json:', JSON.stringify(json, null, 2));
+        // console.log('1-tag overlap disabled json:', JSON.stringify(json, null, 2));
         expect(json.products.length).toBe(0);
     });
 });

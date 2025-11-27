@@ -175,15 +175,15 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
   return (
     <>
       {/* MAIN PAGE */}
-      <div className="min-h-screen bg-white">
-        <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-2 lg:px-12 lg:py-14">
+      <div className="min-h-screen bg-white overflow-x-hidden">
+        <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-2 lg:px-12 lg:py-14 max-w-full">
           {/* Gallery: product gallery with hero image and static thumbnail carousel */}
-          <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start">
+          <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start overflow-x-hidden">
             <ProductGallery images={images} productTitle={product.title} />
           </div>
 
           {/* Details (right side) */}
-          <div className="product-details flex w-full flex-col justify-start md:items-start">
+          <div className="product-details flex w-full flex-col justify-start md:items-start overflow-x-hidden">
             {currentVariant && (
               <ProductBuyBox
                 product={pdpProduct}

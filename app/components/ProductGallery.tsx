@@ -23,6 +23,8 @@ export function ProductGallery({
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
   const thumbRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const currentImage = images[selectedIndex] || images[0];
 
@@ -84,7 +86,43 @@ export function ProductGallery({
       inline: 'center',
       block: 'nearest',
     });
+    // ensure arrow state updates on change
+    setTimeout(() => {
+      const el = thumbRef.current;
+      if (!el) return;
+      setCanScrollLeft(el.scrollLeft > 1);
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    }, 120);
   }, [selectedIndex]);
+
+  // Helper to update availability of arrows
+  const updateThumbArrows = () => {
+    const el = thumbRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 1);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
+
+  // Scroll thumbnail strip
+  const scrollThumbs = (direction: 'left' | 'right') => {
+    const el = thumbRef.current;
+    if (!el) return;
+    const amount = Math.round(el.clientWidth * 0.6);
+    el.scrollBy({left: direction === 'left' ? -amount : amount, behavior: 'smooth'});
+  };
+
+  useEffect(() => {
+    const el = thumbRef.current;
+    if (!el) return;
+    const handler = () => updateThumbArrows();
+    el.addEventListener('scroll', handler, {passive: true});
+    window.addEventListener('resize', handler);
+    updateThumbArrows();
+    return () => {
+      el.removeEventListener('scroll', handler);
+      window.removeEventListener('resize', handler);
+    };
+  }, [thumbRef.current]);
 
   if (!images.length) {
     return (
@@ -110,11 +148,11 @@ export function ProductGallery({
   }
 
   return (
-    <div className="space-y-6 lg:space-y-8">
+    <div className="space-y-6 lg:space-y-8 w-full max-w-full overflow-x-hidden">
       {/* Hero image with thumbnails carousel below */}
-      <div className="w-full flex flex-col items-center">
+      <div className="w-full flex flex-col items-center max-w-full">
         {/* Main Image - Responsive */}
-        <div className="mb-6 flex items-center justify-center w-full">
+        <div className="mb-6 flex items-center justify-center w-full max-w-full">
           <button
             type="button"
             aria-label="Open image viewer"
@@ -150,7 +188,7 @@ export function ProductGallery({
           <div className="relative">
             <div
               ref={thumbRef}
-              className="flex gap-3 items-center justify-start overflow-x-auto py-3 px-1 scrollbar-hide"
+                    className="flex flex-wrap gap-3 items-center justify-start overflow-hidden py-3 px-1 scrollbar-hide"
               style={{
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
@@ -193,8 +231,8 @@ export function ProductGallery({
 
         {/* Modal viewer - Fullscreen */}
         {isModalOpen && (
-          <div
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-md animate-fadeIn cursor-pointer"
+               <div
+                 className="fixed inset-0 z-[200] flex items-center justify-center bg-transparent backdrop-blur-none animate-fadeIn cursor-pointer"
             role="dialog"
             aria-modal="true"
             onClick={closeModal}

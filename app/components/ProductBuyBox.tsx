@@ -136,7 +136,7 @@ export function ProductBuyBox({
       {/* Product Images - Horizontal Scroll (mini gallery above buy box) */}
       {images.length > 0 && (
         <div
-          className="flex gap-3 overflow-x-auto pb-2"
+          className="flex gap-3 flex-wrap pb-2"
           style={{scrollbarWidth: 'thin'}}
         >
           {images.map((img: any, idx: number) => (

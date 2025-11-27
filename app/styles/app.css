@@ -306,6 +306,11 @@ body {
   padding: 0;
   font-weight: 400;
   font-size: 1rem;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -343,6 +348,7 @@ img {
   max-width: 100%;
   height: auto;
   display: block;
+  box-sizing: border-box;
 }
 
 a {
@@ -417,6 +423,9 @@ label {
 .page-content {
   background: var(--color-white);
   color: var(--color-black);
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Section spacing - calm 40px gaps */
@@ -2369,10 +2378,13 @@ label {
 
 .product-container {
   max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
   display: grid;
   gap: var(--space-8);
   padding: var(--space-6) var(--space-4);
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 @media (min-width: 1024px) {
@@ -2385,12 +2397,16 @@ label {
 
 .product-gallery {
   position: relative;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .product-gallery .product-image {
   overflow: hidden;
   background: var(--color-grey-50);
   aspect-ratio: 3/4;
+  max-width: 100%;
 }
 
 .product-gallery .product-image img {

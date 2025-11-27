@@ -1,5 +1,5 @@
-import {Image} from '@shopify/hydrogen';
-import {useEffect, useRef, useState} from 'react';
+import { Image } from '@shopify/hydrogen';
+import { useEffect, useRef, useState } from 'react';
 
 export interface PDPImage {
   url: string;

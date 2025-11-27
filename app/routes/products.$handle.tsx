@@ -10,6 +10,8 @@ import {
 } from 'react-router';
 import { ProductPage } from '~/components/ProductPage';
 import { redirectIfHandleIsLocalized } from '~/lib/redirect';
+import getSimilarProductsConfig from '~/lib/similarProductsConfig';
+import { filterByTagOverlap, productTypeFallback, vendorFallback } from '~/lib/similarProductsUtils';
 import type { Route } from './+types/products.$handle';
 
 export const meta: Route.MetaFunction = ({data}) => {
@@ -62,10 +64,100 @@ async function loadCriticalData({
   // The API handle might be localized, so redirect to the localized handle
   redirectIfHandleIsLocalized(request, {handle, data: product});
 
+  // Attempt to fetch visually or tag-based similar products using product tags as query
+  let similarProducts: any[] = [];
+
+  const config = getSimilarProductsConfig();
+  try {
+    const tagQuery = (product.tags || []).slice(0, 3).join(' OR ');
+    if (tagQuery) {
+      const recs = await storefront.query(
+        PRODUCT_RECOMMENDATIONS_QUERY,
+        {
+          variables: {query: tagQuery, first: 20},
+        },
+      );
+
+      // Apply overlap requirement based on config
+      const productTags = product.tags || [];
+      const requiredOverlap = productTags.length >= config.overlap ? config.overlap : productTags.length;
+
+      similarProducts = filterByTagOverlap(recs?.products?.nodes ?? [], productTags, requiredOverlap)
+        .filter((node: any) => node.handle !== product.handle)
+        .slice(0, 5);
+
+      if (similarProducts.length === 0 && config.allowOneTagFallback && requiredOverlap > 1) {
+        similarProducts = filterByTagOverlap(recs?.products?.nodes ?? [], productTags, 1)
+          .filter((node: any) => node.handle !== product.handle)
+          .slice(0, 5);
+      }
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations query failed', err);
+  }
+
+  // If none and fallback is enabled, attempt vendor/productType fallback
+  if ((similarProducts.length === 0) && config.fallbackEnabled) {
+    // Vendor fallback
+    if (product.vendor) {
+      try {
+        const vendorRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
+          variables: { query: product.vendor, first: 20 },
+        });
+        similarProducts = vendorFallback(vendorRecs?.products?.nodes ?? [], product.vendor)
+          .filter((n: any) => n.handle !== product.handle)
+          .slice(0, 5);
+      } catch (err) {
+        if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations vendor fallback failed', err);
+      }
+    }
+
+    // productType fallback
+    if ((similarProducts.length === 0) && product.productType) {
+      try {
+        const typeRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
+          variables: { query: product.productType, first: 20 },
+        });
+        similarProducts = productTypeFallback(typeRecs?.products?.nodes ?? [], product.productType)
+          .filter((n: any) => n.handle !== product.handle)
+          .slice(0, 5);
+      } catch (err) {
+        if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations productType fallback failed', err);
+      }
+    }
+  }
+
   return {
     product,
+    similarProducts,
   };
 }
+  const PRODUCT_RECOMMENDATIONS_QUERY = `#graphql
+    query ProductRecommendations(
+      $query: String!
+      $first: Int!
+    ) {
+      products(first: $first, query: $query) {
+        nodes {
+          id
+          title
+          handle
+          tags
+          productType
+          priceRange {
+            minVariantPrice {
+              amount
+              currencyCode
+            }
+          }
+          featuredImage {
+            url
+            altText
+          }
+        }
+      }
+    }
+  `;
 
 /**
  * Load data for rendering content below the fold. This data is deferred and will be

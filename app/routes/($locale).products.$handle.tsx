@@ -2,17 +2,18 @@ import type { Route } from './+types/products.$handle';
 
 import { useLoaderData } from '@remix-run/react';
 import {
-  Analytics,
-  getAdjacentAndFirstAvailableVariants,
-  getSelectedProductOptions,
-  useOptimisticVariant,
-  useSelectedOptionInUrlParam,
+    Analytics,
+    getAdjacentAndFirstAvailableVariants,
+    getSelectedProductOptions,
+    useOptimisticVariant,
+    useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
 import { redirect } from '@shopify/remix-oxygen';
 
 import type { ProductQuery } from 'storefrontapi.generated';
 import { ProductPage } from '~/components/ProductPage';
 import { redirectIfHandleIsLocalized } from '~/lib/redirect';
+import getSimilarProductsConfig from '~/lib/similarProductsConfig';
 
 export const meta: Route.MetaFunction = ({data}) => {
   const title = data?.product?.title ?? 'Product';
@@ -33,8 +34,6 @@ export async function loader(args: Route.LoaderArgs) {
   const criticalData = await loadCriticalData(args);
 
   const finalData = {...deferredData, ...criticalData};
-  console.log('MAIN LOADER - finalData:', finalData);
-  console.log('MAIN LOADER - finalData.similarProducts:', finalData.similarProducts);
 
   return finalData;
 }
@@ -71,51 +70,74 @@ async function loadCriticalData({
   // The API handle might be localized, so redirect if needed
   redirectIfHandleIsLocalized(request, {handle, data: product});
 
-  // Fetch similar products - TEMPORARY TEST DATA
-  const similarProducts: any[] = [
-    {
-      id: 'test-1',
-      title: 'Test Product 1',
-      handle: 'test-1',
-      tags: ['blazer', 'men'],
-      priceRange: {
-        minVariantPrice: {
-          amount: '99.00',
-          currencyCode: 'EGP',
-        },
-      },
-      featuredImage: {
-        url: 'https://cdn.shopify.com/s/files/1/0688/1755/1382/files/Ribbon_Jacket-1.jpg?v=1703145651',
-        altText: 'Test Product',
-      },
-    },
-    {
-      id: 'test-2',
-      title: 'Test Product 2',
-      handle: 'test-2',
-      tags: ['blazer', 'formal'],
-      priceRange: {
-        minVariantPrice: {
-          amount: '149.00',
-          currencyCode: 'EGP',
-        },
-      },
-      featuredImage: {
-        url: 'https://cdn.shopify.com/s/files/1/0688/1755/1382/files/Ribbon_Jacket-1.jpg?v=1703145651',
-        altText: 'Test Product 2',
-      },
-    },
-  ];
+  const config = getSimilarProductsConfig();
+  let similarProducts: any[] = [];
 
-  console.log('LOADER - About to return similarProducts:', similarProducts);
-  console.log('LOADER - similarProducts.length:', similarProducts.length);
+  try {
+    const tagQuery = (product.tags || []).slice(0, 3).join(' OR ');
+    if (tagQuery) {
+      const recs = await storefront.query(
+        PRODUCT_RECOMMENDATIONS_QUERY,
+        {
+          variables: {query: tagQuery, first: 20},
+        },
+      );
+
+      const productTags = product.tags || [];
+      const requiredOverlap = productTags.length >= config.overlap ? config.overlap : productTags.length;
+
+      similarProducts = (recs?.products?.nodes ?? [])
+        .filter((node: any) => node.handle !== product.handle)
+        .filter((node: any) => {
+          const overlap = (node.tags || []).filter((t: string) => productTags.includes(t));
+          return overlap.length >= requiredOverlap && overlap.length > 0;
+        })
+        .slice(0, 5);
+
+      if (similarProducts.length === 0 && config.allowOneTagFallback && requiredOverlap > 1) {
+        similarProducts = (recs?.products?.nodes ?? [])
+          .filter((node: any) => node.handle !== product.handle)
+          .filter((node: any) => {
+            const overlap = (node.tags || []).filter((t: string) => productTags.includes(t));
+            return overlap.length >= 1;
+          })
+          .slice(0, 5);
+      }
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations query failed', err);
+  }
+
+  // Fallback vendor/productType
+  if ((similarProducts.length === 0) && config.fallbackEnabled) {
+    if (product.vendor) {
+      try {
+        const vendorRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
+          variables: { query: product.vendor, first: 20 },
+        });
+        similarProducts = (vendorRecs?.products?.nodes ?? []).filter((n: any) => n.handle !== product.handle).slice(0, 5);
+      } catch (err) {
+        if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations vendor fallback failed', err);
+      }
+    }
+    if ((similarProducts.length === 0) && product.productType) {
+      try {
+        const typeRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
+          variables: { query: product.productType, first: 20 },
+        });
+        similarProducts = (typeRecs?.products?.nodes ?? []).filter((n: any) => n.handle !== product.handle).slice(0, 5);
+      } catch (err) {
+        if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations productType fallback failed', err);
+      }
+    }
+  }
 
   const returnData = {
     product,
     similarProducts,
   };
 
-  console.log('LOADER - returnData:', returnData);
+  // return data ready
 
   return returnData;
 }
@@ -134,11 +156,9 @@ function loadDeferredData({
 
 export default function Product() {
   const loaderData = useLoaderData<typeof loader>();
-  console.log('Product component - full loaderData:', loaderData);
 
   const {product, similarProducts} = loaderData;
-  console.log('Product component - product:', product);
-  console.log('Product component - similarProducts:', similarProducts);
+  // Product data ready
 
   // Optimistically select a variant based on availability/adjacent variants
   const selectedVariant = useOptimisticVariant(
@@ -303,6 +323,7 @@ const PRODUCT_RECOMMENDATIONS_QUERY = `#graphql
         title
         handle
         tags
+          productType
         priceRange {
           minVariantPrice {
             amount

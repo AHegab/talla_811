@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import type { ProductQuery } from 'storefrontapi.generated';
 import {
   ProductBuyBox,
@@ -8,6 +9,7 @@ import {
 } from './ProductBuyBox';
 import type { PDPImage } from './ProductGallery';
 import { ProductGallery } from './ProductGallery';
+import { SimilarItems } from './SimilarItems';
 
 interface UserMeasurements {
   gender: 'male' | 'female';
@@ -29,8 +31,7 @@ interface ProductPageProps {
 }
 
 export function ProductPage({product, selectedVariant, similarProducts}: ProductPageProps) {
-  console.log('ProductPage - similarProducts:', similarProducts);
-  console.log('ProductPage - similarProducts length:', similarProducts?.length);
+  // Debug logs removed
 
   // Transform selectedVariant to PDPVariant
   const transformVariant = (
@@ -120,6 +121,8 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
     variants: pdpVariants,
   };
 
+  // No fallback - show only loader-provided similar products that match tag overlap
+
   // Simple size recommendation algorithm (kept for future use)
   const calculateRecommendedSize = (
     measurements: UserMeasurements,
@@ -186,21 +189,31 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
           <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start overflow-x-hidden">
             <ProductGallery images={images} productTitle={product.title} />
 
+            {/* Visually similar items (image-based) */}
+            {images.length > 0 && (
+              <div className="hidden lg:block">
+                <SimilarItems
+                  seedImageUrl={images[0].url}
+                  currentProductHandle={product.handle}
+                  currentProductTags={product.tags ?? []}
+                  vendor={product.vendor}
+                  productType={product.productType}
+                />
+              </div>
+            )}
+
             {/* Similar Products Section */}
-            <div className="w-full mt-8 border-2 border-red-500 p-4">
-              <div>DEBUG: similarProducts = {JSON.stringify(similarProducts)}</div>
-              <div>DEBUG: length = {similarProducts?.length}</div>
-            </div>
-            {similarProducts && similarProducts.length > 0 && (
+            {/* Similar products debug removed */}
+            {similarProducts && similarProducts.length > 0 ? (
               <div className="w-full mt-8">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
                   Similar Products
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                   {similarProducts.map((similar) => (
-                    <a
+                    <Link
                       key={similar.id}
-                      href={`/products/${similar.handle}`}
+                      to={`/products/${similar.handle}`}
                       className="group flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-gray-900 hover:shadow-md"
                     >
                       {similar.featuredImage && (
@@ -213,7 +226,7 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
                         </div>
                       )}
                       <div className="flex flex-col gap-1">
-                        <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
+                        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
                           {similar.title}
                         </h3>
                         <p className="text-sm font-semibold text-gray-900">
@@ -233,9 +246,13 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
                           </div>
                         )}
                       </div>
-                    </a>
+                    </Link>
                   ))}
                 </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-gray-500">
+                No similar products found for this item.
               </div>
             )}
           </div>
@@ -249,6 +266,7 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
                 onVariantChange={setCurrentVariant}
                 recommendedSize={recommendedSize}
                 similarProducts={similarProducts}
+                seedImageUrl={images[0]?.url}
               />
             )}
 
@@ -262,6 +280,19 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
                 <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
                   {product.description || 'No description available.'}
                 </div>
+              </div>
+
+              {/* Mobile: visually similar items under Shipping & Returns */}
+              <div className="mt-6 lg:hidden">
+                {images.length > 0 && (
+                  <SimilarItems
+                    seedImageUrl={images[0].url}
+                    currentProductHandle={product.handle}
+                    currentProductTags={product.tags ?? []}
+                    vendor={product.vendor}
+                    productType={product.productType}
+                  />
+                )}
               </div>
 
               {/* Details & Care Panel */}

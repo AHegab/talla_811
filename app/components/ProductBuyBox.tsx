@@ -4,9 +4,11 @@ import {
   Money,
   type OptimisticCartLineInput,
 } from '@shopify/hydrogen';
-import { Tag, Tags, Sparkles, Shirt, Users, Sun, Leaf, Heart, Flame } from 'lucide-react';
+import { Flame, Heart, Leaf, Shirt, Sparkles, Sun, Tag, Tags, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 
+import { SimilarItems } from './SimilarItems';
 import { SizeRecommendation } from './SizeRecommendation';
 import { SizeRecommendationPrompt } from './SizeRecommendationPrompt';
 
@@ -57,6 +59,7 @@ interface ProductBuyBoxProps {
   onVariantChange?: (variant: PDPVariant) => void;
   recommendedSize?: string | null;
   similarProducts?: SimilarProduct[];
+  seedImageUrl?: string | null;
 }
 
 export function ProductBuyBox({
@@ -65,6 +68,7 @@ export function ProductBuyBox({
   onVariantChange,
   recommendedSize,
   similarProducts = [],
+  seedImageUrl,
 }: ProductBuyBoxProps) {
   const [sizeRecOpen, setSizeRecOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -134,6 +138,8 @@ export function ProductBuyBox({
   // Optional images for horizontal scroll (if you pass them on PDPProduct)
   const images = (product as PDPProduct).images?.nodes ?? [];
 
+  // No fallback similar products; we require server-side filter for >=2 tags overlap
+
   return (
     <div className="space-y-4 animate-fadein">
       {/* Product Images - Horizontal Scroll (mini gallery above buy box) */}
@@ -157,6 +163,19 @@ export function ProductBuyBox({
               />
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Image-based visually similar products (inside BuyBox) */}
+      {(!similarProducts || similarProducts.length === 0) && seedImageUrl && (
+        <div className="mt-6">
+          <SimilarItems
+            seedImageUrl={seedImageUrl}
+            currentProductHandle={product.handle}
+            currentProductTags={product.tags ?? []}
+            vendor={product.vendor}
+            productType={product.productType}
+          />
         </div>
       )}
 
@@ -419,6 +438,42 @@ export function ProductBuyBox({
           );
         }}
       </CartForm>
+
+        {/* Similar products (compact) */}
+        {similarProducts && similarProducts.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Similar items</h3>
+              <div className="hidden lg:flex gap-3 overflow-x-auto">
+              {similarProducts.slice(0, 4).map((p: SimilarProduct) => (
+                <Link
+                  key={p.id}
+                  to={`/products/${p.handle}`}
+                  className="flex-shrink-0 w-24"
+                >
+                  <div className="flex flex-col gap-2 items-center">
+                    {p.featuredImage && (
+                      <div className="aspect-square w-24 overflow-hidden rounded-md bg-gray-100">
+                        <img
+                          src={p.featuredImage.url}
+                          alt={p.featuredImage.altText || p.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <div className="text-xs text-center text-gray-700 line-clamp-2">
+                      {p.title}
+                    </div>
+                    <div className="text-xs font-semibold text-gray-900">
+                      {p.priceRange?.minVariantPrice.currencyCode}{' '}
+                      {p.priceRange?.minVariantPrice.amount}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
     </div>
   );

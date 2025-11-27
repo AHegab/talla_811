@@ -37,11 +37,26 @@ export interface PDPProduct {
   images?: { nodes: any[] };
 }
 
+export interface SimilarProduct {
+  id: string;
+  title: string;
+  handle: string;
+  priceRange: {
+    minVariantPrice: { amount: string; currencyCode: string };
+  };
+  featuredImage?: {
+    url: string;
+    altText?: string;
+  };
+  tags?: string[];
+}
+
 interface ProductBuyBoxProps {
   product: PDPProduct;
   selectedVariant: PDPVariant;
   onVariantChange?: (variant: PDPVariant) => void;
   recommendedSize?: string | null;
+  similarProducts?: SimilarProduct[];
 }
 
 export function ProductBuyBox({
@@ -49,6 +64,7 @@ export function ProductBuyBox({
   selectedVariant,
   onVariantChange,
   recommendedSize,
+  similarProducts = [],
 }: ProductBuyBoxProps) {
   const [sizeRecOpen, setSizeRecOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -403,6 +419,7 @@ export function ProductBuyBox({
           );
         }}
       </CartForm>
+
     </div>
   );
 }

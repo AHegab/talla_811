@@ -439,7 +439,7 @@ export function HeaderMenu({
     {title: 'Women', url: '/collections/women'},
     {title: 'Men', url: '/collections/men'},
     {title: 'Accessories', url: '/collections/accessories'},
-    {title: 'Brands', url: '/collections/brands'},
+    {title: 'Brands', url: '/brands'},
     {title: 'Journal', url: '/blogs/journal'},
     {title: 'About', url: '/pages/about'},
   ];

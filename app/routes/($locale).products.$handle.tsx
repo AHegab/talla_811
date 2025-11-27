@@ -32,7 +32,11 @@ export async function loader(args: Route.LoaderArgs) {
   const deferredData = loadDeferredData(args);
   const criticalData = await loadCriticalData(args);
 
-  return {...deferredData, ...criticalData};
+  const finalData = {...deferredData, ...criticalData};
+  console.log('MAIN LOADER - finalData:', finalData);
+  console.log('MAIN LOADER - finalData.similarProducts:', finalData.similarProducts);
+
+  return finalData;
 }
 
 /**
@@ -67,9 +71,53 @@ async function loadCriticalData({
   // The API handle might be localized, so redirect if needed
   redirectIfHandleIsLocalized(request, {handle, data: product});
 
-  return {
+  // Fetch similar products - TEMPORARY TEST DATA
+  const similarProducts: any[] = [
+    {
+      id: 'test-1',
+      title: 'Test Product 1',
+      handle: 'test-1',
+      tags: ['blazer', 'men'],
+      priceRange: {
+        minVariantPrice: {
+          amount: '99.00',
+          currencyCode: 'EGP',
+        },
+      },
+      featuredImage: {
+        url: 'https://cdn.shopify.com/s/files/1/0688/1755/1382/files/Ribbon_Jacket-1.jpg?v=1703145651',
+        altText: 'Test Product',
+      },
+    },
+    {
+      id: 'test-2',
+      title: 'Test Product 2',
+      handle: 'test-2',
+      tags: ['blazer', 'formal'],
+      priceRange: {
+        minVariantPrice: {
+          amount: '149.00',
+          currencyCode: 'EGP',
+        },
+      },
+      featuredImage: {
+        url: 'https://cdn.shopify.com/s/files/1/0688/1755/1382/files/Ribbon_Jacket-1.jpg?v=1703145651',
+        altText: 'Test Product 2',
+      },
+    },
+  ];
+
+  console.log('LOADER - About to return similarProducts:', similarProducts);
+  console.log('LOADER - similarProducts.length:', similarProducts.length);
+
+  const returnData = {
     product,
+    similarProducts,
   };
+
+  console.log('LOADER - returnData:', returnData);
+
+  return returnData;
 }
 
 /**
@@ -81,12 +129,16 @@ function loadDeferredData({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   params,
 }: Route.LoaderArgs) {
-  // Add non-critical calls later: reviews, recommendations, social, etc.
   return {};
 }
 
 export default function Product() {
-  const {product} = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
+  console.log('Product component - full loaderData:', loaderData);
+
+  const {product, similarProducts} = loaderData;
+  console.log('Product component - product:', product);
+  console.log('Product component - similarProducts:', similarProducts);
 
   // Optimistically select a variant based on availability/adjacent variants
   const selectedVariant = useOptimisticVariant(
@@ -99,7 +151,7 @@ export default function Product() {
 
   return (
     <>
-      <ProductPage product={product} selectedVariant={selectedVariant} />
+      <ProductPage product={product} selectedVariant={selectedVariant} similarProducts={similarProducts} />
 
       <Analytics.ProductView
         data={{
@@ -239,3 +291,29 @@ const PRODUCT_QUERY = `#graphql
   }
   ${PRODUCT_FRAGMENT}
 ` as const;
+
+const PRODUCT_RECOMMENDATIONS_QUERY = `#graphql
+  query ProductRecommendations(
+    $query: String!
+    $first: Int!
+  ) {
+    products(first: $first, query: $query) {
+      nodes {
+        id
+        title
+        handle
+        tags
+        priceRange {
+          minVariantPrice {
+            amount
+            currencyCode
+          }
+        }
+        featuredImage {
+          url
+          altText
+        }
+      }
+    }
+  }
+`;

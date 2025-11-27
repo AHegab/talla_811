@@ -4,6 +4,7 @@ import {
   ProductBuyBox,
   type PDPProduct,
   type PDPVariant,
+  type SimilarProduct,
 } from './ProductBuyBox';
 import type { PDPImage } from './ProductGallery';
 import { ProductGallery } from './ProductGallery';
@@ -24,9 +25,13 @@ type ShopifyProduct = NonNullable<ProductQuery['product']>;
 interface ProductPageProps {
   product: ShopifyProduct;
   selectedVariant: ShopifyProduct['selectedOrFirstAvailableVariant'];
+  similarProducts?: SimilarProduct[];
 }
 
-export function ProductPage({product, selectedVariant}: ProductPageProps) {
+export function ProductPage({product, selectedVariant, similarProducts}: ProductPageProps) {
+  console.log('ProductPage - similarProducts:', similarProducts);
+  console.log('ProductPage - similarProducts length:', similarProducts?.length);
+
   // Transform selectedVariant to PDPVariant
   const transformVariant = (
     v: NonNullable<ShopifyProduct['selectedOrFirstAvailableVariant']>,
@@ -180,6 +185,59 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
           {/* Gallery: product gallery with hero image and static thumbnail carousel */}
           <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start overflow-x-hidden">
             <ProductGallery images={images} productTitle={product.title} />
+
+            {/* Similar Products Section */}
+            <div className="w-full mt-8 border-2 border-red-500 p-4">
+              <div>DEBUG: similarProducts = {JSON.stringify(similarProducts)}</div>
+              <div>DEBUG: length = {similarProducts?.length}</div>
+            </div>
+            {similarProducts && similarProducts.length > 0 && (
+              <div className="w-full mt-8">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Similar Products
+                </h2>
+                <div className="grid grid-cols-2 gap-4">
+                  {similarProducts.map((similar) => (
+                    <a
+                      key={similar.id}
+                      href={`/products/${similar.handle}`}
+                      className="group flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-gray-900 hover:shadow-md"
+                    >
+                      {similar.featuredImage && (
+                        <div className="aspect-square w-full overflow-hidden rounded-md bg-gray-100">
+                          <img
+                            src={similar.featuredImage.url}
+                            alt={similar.featuredImage.altText || similar.title}
+                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          />
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-1">
+                        <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
+                          {similar.title}
+                        </h3>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {similar.priceRange.minVariantPrice.currencyCode}{' '}
+                          {similar.priceRange.minVariantPrice.amount}
+                        </p>
+                        {similar.tags && similar.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {similar.tags.slice(0, 2).map((tag, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Details (right side) */}
@@ -190,6 +248,7 @@ export function ProductPage({product, selectedVariant}: ProductPageProps) {
                 selectedVariant={currentVariant}
                 onVariantChange={setCurrentVariant}
                 recommendedSize={recommendedSize}
+                similarProducts={similarProducts}
               />
             )}
 

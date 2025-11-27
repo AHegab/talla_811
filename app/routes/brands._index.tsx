@@ -22,7 +22,7 @@ export const meta: Route.MetaFunction = () => {
 };
 
 interface BrandCard {
-  id: string;
+  id: string; 
   title: string;
   handle: string;
   // Keep the original image object so we can use Hydrogen's Image component

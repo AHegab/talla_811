@@ -133,7 +133,7 @@ async function loadCriticalData({
   };
 }
   const PRODUCT_RECOMMENDATIONS_QUERY = `#graphql
-    query ProductRecommendations(
+    query ProductRecsNonLocale(
       $query: String!
       $first: Int!
     ) {

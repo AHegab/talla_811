@@ -113,8 +113,8 @@ async function loadCriticalData({
     if (product.vendor) {
       try {
         const vendorRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
-          variables: { query: product.vendor, first: 20 },
-        });
+          variables: { query: `vendor:"${product.vendor}"`, first: 20 },
+        } as any);
         similarProducts = (vendorRecs?.products?.nodes ?? []).filter((n: any) => n.handle !== product.handle).slice(0, 5);
       } catch (err) {
         if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations vendor fallback failed', err);
@@ -123,8 +123,8 @@ async function loadCriticalData({
     if ((similarProducts.length === 0) && product.productType) {
       try {
         const typeRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
-          variables: { query: product.productType, first: 20 },
-        });
+          variables: { query: `product_type:"${product.productType}"`, first: 20 },
+        } as any);
         similarProducts = (typeRecs?.products?.nodes ?? []).filter((n: any) => n.handle !== product.handle).slice(0, 5);
       } catch (err) {
         if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations productType fallback failed', err);
@@ -313,7 +313,7 @@ const PRODUCT_QUERY = `#graphql
 ` as const;
 
 const PRODUCT_RECOMMENDATIONS_QUERY = `#graphql
-  query ProductRecommendations(
+  query ProductRecsLocale(
     $query: String!
     $first: Int!
   ) {

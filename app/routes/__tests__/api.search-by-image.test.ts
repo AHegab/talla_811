@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { describe, expect, it } from 'vitest';
 import { action } from '../api.search-by-image';
 
@@ -22,7 +23,7 @@ describe('api.search-by-image action', () => {
 
         const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c' });
         const res = await action({ request, context: mockContext } as any);
-        const json = await res.json();
+        const json = (await res.json()) as any;
         expect(Array.isArray(json.products)).toBe(true);
         expect(json.products.length).toBeGreaterThan(0);
         expect(json.products[0].handle).toBe('a');
@@ -42,7 +43,7 @@ describe('api.search-by-image action', () => {
 
         const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c', vendor: 'Talla' });
         const res = await action({ request, context: mockContext } as any);
-        const json = await res.json();
+        const json = (await res.json()) as any;
         expect(json.products.length).toBe(1);
         expect(json.products[0].vendor).toBe('Talla');
     });
@@ -63,7 +64,7 @@ describe('api.search-by-image action', () => {
 
         const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c' });
         const res = await action({ request, context: mockContext } as any);
-        const json = await res.json();
+        const json = (await res.json()) as any;
         expect(json.products.length).toBe(1);
     });
 
@@ -83,7 +84,7 @@ describe('api.search-by-image action', () => {
 
         const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c' });
         const res = await action({ request, context: mockContext } as any);
-        const json = await res.json();
+        const json = (await res.json()) as any;
         expect(json.products.length).toBe(0);
     });
 });

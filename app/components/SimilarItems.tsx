@@ -51,19 +51,21 @@ export function SimilarItems({
         }
 
         const data = (await response.json()) as {products?: SimilarProduct[]; meta?: any};
-        // Filter out current product and limit to 5 items
-        // The server already filters for at least 2 tags in common, but as a safety
-        // client-side filter we still remove the current product and ensure at least
-        // a couple tags overlap if `currentProductTags` exists.
-        const filtered = (data.products || [])
-          .filter((p: SimilarProduct) => p.handle !== currentProductHandle)
-          .filter((p: SimilarProduct) => {
+        // If the server used fallback (vendor/productType/1-tag), don't apply strict
+        // tag filtering on the client; otherwise, enforce tag >= 2 overlap (or exact)
+        let filtered = (data.products || []).filter((p: SimilarProduct) => p.handle !== currentProductHandle);
+
+        const usedFallbackFlag = !!data.meta?.usedFallback;
+        if (!usedFallbackFlag) {
+          // The server did not use fallback, so enforce tag-overlap locally as a safety net.
+          filtered = filtered.filter((p: SimilarProduct) => {
             if (!currentProductTags || currentProductTags.length === 0) return false;
             const overlap = p.tags?.filter((t) => currentProductTags.includes(t)) ?? [];
             const required = currentProductTags.length >= 2 ? 2 : currentProductTags.length;
             return overlap.length >= required;
-          })
-          .slice(0, 5);
+          });
+        }
+        filtered = filtered.slice(0, 5);
 
         setProducts(filtered);
         setUsedFallback(!!data.meta?.usedFallback);
@@ -78,7 +80,7 @@ export function SimilarItems({
     if (seedImageUrl) {
       fetchSimilarItems();
     }
-  }, [seedImageUrl, currentProductHandle, currentProductTags]);
+  }, [seedImageUrl, currentProductHandle, currentProductTags, vendor, productType]);
 
   // Render a placeholder when no products were found
   if (error || (!loading && products.length === 0)) {
@@ -169,7 +171,7 @@ export function SimilarItems({
                         {product.title}
                       </h3>
                       <p className="text-sm font-medium pt-1 text-black" style={{fontFamily: 'var(--font-sans)'}}>
-                        <Money data={{amount: product.price.amount, currencyCode: product.price.currencyCode}} />
+                        <Money data={{amount: product.price.amount, currencyCode: product.price.currencyCode as any}} />
                       </p>
                     </div>
                   </div>
@@ -208,7 +210,7 @@ export function SimilarItems({
                         {product.title}
                       </h3>
                       <p className="text-sm font-medium pt-1 text-black" style={{fontFamily: 'var(--font-sans)'}}>
-                        <Money data={{amount: product.price.amount, currencyCode: product.price.currencyCode}} />
+                        <Money data={{amount: product.price.amount, currencyCode: product.price.currencyCode as any}} />
                       </p>
                     </div>
                   </div>

@@ -1,5 +1,6 @@
+import { Image } from '@shopify/hydrogen';
+import { Link, useLoaderData } from 'react-router';
 import type { Route } from './+types/brands._index';
-import { useLoaderData } from 'react-router';
 
 /**
  * Brands Index Page
@@ -24,7 +25,8 @@ interface BrandCard {
   id: string;
   title: string;
   handle: string;
-  imageUrl: string | null;
+  // Keep the original image object so we can use Hydrogen's Image component
+  image: any | null;
   imageAlt: string | null;
   url: string;
 }
@@ -52,22 +54,21 @@ export async function loader({ context }: Route.LoaderArgs) {
     })
     .map((item: any) => {
       const collection = item.resource;
-      const imageUrl = collection.image?.url || null;
+      const image = collection.image || null;
 
-      console.log('Brand:', collection.title, 'Image URL:', imageUrl);
+      // Debug logging removed
 
       return {
         id: collection.id,
         title: collection.title,
         handle: collection.handle,
-        imageUrl: imageUrl,
-        imageAlt: collection.image?.altText || collection.title,
+        image: image,
+        imageAlt: image?.altText || collection.title,
         url: `/collections/${collection.handle}`,
       };
     });
 
-  console.log('Total brands loaded:', brands.length);
-  console.log('Brands with images:', brands.filter(b => b.imageUrl).length);
+  // Debug logging removed
 
   return { brands };
 }
@@ -75,8 +76,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 export default function BrandsIndex() {
   const { brands } = useLoaderData<typeof loader>();
 
-  console.log('Component - brands:', brands);
-  console.log('Component - brands with images:', brands.filter(b => b.imageUrl).length);
+  // Debug logging removed
 
   return (
     <div className="min-h-screen bg-[var(--color-bg,#FBFBFB)] overflow-x-hidden">
@@ -94,15 +94,7 @@ export default function BrandsIndex() {
           </p>
         </header>
 
-        {/* DEBUG BOX */}
-        <div className="mb-8 border-2 border-yellow-500 bg-yellow-50 p-4 rounded">
-          <h3 className="font-bold mb-2">DEBUG - Brand Images</h3>
-          {brands.map((brand) => (
-            <div key={brand.id} className="text-xs mb-1">
-              <strong>{brand.title}:</strong> {brand.imageUrl || 'NO IMAGE'}
-            </div>
-          ))}
-        </div>
+        {/* Debug box removed */}
 
         {/* Brands Grid */}
         {brands.length === 0 ? (
@@ -112,18 +104,21 @@ export default function BrandsIndex() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 lg:gap-8">
             {brands.map((brand) => (
-              <a
+              <Link
                 key={brand.id}
-                href={brand.url}
+                to={brand.url}
+                prefetch="intent"
                 className="group flex flex-col items-center justify-center rounded-2xl border border-[var(--color-surface,#DDDEE2)] bg-[var(--color-bg,#FBFBFB)] p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
               >
                 {/* Brand Logo */}
                 <div className="w-full aspect-square mb-4 flex items-center justify-center">
-                  {brand.imageUrl ? (
-                    <img
-                      src={brand.imageUrl}
+                  {brand.image ? (
+                    <Image
+                      data={brand.image}
                       alt={brand.imageAlt || brand.title}
+                      aspectRatio="1/1"
                       className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                      sizes="(min-width: 45em) 400px, 100vw"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
@@ -141,7 +136,7 @@ export default function BrandsIndex() {
                 <h2 className="text-sm md:text-base font-medium uppercase tracking-wider text-[var(--color-text,#292929)] text-center">
                   {brand.title}
                 </h2>
-              </a>
+              </Link>
             ))}
           </div>
         )}
@@ -166,6 +161,7 @@ const BRANDS_MENU_QUERY = `#graphql
             title
             handle
             image {
+              id
               url
               altText
               width

@@ -137,7 +137,9 @@ async function loadCriticalData({
     similarProducts,
   };
 
-  // return data ready
+  console.log('LOADER - returnData:', returnData);
+  console.log('LOADER - returnData.similarProducts:', returnData.similarProducts);
+  console.log('LOADER - similarProducts length:', returnData.similarProducts?.length);
 
   return returnData;
 }
@@ -157,8 +159,12 @@ function loadDeferredData({
 export default function Product() {
   const loaderData = useLoaderData<typeof loader>();
 
+  console.log('Product component - FULL loaderData:', loaderData);
+  console.log('Product component - loaderData.similarProducts:', loaderData.similarProducts);
+
   const {product, similarProducts} = loaderData;
-  // Product data ready
+  console.log('Product component - destructured similarProducts:', similarProducts);
+  console.log('Product component - similarProducts length:', similarProducts?.length);
 
   // Optimistically select a variant based on availability/adjacent variants
   const selectedVariant = useOptimisticVariant(

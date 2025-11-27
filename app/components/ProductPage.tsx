@@ -9,7 +9,6 @@ import {
 } from './ProductBuyBox';
 import type { PDPImage } from './ProductGallery';
 import { ProductGallery } from './ProductGallery';
-import { SimilarItems } from './SimilarItems';
 
 interface UserMeasurements {
   gender: 'male' | 'female';
@@ -31,7 +30,9 @@ interface ProductPageProps {
 }
 
 export function ProductPage({product, selectedVariant, similarProducts}: ProductPageProps) {
-  // Debug logs removed
+  console.log('ProductPage - similarProducts:', similarProducts);
+  console.log('ProductPage - similarProducts length:', similarProducts?.length);
+  console.log('ProductPage - similarProducts array:', JSON.stringify(similarProducts));
 
   // Transform selectedVariant to PDPVariant
   const transformVariant = (
@@ -188,73 +189,6 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
           {/* Gallery: product gallery with hero image and static thumbnail carousel */}
           <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start overflow-x-hidden">
             <ProductGallery images={images} productTitle={product.title} />
-
-            {/* Visually similar items (image-based) */}
-            {images.length > 0 && (
-              <div className="hidden lg:block">
-                <SimilarItems
-                  seedImageUrl={images[0].url}
-                  currentProductHandle={product.handle}
-                  currentProductTags={product.tags ?? []}
-                  vendor={product.vendor}
-                  productType={product.productType}
-                />
-              </div>
-            )}
-
-            {/* Similar Products Section */}
-            {/* Similar products debug removed */}
-            {similarProducts && similarProducts.length > 0 ? (
-              <div className="w-full mt-8">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Similar Products
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {similarProducts.map((similar) => (
-                    <Link
-                      key={similar.id}
-                      to={`/products/${similar.handle}`}
-                      className="group flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-gray-900 hover:shadow-md"
-                    >
-                      {similar.featuredImage && (
-                        <div className="aspect-square w-full overflow-hidden rounded-md bg-gray-100">
-                          <img
-                            src={similar.featuredImage.url}
-                            alt={similar.featuredImage.altText || similar.title}
-                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                          />
-                        </div>
-                      )}
-                      <div className="flex flex-col gap-1">
-                        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
-                          {similar.title}
-                        </h3>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {similar.priceRange.minVariantPrice.currencyCode}{' '}
-                          {similar.priceRange.minVariantPrice.amount}
-                        </p>
-                        {similar.tags && similar.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {similar.tags.slice(0, 2).map((tag, idx) => (
-                              <span
-                                key={idx}
-                                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-sm text-gray-500">
-                No similar products found for this item.
-              </div>
-            )}
           </div>
 
           {/* Details (right side) */}
@@ -266,7 +200,6 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
                 onVariantChange={setCurrentVariant}
                 recommendedSize={recommendedSize}
                 similarProducts={similarProducts}
-                seedImageUrl={images[0]?.url}
               />
             )}
 
@@ -280,19 +213,6 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
                 <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
                   {product.description || 'No description available.'}
                 </div>
-              </div>
-
-              {/* Mobile: visually similar items under Shipping & Returns */}
-              <div className="mt-6 lg:hidden">
-                {images.length > 0 && (
-                  <SimilarItems
-                    seedImageUrl={images[0].url}
-                    currentProductHandle={product.handle}
-                    currentProductTags={product.tags ?? []}
-                    vendor={product.vendor}
-                    productType={product.productType}
-                  />
-                )}
               </div>
 
               {/* Details & Care Panel */}
@@ -322,6 +242,65 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
                   </ul>
                 </div>
               </div>
+
+              {/* DEBUG BOX */}
+              <div className="w-full border-2 border-red-500 bg-red-50 p-4 rounded">
+                <h3 className="font-bold mb-2">DEBUG - Similar Products</h3>
+                <div className="text-xs">
+                  <div>similarProducts exists: {similarProducts ? 'YES' : 'NO'}</div>
+                  <div>similarProducts length: {similarProducts?.length || 0}</div>
+                  <div>Data: {JSON.stringify(similarProducts)}</div>
+                </div>
+              </div>
+
+              {/* Similar Products Section */}
+              {similarProducts && similarProducts.length > 0 && (
+                <div className="w-full">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    Similar Products
+                  </h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {similarProducts.map((similar) => (
+                      <Link
+                        key={similar.id}
+                        to={`/products/${similar.handle}`}
+                        className="group flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-gray-900 hover:shadow-md"
+                      >
+                        {similar.featuredImage && (
+                          <div className="aspect-square w-full overflow-hidden rounded-md bg-gray-100">
+                            <img
+                              src={similar.featuredImage.url}
+                              alt={similar.featuredImage.altText || similar.title}
+                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                            />
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-1">
+                          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
+                            {similar.title}
+                          </h3>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {similar.priceRange.minVariantPrice.currencyCode}{' '}
+                            {similar.priceRange.minVariantPrice.amount}
+                          </p>
+                          {similar.tags && similar.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {similar.tags.slice(0, 2).map((tag, idx) => (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

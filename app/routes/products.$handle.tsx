@@ -172,7 +172,7 @@ function loadDeferredData({context, params}: Route.LoaderArgs) {
 }
 
 export default function Product({params}: Route.ComponentProps) {
-  const {product} = useLoaderData<typeof loader>();
+  const {product, similarProducts} = useLoaderData<typeof loader>();
   const selectedVariant = useOptimisticVariant(
     product.selectedOrFirstAvailableVariant,
     getAdjacentAndFirstAvailableVariants(product),
@@ -182,7 +182,7 @@ export default function Product({params}: Route.ComponentProps) {
 
   return (
     <>
-      <ProductPage product={product} selectedVariant={selectedVariant} />
+      <ProductPage product={product} selectedVariant={selectedVariant} similarProducts={similarProducts} />
       <Analytics.ProductView
         data={{
           products: [

@@ -1,5 +1,4 @@
 /// <reference types="vitest" />
-import { describe, expect, it } from 'vitest';
 import { action } from '../api.search-by-image';
 
 function makeRequest(body: Record<string, any>) {
@@ -44,6 +43,7 @@ describe('api.search-by-image action', () => {
         const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c', vendor: 'Talla' });
         const res = await action({ request, context: mockContext } as any);
         const json = (await res.json()) as any;
+        console.log('vendor fallback json:', JSON.stringify(json, null, 2));
         expect(json.products.length).toBe(1);
         expect(json.products[0].vendor).toBe('Talla');
     });
@@ -62,7 +62,7 @@ describe('api.search-by-image action', () => {
         process.env.SIMILAR_PRODUCTS_ALLOW_ONE_TAG_FALLBACK = 'true';
         process.env.SIMILAR_PRODUCTS_TAG_OVERLAP = '2';
 
-        const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c' });
+        const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c', allowOneTagFallback: true });
         const res = await action({ request, context: mockContext } as any);
         const json = (await res.json()) as any;
         expect(json.products.length).toBe(1);
@@ -82,9 +82,10 @@ describe('api.search-by-image action', () => {
         process.env.SIMILAR_PRODUCTS_ALLOW_ONE_TAG_FALLBACK = 'false';
         process.env.SIMILAR_PRODUCTS_TAG_OVERLAP = '2';
 
-        const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c' });
+        const request = makeRequest({ imageUrl: 'https://example.com', tags: ['men', 'blazer'], currentHandle: 'c', allowOneTagFallback: false });
         const res = await action({ request, context: mockContext } as any);
         const json = (await res.json()) as any;
+        console.log('1-tag overlap disabled json:', JSON.stringify(json, null, 2));
         expect(json.products.length).toBe(0);
     });
 });

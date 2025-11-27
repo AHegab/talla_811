@@ -42,6 +42,10 @@ export default defineConfig({
     },
     // Force Vite to bundle these ESM-only packages for SSR which avoids
     // issues with CommonJS/exports resolution and missing subpath specifiers
+    // If a Node built-in or a dev dependency (like vitest) is accidentally
+    // pulled into the server bundle, mark built-in modules external so Vite
+    // doesn't try to bundle them (e.g. 'async_hooks' used by p-limit).
+    external: ['async_hooks'],
     noExternal: ['react-router', 'react-router-dom', '@remix-run/react'],
   },
   server: {

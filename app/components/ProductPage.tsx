@@ -128,8 +128,22 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
   // Extract size chart metafield and map to pdpProduct.sizeChartImage
   try {
     const nodes = (product as any)?.metafields?.nodes ?? [];
-    const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage'];
-    const found = nodes.find((m: any) => (m && m.key && keyNames.includes(m.key)) || (m && m.key && m.key.toLowerCase().includes('size')));
+    const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage', 'size_map', 'size-map'];
+    const found = nodes.find((m: any) => {
+      if (!m) return false;
+      const key = (m.key || '').toString().toLowerCase();
+      const ns = (m.namespace || '').toString().toLowerCase();
+      const val = (m.value || '').toString().toLowerCase();
+      const refAlt = (m.reference?.image?.altText || m.reference?.alt || '').toString().toLowerCase();
+      // check key/namespace or value or alt text contains 'size' or matches known keys
+      return (
+        keyNames.some((k) => key.includes(k)) ||
+        key.includes('size') ||
+        ns.includes('size') ||
+        val.includes('size') ||
+        refAlt.includes('size')
+      );
+    });
     if (found) {
       const ref = found.reference;
       if (ref && ref.__typename === 'MediaImage' && ref.image?.url) {

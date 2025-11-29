@@ -72,6 +72,8 @@ export function ProductBuyBox({
   const [sizeRecOpen, setSizeRecOpen] = useState(false);
   const [sizeChartOpen, setSizeChartOpen] = useState(false);
   const [brandSizeChartOpen, setBrandSizeChartOpen] = useState(false);
+  // which chart to show in the main chart modal: 'product' | 'brand'
+  const [chartSource, setChartSource] = useState<'product' | 'brand' | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
   const [showSizePrompt, setShowSizePrompt] = useState(false); // reserved if you want to show a separate prompt later
   const [hasMeasurements, setHasMeasurements] = useState(false);
@@ -427,10 +429,17 @@ export function ProductBuyBox({
                   </button>
                 )}
                 {/* Size Chart button (from product metafield) */}
-                {product.sizeChartImage && (
+                {(product.sizeChartImage || product.brandSizeChartImage) && (
                   <button
                     type="button"
-                    onClick={() => setSizeChartOpen(true)}
+                    onClick={() => {
+                      if (product.sizeChartImage) {
+                        setChartSource('product');
+                      } else if (product.brandSizeChartImage) {
+                        setChartSource('brand');
+                      }
+                      setSizeChartOpen(true);
+                    }}
                     className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:border-gray-400 rounded-full transition-all duration-200 hover:bg-gray-50"
                   >
                     Size Chart
@@ -477,16 +486,16 @@ export function ProductBuyBox({
                         const base = 'px-5 py-3 text-sm font-medium rounded-full border transition-all duration-300 ease-out';
                         if (isColorOption) {
                           // for color options, rely on inline backgroundColor and vary the border and opacity
-                          const border = isSelected ? 'border-gray-800 shadow-sm' : 'border-gray-200 hover:border-gray-400';
-                          const selectedRing = isSelected ? (isLightColor(cssColor!) ? 'ring-2 ring-gray-800 ring-offset-2' : 'ring-2 ring-white ring-offset-2') : '';
+                          const border = isSelected ? 'border-gray-900 shadow-lg' : 'border-gray-200 hover:border-gray-400';
+                          const selectedRing = isSelected ? (isLightColor(cssColor!) ? 'ring-2 ring-gray-900 ring-offset-2' : 'ring-2 ring-gray-900 ring-offset-2') : '';
                           const disabled = !isAvailable ? 'opacity-30 cursor-not-allowed filter grayscale line-through' : '';
                           const rec = isRec && !isSelected ? 'ring-2 ring-emerald-400 ring-offset-2' : '';
-                          const classes = [base, border, disabled, selectedRing, rec].filter(Boolean).join(' ');
+                          const classes = [base, border, disabled, selectedRing, rec, isSelected ? 'transform scale-105' : ''].filter(Boolean).join(' ');
                           return classes;
                         }
                         // Not a color option - soft, friendly styling
                         const classes = `${base} ${isSelected
-                          ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
+                          ? 'bg-gray-900 text-white border-gray-900 shadow-lg transform scale-105 ring-2 ring-gray-900'
                           : isAvailable
                             ? 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
                             : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed line-through'
@@ -506,6 +515,13 @@ export function ProductBuyBox({
                         </span>
                       ) : (
                         value
+                      )}
+                      {isSelected && (
+                        <span className="ml-2 inline-flex items-center text-sm text-white">
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </span>
                       )}
                       {isRec && !isSelected && <span className="ml-1 text-green-600">✓</span>}
                     </button>
@@ -529,10 +545,10 @@ export function ProductBuyBox({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
           <div className="max-w-4xl w-full">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-semibold">Size Chart</h4>
-              <button onClick={() => setSizeChartOpen(false)} className="text-gray-600">Close</button>
+              <h4 className="text-lg font-semibold">{chartSource === 'brand' ? 'Brand Size Chart' : 'Size Chart'}</h4>
+              <button onClick={() => { setSizeChartOpen(false); setChartSource(null); }} className="text-gray-600">Close</button>
             </div>
-            <SizeChart imageUrl={product.sizeChartImage?.url} alt={product.sizeChartImage?.alt || 'Size chart'} />
+            <SizeChart imageUrl={chartSource === 'brand' ? product.brandSizeChartImage?.url : product.sizeChartImage?.url || product.brandSizeChartImage?.url} alt={chartSource === 'brand' ? product.brandSizeChartImage?.alt || 'Brand size chart' : product.sizeChartImage?.alt || product.brandSizeChartImage?.alt || 'Size chart'} />
           </div>
         </div>
       )}

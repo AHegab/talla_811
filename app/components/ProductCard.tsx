@@ -55,7 +55,7 @@ export function ProductCard({
       </div>
 
       {/* Text block – title then price under the image */}
-      <div className="mt-4 px-1">
+      <div className="mt-6 px-1">
         <h3
           className="text-[11px] font-normal uppercase text-black tracking-wide line-clamp-2"
           style={{ fontFamily: 'var(--font-sans)' }}

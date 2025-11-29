@@ -1,4 +1,3 @@
-import React from 'react';
 
 export type SizeChartProps = {
   /** Image URL for the size chart. */

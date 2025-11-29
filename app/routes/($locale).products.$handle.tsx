@@ -156,8 +156,8 @@ async function loadBrandSizeChart(storefront: any, vendor?: string | null) {
     });
     const collection = byHandle?.collectionByHandle;
     if (collection) {
-      // check metafields similar to product
-      const nodes = collection.metafields?.nodes ?? [];
+    // check metafields similar to product
+    const nodes = collection.metafields?.nodes ?? [];
       const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage'];
         const found = nodes.find((m: any) => {
           if (!m) return false;
@@ -174,15 +174,33 @@ async function loadBrandSizeChart(storefront: any, vendor?: string | null) {
           );
         });
       if (found) {
+          if (process.env.NODE_ENV !== 'production') {
+            // eslint-disable-next-line no-console
+            console.log('Product size chart metafield found:', found);
+          }
+        // more robust extraction similar to product
         const ref = found.reference;
         if (ref && ref.__typename === 'MediaImage' && ref.image?.url) {
           return { url: ref.image.url, alt: ref.image.altText ?? 'Size chart', source: 'brand' };
         }
-        if (ref && (ref.url)) {
+        if (ref && ref.url) {
           return { url: ref.url, alt: found?.value ?? 'Size chart', source: 'brand' };
         }
-        if (found.value && typeof found.value === 'string' && found.value.startsWith('http')) {
-          return { url: found.value, alt: 'Size chart', source: 'brand' };
+        if (found.value && typeof found.value === 'string') {
+          const trimmed = found.value.trim();
+          if (trimmed.startsWith('http')) return { url: trimmed, alt: found?.value ?? 'Size chart', source: 'brand' };
+          if (trimmed.startsWith('{')) {
+            try {
+              const parsed: any = JSON.parse(trimmed);
+              const url = parsed.url || parsed.src || parsed.file?.url || parsed.previewImage?.url;
+              const alt = parsed.alt || parsed.altText || parsed.previewImage?.altText;
+              if (url) return { url, alt: alt ?? found?.value ?? 'Size chart', source: 'brand' };
+            } catch (err) {
+              // ignore
+            }
+          }
+          const imgSrcMatch = trimmed.match(/<img[^>]+src=["']([^"'>]+)["']/i);
+          if (imgSrcMatch) return { url: imgSrcMatch[1], alt: found?.value ?? 'Size chart', source: 'brand' };
         }
       }
     }

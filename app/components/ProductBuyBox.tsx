@@ -7,9 +7,9 @@ import {
 import { Flame, Heart, Leaf, Shirt, Sparkles, Sun, Tag, Tags, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import SizeChart from './SizeChart';
 import { SizeRecommendation } from './SizeRecommendation';
 import { SizeRecommendationPrompt } from './SizeRecommendationPrompt';
-import SizeChart from './SizeChart';
 
 export interface PDPVariant {
   id: string;
@@ -421,7 +421,18 @@ export function ProductBuyBox({
                 {option.name.toLowerCase() === 'size' && (
                   <button
                     type="button"
-                    onClick={() => setSizeRecOpen(!sizeRecOpen)}
+                    onClick={() => {
+                      // Open product size chart if available, otherwise open brand chart, else open size recommendation
+                      if (product.sizeChartImage) {
+                        setChartSource('product');
+                        setSizeChartOpen(true);
+                      } else if (product.brandSizeChartImage) {
+                        setChartSource('brand');
+                        setSizeChartOpen(true);
+                      } else {
+                        setSizeRecOpen(!sizeRecOpen);
+                      }
+                    }}
                     className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:border-gray-400 rounded-full transition-all duration-200 hover:bg-gray-50"
                     aria-expanded={sizeRecOpen}
                   >
@@ -457,7 +468,7 @@ export function ProductBuyBox({
               </div>
 
               {/* Options - Smaller, friendlier buttons */}
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 ml-3">
                 {option.values.map((value) => {
                   const isAvailable = product.variants.some(
                     (v) =>
@@ -468,12 +479,12 @@ export function ProductBuyBox({
                       ),
                   );
                   const isSelected = selectedOptions[option.name] === value;
-                  const isColorOption = option.name.toLowerCase() === 'color';
+                      const isColorOption = option.name.toLowerCase() === 'color';
                   const cssColor = isColorOption ? toHex(value) : undefined;
                   const textColorClass = cssColor ? (isLightColor(cssColor) ? 'text-gray-900' : 'text-white') : '';
                   const isRec = recommendedSize === value && option.name.toLowerCase() === 'size';
 
-                  return (
+                      return (
                     <button
                       key={value}
                       type="button"

@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import type { ProductQuery } from 'storefrontapi.generated';
 import {
-  ProductBuyBox,
-  type PDPProduct,
-  type PDPVariant,
-  type SimilarProduct,
+    ProductBuyBox,
+    type PDPProduct,
+    type PDPVariant,
+    type SimilarProduct,
 } from './ProductBuyBox';
 import type { PDPImage } from './ProductGallery';
 import { ProductGallery } from './ProductGallery';
@@ -126,6 +126,46 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
   }
 
   // Extract size chart metafield and map to pdpProduct.sizeChartImage
+  const extractMetafieldImage = (m: any): { url: string; alt?: string } | undefined => {
+    if (!m) return undefined;
+    try {
+      // reference object is preferred for single-media metafields
+      const ref = m.reference;
+      if (ref) {
+        if (ref.__typename === 'MediaImage' && ref.image?.url) {
+          return { url: ref.image.url, alt: ref.image.altText ?? m.value ?? undefined };
+        }
+        // GenericFile, or File-like structures
+        if (ref.url) return { url: ref.url, alt: m.value ?? undefined };
+        // If the reference includes a 'file' or 'previewImage'
+        const nested = ref.image || ref.previewImage || ref.file;
+        if (nested?.url) return { url: nested.url, alt: nested?.altText ?? m.value ?? undefined };
+      }
+      // value may be a plain URL, JSON, or HTML - handle common cases
+      if (m.value && typeof m.value === 'string') {
+        const trimmed = m.value.trim();
+        if (trimmed.startsWith('http')) return { url: trimmed, alt: undefined };
+        // JSON (Shopify sometimes stores file metadata as JSON string)
+        if (trimmed.startsWith('{')) {
+          try {
+            const parsed: any = JSON.parse(trimmed);
+            const url = parsed.url || parsed.src || parsed.file?.url || parsed.previewImage?.url;
+            const alt = parsed.alt || parsed.altText || parsed.previewImage?.altText;
+            if (url) return { url, alt };
+          } catch (e) {
+            // ignore
+          }
+        }
+        // HTML; find <img src="..."
+        const imgSrcMatch = trimmed.match(/<img[^>]+src=["']([^"'>]+)["']/i);
+        if (imgSrcMatch) return { url: imgSrcMatch[1], alt: undefined };
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+    return undefined;
+  };
+
   try {
     const nodes = (product as any)?.metafields?.nodes ?? [];
     const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage', 'size_map', 'size-map'];
@@ -145,14 +185,14 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
       );
     });
     if (found) {
-      const ref = found.reference;
-      if (ref && ref.__typename === 'MediaImage' && ref.image?.url) {
-        pdpProduct.sizeChartImage = { url: ref.image.url, alt: ref.image.altText ?? 'Size chart' } as any;
-      } else if (ref && (ref.url || ref.alt)) {
-        pdpProduct.sizeChartImage = { url: ref.url ?? (found.value || ''), alt: found?.value ?? 'Size chart' } as any;
-      } else if (found.value && typeof found.value === 'string' && found.value.startsWith('http')) {
-        pdpProduct.sizeChartImage = { url: found.value, alt: 'Size chart' } as any;
+      const extracted = extractMetafieldImage(found);
+      if (extracted?.url) {
+        pdpProduct.sizeChartImage = { url: extracted.url, alt: extracted.alt ?? found?.value ?? 'Size chart' } as any;
       }
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.log('PDP mapped size/brand chart', { productId: product.id, sizeChart: pdpProduct.sizeChartImage, brandChart: pdpProduct.brandSizeChartImage });
     }
   } catch (e) {
     // ignore: product might not contain metafields from the query; sizeChart remains undefined

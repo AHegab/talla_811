@@ -116,7 +116,27 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
             },
           }),
     variants: pdpVariants,
+    // sizeChartImage will be mapped later
   };
+
+  // Extract size chart metafield and map to pdpProduct.sizeChartImage
+  try {
+    const nodes = (product as any)?.metafields?.nodes ?? [];
+    const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage'];
+    const found = nodes.find((m: any) => (m && m.key && keyNames.includes(m.key)) || (m && m.key && m.key.toLowerCase().includes('size')));
+    if (found) {
+      const ref = found.reference;
+      if (ref && ref.__typename === 'MediaImage' && ref.image?.url) {
+        pdpProduct.sizeChartImage = { url: ref.image.url, alt: ref.image.altText ?? 'Size chart' } as any;
+      } else if (ref && (ref.url || ref.alt)) {
+        pdpProduct.sizeChartImage = { url: ref.url ?? (found.value || ''), alt: found?.value ?? 'Size chart' } as any;
+      } else if (found.value && typeof found.value === 'string' && found.value.startsWith('http')) {
+        pdpProduct.sizeChartImage = { url: found.value, alt: 'Size chart' } as any;
+      }
+    }
+  } catch (e) {
+    // ignore: product might not contain metafields from the query; sizeChart remains undefined
+  }
 
   // No fallback - show only loader-provided similar products that match tag overlap
 
@@ -147,7 +167,6 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
 
     // BMI contribution
     if (bmi < 18.5) sizeIndex -= 1;
-    else if (bmi > 25) sizeIndex += 1;
     else if (bmi > 30) sizeIndex += 2;
 
     // Body fit preference
@@ -270,6 +289,15 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
                     <li>Machine washable</li>
                     <li>Made with care for the environment</li>
                   </ul>
+                  {/* Size chart preview and link */}
+                  {pdpProduct.sizeChartImage && (
+                    <div className="mt-4 flex items-center gap-4">
+                      <img src={pdpProduct.sizeChartImage.url} alt={pdpProduct.sizeChartImage.alt || 'Size chart'} className="h-16 w-auto object-contain rounded-md border border-gray-100" />
+                      <a href={pdpProduct.sizeChartImage.url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-gray-700 hover:text-black underline">
+                        View Size Chart
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 

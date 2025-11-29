@@ -249,6 +249,32 @@ const PRODUCT_FRAGMENT = `#graphql
         height
       }
     }
+    metafields(first: 10) {
+      nodes {
+        id
+        key
+        namespace
+        value
+        type
+        reference {
+          __typename
+          ... on MediaImage {
+            image {
+              id
+              url
+              altText
+              width
+              height
+            }
+          }
+          ... on GenericFile {
+            alt
+            mimeType
+            url
+          }
+        }
+      }
+    }
     encodedVariantExistence
     encodedVariantAvailability
     options {

@@ -1,11 +1,15 @@
-import React from "react";
-import { Money, MoneyV2 } from "@shopify/hydrogen";
+import { Money } from "@shopify/hydrogen";
+
+export type MoneyV2Shape = {
+  amount: string;
+  currencyCode?: string;
+};
 
 export type PriceBlockProps = {
   /** Product variant price money object */
-  price: MoneyV2;
+  price: MoneyV2Shape;
   /** Product variant compareAtPrice money object (optional) */
-  compareAtPrice?: MoneyV2 | null;
+  compareAtPrice?: MoneyV2Shape | null;
   /** Optional className to pass into the wrapping element */
   className?: string;
 };
@@ -45,15 +49,15 @@ export default function PriceBlock({
     >
       <div className="flex items-center gap-2">
         {/* Current price - bold, Open Sauce, 20px (text-[20px]) */}
-        <div className="font-open-sauce text-[20px] font-semibold text-[#292929] leading-none">
-          <Money withoutTrailingZeros data={price} />
+        <div className="font-sans text-[20px] font-semibold text-[#292929] leading-none">
+          <Money withoutTrailingZeros data={price as any} />
         </div>
 
         {/* Compare at price when discounted */}
         {isDiscounted && (
-          <div className="text-[16px] text-[#A0A0A0] font-open-sauce leading-none">
+          <div className="text-[16px] text-[#A0A0A0] font-sans leading-none">
             <span className="line-through decoration-[#A0A0A0] decoration-1">
-              <Money withoutTrailingZeros data={compareAtPrice!} />
+              <Money withoutTrailingZeros data={compareAtPrice! as any} />
             </span>
           </div>
         )}
@@ -62,7 +66,7 @@ export default function PriceBlock({
       {/* Discount badge */}
       {isDiscounted && percent > 0 && (
         <span
-          className="text-[10px] font-playfair-display-sc bg-[#00F4D2] text-black rounded-full px-[10px] py-[4px] leading-none"
+          className="text-[10px] font-display bg-[#00F4D2] text-black rounded-full px-[10px] py-[4px] leading-none"
           style={{
             // ensure pill is vertically centered and compact
             display: "inline-flex",

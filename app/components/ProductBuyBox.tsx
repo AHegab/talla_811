@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 
 import { SizeRecommendation } from './SizeRecommendation';
 import { SizeRecommendationPrompt } from './SizeRecommendationPrompt';
+import SizeChart from './SizeChart';
 
 export interface PDPVariant {
   id: string;
@@ -35,6 +36,8 @@ export interface PDPProduct {
   // Optional images for the mini-scroll gallery
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   images?: { nodes: any[] };
+  // optional size chart image url
+  sizeChartImage?: { url: string; alt?: string } | null;
 }
 
 export interface SimilarProduct {
@@ -65,6 +68,7 @@ export function ProductBuyBox({
   recommendedSize,
 }: ProductBuyBoxProps) {
   const [sizeRecOpen, setSizeRecOpen] = useState(false);
+  const [sizeChartOpen, setSizeChartOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const [showSizePrompt, setShowSizePrompt] = useState(false); // reserved if you want to show a separate prompt later
   const [hasMeasurements, setHasMeasurements] = useState(false);
@@ -411,6 +415,16 @@ export function ProductBuyBox({
                     Size Guide
                   </button>
                 )}
+                {/* Size Chart button (from product metafield) */}
+                {product.sizeChartImage && (
+                  <button
+                    type="button"
+                    onClick={() => setSizeChartOpen(true)}
+                    className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:border-gray-400 rounded-full transition-all duration-200 hover:bg-gray-50"
+                  >
+                    Size Chart
+                  </button>
+                )}
               </div>
 
               {/* Options - Smaller, friendlier buttons */}
@@ -488,6 +502,19 @@ export function ProductBuyBox({
           onRecommendation={handleSizeRecommendation}
           onClose={() => setSizeRecOpen(false)}
         />
+      )}
+
+      {/* Size Chart Modal / Viewer */}
+      {sizeChartOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="max-w-4xl w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold">Size Chart</h4>
+              <button onClick={() => setSizeChartOpen(false)} className="text-gray-600">Close</button>
+            </div>
+            <SizeChart imageUrl={product.sizeChartImage?.url} alt={product.sizeChartImage?.alt || 'Size chart'} />
+          </div>
+        </div>
       )}
 
       {/* Add to Cart Button - Simple & Friendly */}

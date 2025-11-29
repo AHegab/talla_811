@@ -9,6 +9,7 @@ import type { CartApiQueryFragment, HeaderQuery } from 'storefrontapi.generated'
 import { useAside } from '~/components/Aside';
 import { SearchFormPredictive } from '~/components/SearchFormPredictive';
 import { SearchResultsPredictive } from '~/components/SearchResultsPredictive';
+import { Search, User, ShoppingBag, Menu, X } from 'lucide-react';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -171,20 +172,9 @@ export function Header({
                   type="button"
                   aria-label="Open menu"
                   onClick={() => open('mobile')}
-                  className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center"
+                  className="appearance-none bg-transparent text-white border-0 p-0 flex items-center justify-center focus:outline-none"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    className="h-5 w-5 block"
-                  >
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="3" y1="18" x2="21" y2="18" />
-                  </svg>
+                  <Menu className="h-5 w-5" strokeWidth={2} />
                 </button>
               </div>
 
@@ -207,19 +197,9 @@ export function Header({
                   type="button"
                   aria-label="Search"
                   onClick={() => setSearchOpen((s) => !s)}
-                  className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center"
+                  className="appearance-none bg-transparent text-white border-0 p-0 flex items-center justify-center focus:outline-none"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    className="h-4 w-4 block"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="M21 21l-4.35-4.35" />
-                  </svg>
+                  <Search className="h-5 w-5" strokeWidth={2} />
                 </button>
 
                 {/* Account */}
@@ -227,14 +207,9 @@ export function Header({
                   prefetch="intent"
                   to="/account"
                   aria-label="Account"
-                  className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center"
+                  className="appearance-none bg-transparent text-white border-0 p-0 flex items-center justify-center focus:outline-none"
                 >
-                  <img
-                    src="/icons/account.svg"
-                    alt=""
-                    aria-hidden="true"
-                    className="h-4 w-4 object-contain block"
-                  />
+                  <User className="h-5 w-5" strokeWidth={2} />
                 </NavLink>
 
                 {/* Cart */}
@@ -242,20 +217,9 @@ export function Header({
                   type="button"
                   aria-label="Cart"
                   onClick={() => open('cart')}
-                  className="appearance-none bg-transparent text-white border-0 p-1 flex items-center justify-center relative"
+                  className="appearance-none bg-transparent text-white border-0 p-0 flex items-center justify-center relative focus:outline-none"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    className="h-4 w-4 block"
-                  >
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <path d="M16 10a4 4 0 0 1-8 0" />
-                  </svg>
+                  <ShoppingBag className="h-5 w-5" strokeWidth={2} />
                 </button>
               </div>
             </div>
@@ -294,12 +258,7 @@ export function Header({
                 {({inputRef, fetchResults, goToSearch}) => (
                   <div className="flex items-center gap-2 p-2">
                     <div className="flex items-center flex-1 bg-white rounded-md px-3 py-2">
-                      <img
-                        src="/icons/search.svg"
-                        alt=""
-                        aria-hidden="true"
-                        className="h-4 w-4 mr-2 flex-shrink-0 object-contain block"
-                      />
+                      <Search className="h-4 w-4 mr-2 flex-shrink-0 text-gray-400" strokeWidth={2} />
                       <input
                         ref={(el) => {
                           try {
@@ -339,17 +298,7 @@ export function Header({
                       }}
                       className="flex items-center justify-center flex-shrink-0 w-9 h-9 rounded-md bg-gray-800 text-white border border-gray-800 hover:bg-gray-900 transition-colors p-0 m-0 cursor-pointer"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#fff"
-                        strokeWidth={1.6}
-                        className="h-4 w-4 block"
-                      >
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="M21 21l-4.5-4.5" />
-                      </svg>
+                      <Search className="h-4 w-4" strokeWidth={2} />
                     </button>
 
                     <button
@@ -362,17 +311,7 @@ export function Header({
                       aria-label="Close search"
                       className="flex items-center justify-center flex-shrink-0 w-9 h-9 rounded-md bg-gray-800 text-white border border-gray-800 hover:bg-gray-900 transition-colors p-0 m-0 cursor-pointer"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#fff"
-                        strokeWidth={1.8}
-                        className="h-3.5 w-3.5 block"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
+                      <X className="h-4 w-4" strokeWidth={2} />
                     </button>
                   </div>
                 )}

@@ -613,6 +613,23 @@ button.reset:hover {
 * Magazine Buttons & Forms
 * --------------------------------------------------
 */
+
+/* Header Navigation Buttons - No backgrounds */
+header button,
+header a.appearance-none {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: inherit;
+}
+
+header button:focus-visible,
+header a.appearance-none:focus-visible {
+  outline: none;
+}
+
 button, .button {
   display: inline-block;
   padding: 14px 32px;
@@ -647,7 +664,9 @@ button, .button {
 }
 
 
-button::before, .button::before {
+/* Exclude header buttons from global button effects */
+button:not(header button)::before,
+.button::before {
   content: '';
   position: absolute;
   top: 0;
@@ -658,20 +677,31 @@ button::before, .button::before {
   transition: left 0.6s;
 }
 
-button:hover::before, .button:hover::before {
+button:not(header button):hover::before,
+.button:hover::before {
   left: 100%;
 }
 
-button:hover, .button:hover {
+button:not(header button):hover,
+.button:hover {
   background: var(--color-white);
   color: var(--color-black);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-button:active, .button:active {
+button:not(header button):active,
+.button:active {
   transform: translateY(0);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Header buttons have no hover background effects */
+header button:hover,
+header a.appearance-none:hover {
+  background: none !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 button.secondary, .button.secondary {

@@ -5,7 +5,7 @@ import {
   type OptimisticCartLineInput,
 } from '@shopify/hydrogen';
 import { Flame, Heart, Leaf, Shirt, Sparkles, Sun, Tag, Tags, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { SizeRecommendation } from './SizeRecommendation';
 import { SizeRecommendationPrompt } from './SizeRecommendationPrompt';
@@ -78,6 +78,87 @@ export function ProductBuyBox({
     },
   );
 
+  // Simple name -> hex map for common colors used in product option labels.
+  // If you add uncommon color names, extend the map here so the UI renders correctly.
+  const colorNameToHex: Record<string, string> = {
+    navy: '#0b3d91',
+    black: '#000000',
+    white: '#ffffff',
+    red: '#ef4444',
+    blue: '#3b82f6',
+    green: '#10b981',
+    yellow: '#f59e0b',
+    gray: '#6b7280',
+    grey: '#6b7280',
+    pink: '#ec4899',
+    purple: '#8b5cf6',
+    brown: '#7c3f00',
+    tan: '#d2b48c',
+    orange: '#f97316',
+    skyblue: '#38bdf8',
+    'sky blue': '#38bdf8',
+  };
+
+  const toHex = (val: string) => {
+    const key = val.trim().toLowerCase();
+    if (key.startsWith('#')) return key; // already a hex value
+    // Normalize common misspellings or multiple-word names by removing spaces/hyphens
+    const normalized = key.replace(/\s+|[-_]/g, '');
+    if (colorNameToHex[key as keyof typeof colorNameToHex]) return colorNameToHex[key as keyof typeof colorNameToHex];
+    if (colorNameToHex[normalized as keyof typeof colorNameToHex]) return colorNameToHex[normalized as keyof typeof colorNameToHex];
+    // If the value is a CSS color label without spaces (e.g., skyblue), use it directly
+    if (/^[a-z]+$/.test(normalized)) return normalized;
+    // fallback: return the original value and let the browser try to resolve it
+    return val;
+  };
+
+  const hexToRgb = (hex: string) => {
+    // Normalize shorthand hex
+    const normalized = hex.replace('#', '');
+    let r = 0, g = 0, b = 0;
+    if (normalized.length === 3) {
+      r = parseInt(normalized[0] + normalized[0], 16);
+      g = parseInt(normalized[1] + normalized[1], 16);
+      b = parseInt(normalized[2] + normalized[2], 16);
+    } else if (normalized.length === 6) {
+      r = parseInt(normalized.substring(0, 2), 16);
+      g = parseInt(normalized.substring(2, 4), 16);
+      b = parseInt(normalized.substring(4, 6), 16);
+    }
+    return { r, g, b };
+  };
+
+  const luminance = (r: number, g: number, b: number) => {
+    // relative luminance formula adjusted for sRGB; output in 0..1
+    const [rs, gs, bs] = [r, g, b].map((c) => {
+      const s = c / 255;
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+  };
+
+  const isLightColor = (cssColor: string) => {
+    const normalized = cssColor.trim().toLowerCase();
+    if (normalized.startsWith('#')) {
+      try {
+        const { r, g, b } = hexToRgb(normalized);
+        return luminance(r, g, b) > 0.6; // threshold chosen as 0.6 -> light colors
+      } catch (e) {
+        return false;
+      }
+    }
+    // Named color heuristics
+    if (normalized.includes('white') || normalized.includes('cream') || normalized.includes('ivory') || normalized.includes('light')) return true;
+    if (normalized.includes('black') || normalized.includes('navy') || normalized.includes('dark') || normalized.includes('brown')) return false;
+    // fallback: if map contains an entry return computed luminance
+    if (colorNameToHex[normalized]) {
+      const { r, g, b } = hexToRgb(colorNameToHex[normalized]);
+      return luminance(r, g, b) > 0.6;
+    }
+    // default: dark (so we use white text)
+    return false;
+  };
+
   // Check if user has measurements saved
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -139,7 +220,7 @@ export function ProductBuyBox({
       {/* Product Images - Horizontal Scroll (mini gallery above buy box) */}
       {images.length > 0 && (
         <div
-          className="flex gap-3 flex-wrap pb-2"
+          className="flex gap-4 flex-wrap pb-2"
           style={{ scrollbarWidth: 'thin' }}
         >
           {images.map((img: any, idx: number) => (
@@ -182,7 +263,7 @@ export function ProductBuyBox({
       {/* Product Metadata - Simple & Friendly */}
       <div className="space-y-2 py-2">
         {product.productType && (
-          <div className="flex items-center gap-2 text-xs text-gray-600">
+          <div className="flex items-center gap-3 text-xs text-gray-600">
             <Tag size={12} className="opacity-50" />
             <span className="uppercase text-[10px] tracking-wide font-medium">Type:</span>
             <span>{product.productType}</span>
@@ -191,11 +272,11 @@ export function ProductBuyBox({
 
         {product.tags && product.tags.length > 0 && (
           <div>
-            <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+            <div className="flex items-center gap-3 text-xs text-gray-600 mb-2">
               <Tags size={12} className="opacity-50" />
               <span className="uppercase text-[10px] tracking-wide font-medium">Tags:</span>
             </div>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-3">
               {product.tags.slice(0, 5).map((tag, index) => {
                 const tagLower = tag.toLowerCase();
                 let Icon = Tag;
@@ -234,7 +315,7 @@ export function ProductBuyBox({
                 return (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-xs text-gray-700"
+                    className="inline-flex items-center gap-2 px-2 py-0.5 rounded-md bg-gray-100 text-xs text-gray-700"
                   >
                     <Icon size={12} color={iconColor} strokeWidth={2} />
                     {tag}
@@ -248,7 +329,7 @@ export function ProductBuyBox({
 
       {/* Size Recommendation Banner */}
       {recommendedSize && (
-        <div className="flex items-center gap-2 rounded-md bg-green-50 border border-green-200 py-2 px-3">
+      <div className="flex items-center gap-3 rounded-md bg-green-50 border border-green-200 py-2 px-3">
           <svg
             className="h-4 w-4 text-green-600"
             fill="currentColor"
@@ -271,8 +352,8 @@ export function ProductBuyBox({
         !recommendedSize &&
         product.options &&
         product.options.some((opt) => opt.name.toLowerCase() === 'size') && (
-          <div className="flex items-center justify-between gap-2 rounded-md bg-gray-50 border border-gray-200 py-2 px-3">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-3 rounded-md bg-gray-50 border border-gray-200 py-2 px-3">
+            <div className="flex items-center gap-3">
               <svg
                 className="h-4 w-4 text-gray-500"
                 fill="none"
@@ -321,7 +402,7 @@ export function ProductBuyBox({
               </div>
 
               {/* Options - Smaller, friendlier buttons */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {option.values.map((value) => {
                   const isAvailable = product.variants.some(
                     (v) =>
@@ -332,6 +413,9 @@ export function ProductBuyBox({
                       ),
                   );
                   const isSelected = selectedOptions[option.name] === value;
+                  const isColorOption = option.name.toLowerCase() === 'color';
+                  const cssColor = isColorOption ? toHex(value) : undefined;
+                  const textColorClass = cssColor ? (isLightColor(cssColor) ? 'text-gray-900' : 'text-white') : '';
                   const isRec = recommendedSize === value && option.name.toLowerCase() === 'size';
 
                   return (
@@ -343,24 +427,40 @@ export function ProductBuyBox({
                         handleOptionChange(option.name, value)
                       }
                       disabled={!isAvailable}
-                      className={`
-                        px-4 py-2 text-sm rounded-md border transition-all
-                        ${
-                          isSelected
-                            ? 'bg-black text-white border-black'
-                            : isAvailable
-                              ? 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'
-                              : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed line-through'
+                      className={(() => {
+                        const base = 'px-4 py-2 text-sm rounded-md border transition-all';
+                        if (isColorOption) {
+                          // for color options, rely on inline backgroundColor and vary the border and opacity
+                          const border = isSelected ? 'border-gray-300' : 'border-gray-300 hover:border-gray-900';
+                          const selectedRing = isSelected ? (isLightColor(cssColor!) ? 'ring-2 ring-black ring-offset-1' : 'ring-2 ring-white ring-offset-1') : '';
+                          const disabled = !isAvailable ? 'opacity-60 cursor-not-allowed filter grayscale-[85%] line-through' : '';
+                          const rec = isRec && !isSelected ? 'ring-2 ring-green-400' : '';
+                          const classes = [base, border, disabled, selectedRing, rec].filter(Boolean).join(' ');
+                          return classes;
                         }
-                        ${isRec && !isSelected ? 'ring-2 ring-green-400' : ''}
-                      `}
+                        // Not a color option - keep existing behavior
+                        const classes = `${base} ${isSelected
+                          ? 'bg-black text-white border-black'
+                          : isAvailable
+                            ? 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'
+                            : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed line-through'
+                        } ${isRec && !isSelected ? 'ring-2 ring-green-400' : ''}`;
+                        return classes;
+                      })()}
+                      style={isColorOption ? ({ backgroundColor: cssColor } as React.CSSProperties) : undefined}
                       aria-label={`Select ${option.name.toLowerCase()} ${value}${
                         isRec ? ' (Recommended)' : ''
                       }`}
                       aria-pressed={isSelected}
                       aria-disabled={!isAvailable}
                     >
-                      {value}
+                      {isColorOption ? (
+                        <span className={`inline-block min-w-[48px] text-center ${textColorClass}`}>
+                          {value}
+                        </span>
+                      ) : (
+                        value
+                      )}
                       {isRec && !isSelected && <span className="ml-1 text-green-600">✓</span>}
                     </button>
                   );

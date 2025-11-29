@@ -1,6 +1,6 @@
 import { CartForm, Image, type OptimisticCartLine } from '@shopify/hydrogen';
 import type { CartLineUpdateInput } from '@shopify/hydrogen/storefront-api-types';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router';
 import type { CartApiQueryFragment } from 'storefrontapi.generated';
 import type { CartLayout } from '~/components/CartMain';
@@ -27,9 +27,9 @@ export function CartLineItem({
   const {close} = useAside();
 
   return (
-    <li key={id} className="flex gap-3 pb-4 mb-4 border-b border-[#DDDEE2] last:border-0 last:mb-0">
+    <li key={id} className="flex gap-3 p-3 bg-white rounded-lg border border-gray-200">
       {image && (
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 w-16 sm:w-20">
           <Link
             prefetch="intent"
             to={lineItemUrl}
@@ -38,48 +38,52 @@ export function CartLineItem({
                 close();
               }
             }}
-            className="block overflow-hidden rounded-lg hover:opacity-90 transition-opacity"
+            className="block overflow-hidden rounded-md"
           >
             <Image
               alt={title}
               aspectRatio="3/4"
               data={image}
-              height={100}
+              height={80}
               loading="lazy"
-              width={75}
-              className="object-cover"
+              width={60}
+              className="object-cover w-full"
             />
           </Link>
         </div>
       )}
 
-      <div className="flex-1 min-w-0 flex flex-col">
-        <Link
-          prefetch="intent"
-          to={lineItemUrl}
-          onClick={() => {
-            if (layout === 'aside') {
-              close();
-            }
-          }}
-          className="block mb-1 hover:text-[#292929]/70 transition-colors group"
-        >
-          <h3 className="font-bold text-xs leading-tight tracking-wide uppercase group-hover:underline" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>{product.title}</h3>
-        </Link>
-        
-        <div className="text-[10px] text-[#292929]/60 space-y-0.5 mb-2 font-medium tracking-wide" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>
-          {selectedOptions.map((option) => (
-            <div key={option.name} className="uppercase">
-              <span className="font-bold">{option.name}:</span> {option.value}
-            </div>
-          ))}
+      <div className="flex-1 min-w-0 flex flex-col gap-2 overflow-hidden">
+        <div className="min-w-0">
+          <Link
+            prefetch="intent"
+            to={lineItemUrl}
+            onClick={() => {
+              if (layout === 'aside') {
+                close();
+              }
+            }}
+            className="block hover:text-gray-700 transition-colors"
+          >
+            <h3 className="font-semibold text-sm leading-tight text-gray-900 whitespace-normal">{product.title}</h3>
+          </Link>
+
+          <div className="text-xs text-gray-500 mt-0.5">
+            {selectedOptions.map((option, index) => (
+              <span key={option.name} className="truncate">
+                {option.value}{index < selectedOptions.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-auto flex items-end justify-between">
-          <div className="font-bold text-base text-[#292929]" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>
+        <div className="flex flex-col gap-2">
+          <div className="font-semibold text-sm text-gray-900">
             <ProductPrice price={line?.cost?.totalAmount} />
           </div>
-          <CartLineQuantity line={line} />
+          <div className="flex items-start">
+            <CartLineQuantity line={line} />
+          </div>
         </div>
       </div>
     </li>
@@ -98,37 +102,35 @@ function CartLineQuantity({line}: {line: CartLine}) {
   const nextQuantity = Number((quantity + 1).toFixed(0));
 
   return (
-    <div className="flex flex-col items-end gap-1.5">
-      <div className="flex items-center border border-[#DDDEE2] rounded-lg overflow-hidden">
+    <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center bg-gray-900 rounded-md overflow-hidden">
         <CartLineUpdateButton lines={[{id: lineId, quantity: prevQuantity}]}>
           <button
             aria-label="Decrease quantity"
             disabled={quantity <= 1 || !!isOptimistic}
             name="decrease-quantity"
             value={prevQuantity}
-            className="w-8 h-8 flex items-center justify-center hover:bg-[#292929] hover:text-[#FBFBFB] disabled:opacity-30 disabled:cursor-not-allowed transition-all group"
-            style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}
+            className="w-8 h-8 flex items-center justify-center text-white hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            <Minus size={14} className="text-[#292929] group-hover:text-[#FBFBFB]" />
+            <Minus size={14} strokeWidth={2.5} />
           </button>
         </CartLineUpdateButton>
-        
-        <span className="w-10 text-center text-xs font-bold border-x border-[#DDDEE2] py-2" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>{quantity}</span>
-        
+
+        <span className="min-w-[2.5rem] text-center text-sm font-semibold text-white">{quantity}</span>
+
         <CartLineUpdateButton lines={[{id: lineId, quantity: nextQuantity}]}>
           <button
             aria-label="Increase quantity"
             name="increase-quantity"
             value={nextQuantity}
             disabled={!!isOptimistic}
-            className="w-8 h-8 flex items-center justify-center hover:bg-[#292929] hover:text-[#FBFBFB] disabled:opacity-30 disabled:cursor-not-allowed transition-all group"
-            style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}
+            className="w-8 h-8 flex items-center justify-center text-white hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            <Plus size={14} className="text-[#292929] group-hover:text-[#FBFBFB]" />
+            <Plus size={14} strokeWidth={2.5} />
           </button>
         </CartLineUpdateButton>
       </div>
-      
+
       <CartLineRemoveButton lineIds={[lineId]} disabled={!!isOptimistic} />
     </div>
   );
@@ -153,13 +155,13 @@ function CartLineRemoveButton({
       action={CartForm.ACTIONS.LinesRemove}
       inputs={{lineIds}}
     >
-      <button 
-        disabled={disabled} 
+      <button
+        disabled={disabled}
         type="submit"
-        className="text-[10px] text-[#292929]/50 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors font-semibold uppercase tracking-wider"
-        style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}
+        className="w-8 h-8 flex items-center justify-center bg-gray-900 hover:bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-md text-white"
+        aria-label="Remove item"
       >
-        Remove
+        <Trash2 size={14} strokeWidth={2} />
       </button>
     </CartForm>
   );

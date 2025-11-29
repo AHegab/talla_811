@@ -68,7 +68,11 @@ function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
   return (
     <Aside type="cart" heading="CART">
       <Suspense fallback={<div className="p-6 text-center text-talla-text/60">Loading cart...</div>}>
-        <Await resolve={cart} errorElement={<div className="p-6 text-center text-red-600">Error loading cart</div>}>
+        <Await
+          resolve={cart}
+          // When cart fails to load, render an empty cart instead of an error message so the UI stays usable.
+          errorElement={<CartMain cart={null} layout="aside" />}
+        >
           {(cart) => {
             return <CartMain cart={cart} layout="aside" />;
           }}

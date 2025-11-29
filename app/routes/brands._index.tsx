@@ -34,30 +34,78 @@ interface BrandCard {
 export async function loader({ context }: Route.LoaderArgs) {
   const { storefront } = context;
 
+  // Use a shorter cache strategy in development so menu changes appear immediately.
+  // In production, continue using a long-lived cache for performance.
+  const cacheStrategy =
+    process.env.NODE_ENV === 'development'
+      ? storefront.CacheNone()
+      : storefront.CacheLong();
+
   // Fetch the "brands" menu from Shopify
   const { menu } = await storefront.query(BRANDS_MENU_QUERY, {
     variables: {
       handle: 'brands',
     },
-    cache: storefront.CacheLong(),
+    cache: cacheStrategy,
   });
 
   if (!menu) {
     throw new Response('Brands menu not found', { status: 404 });
   }
 
-  // Transform menu items into brand cards
-  const brands: BrandCard[] = menu.items
-    .filter((item: any) => {
-      // Only include items that link to collections
-      return item.resource?.__typename === 'Collection';
-    })
-    .map((item: any) => {
+  // Debug log the menu items so we can verify what the server returned
+  // (This appears in server logs, not the browser console.)
+  // eslint-disable-next-line no-console
+  console.log('Brands menu items:', menu?.items?.map((i: any) => ({ id: i.id, title: i.title, url: i.url, resourceType: i.resource?.__typename })));
+
+  // Transform menu items into brand cards. We include any menu item so folks who added
+  // menu links as custom URLs (eg. /collections/brand-handle) can still see the brand.
+  // For custom URL items that look like collections, we'll try to fetch the collection
+  // by handle to acquire image metadata.
+  const fallbackHandles = new Set<string>();
+  const itemsWithFallbackHandle: Record<string, any> = {};
+
+  for (const item of menu.items) {
+    if (item.resource?.__typename !== 'Collection') {
+      const fallbackHandle = (item.url || '')?.match(/\/collections\/([^/?#]+)/)?.[1] ?? null;
+      if (fallbackHandle) {
+        fallbackHandles.add(fallbackHandle);
+        itemsWithFallbackHandle[item.id] = fallbackHandle;
+      }
+    }
+  }
+
+  // If we discovered fallback handles, fetch collection details for each handle
+  const fallbackCollectionsByHandle: Record<string, any> = {};
+  if (fallbackHandles.size > 0) {
+    const handles = [...fallbackHandles];
+    const collectionQueryPromises = handles.map((h) =>
+      storefront
+        .query(GET_COLLECTION_BY_HANDLE_QUERY, {
+          variables: { handle: h },
+          cache: cacheStrategy,
+        })
+        .then((res: any) => ({ handle: h, collection: res.collectionByHandle }))
+        .catch((err: unknown) => {
+          // Swallow errors per loader pattern — logging is enough
+          // eslint-disable-next-line no-console
+          console.error(`Failed to fetch collection for handle: ${h}`, err);
+          return { handle: h, collection: null };
+        })
+    );
+
+    const collectionResults = await Promise.all(collectionQueryPromises);
+    for (const result of collectionResults) {
+      if (result.collection) fallbackCollectionsByHandle[result.handle] = result.collection;
+    }
+    // eslint-disable-next-line no-console
+    console.log('Fetched collections for fallback handles:', Object.keys(fallbackCollectionsByHandle));
+  }
+
+  const brands: BrandCard[] = menu.items.map((item: any) => {
+    if (item.resource?.__typename === 'Collection') {
       const collection = item.resource;
       const image = collection.image || null;
-
-      // Debug logging removed
-
       return {
         id: collection.id,
         title: collection.title,
@@ -66,7 +114,34 @@ export async function loader({ context }: Route.LoaderArgs) {
         imageAlt: image?.altText || collection.title,
         url: `/collections/${collection.handle}`,
       };
-    });
+    }
+
+    // Fallback: If the menu item doesn't point at a 'Collection' resource but links
+    // to a collections URL (or is a custom URL pointing to /collections/handle), keep it.
+    const fallbackHandle = itemsWithFallbackHandle[item.id];
+    const fetchedCollection = fallbackHandle ? fallbackCollectionsByHandle[fallbackHandle] : null;
+    if (fetchedCollection) {
+      const img = fetchedCollection.image || null;
+      return {
+        id: fetchedCollection.id,
+        title: fetchedCollection.title,
+        handle: fetchedCollection.handle,
+        image: img,
+        imageAlt: img?.altText || fetchedCollection.title,
+        url: `/collections/${fetchedCollection.handle}`,
+      };
+    }
+    // else generic fallback card without image
+    return {
+      id: item.id,
+      title: item.title,
+      handle: fallbackHandle ?? item.title,
+      image: null,
+      imageAlt: item.title,
+      url: item.url || '#',
+    };
+  });
+    
 
   // Debug logging removed
 
@@ -75,7 +150,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 
 export default function BrandsIndex() {
   const { brands } = useLoaderData<typeof loader>();
-
+  console.log(brands);
   // Debug logging removed
 
   return (
@@ -169,6 +244,24 @@ const BRANDS_MENU_QUERY = `#graphql
             }
           }
         }
+      }
+    }
+  }
+` as const;
+
+// GraphQL Query to fetch a collection by handle (for URL fallback items)
+const GET_COLLECTION_BY_HANDLE_QUERY = `#graphql
+  query CollectionByHandle($handle: String!) {
+    collectionByHandle(handle: $handle) {
+      id
+      title
+      handle
+      image {
+        id
+        url
+        altText
+        width
+        height
       }
     }
   }

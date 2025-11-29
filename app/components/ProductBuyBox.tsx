@@ -68,6 +68,7 @@ export function ProductBuyBox({
   const [addedToCart, setAddedToCart] = useState(false);
   const [showSizePrompt, setShowSizePrompt] = useState(false); // reserved if you want to show a separate prompt later
   const [hasMeasurements, setHasMeasurements] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
     () => {
       const initial: Record<string, string> = {};
@@ -197,7 +198,11 @@ export function ProductBuyBox({
 
   const handleAddToCart = () => {
     setAddedToCart(true);
-    window.setTimeout(() => setAddedToCart(false), 2000);
+    setShowConfetti(true);
+    window.setTimeout(() => {
+      setAddedToCart(false);
+      setShowConfetti(false);
+    }, 800);
   };
 
   const lines: OptimisticCartLineInput[] = [
@@ -216,7 +221,14 @@ export function ProductBuyBox({
   // No fallback similar products; we require server-side filter for >=2 tags overlap
 
   return (
-    <div className="space-y-4 animate-fadein">
+    <div className="space-y-4 animate-fadein relative">
+      {/* Success Ripple Effect */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+          <div className="animate-ripple-out bg-green-500 rounded-full opacity-20 w-32 h-32"></div>
+        </div>
+      )}
+
       {/* Product Images - Horizontal Scroll (mini gallery above buy box) */}
       {images.length > 0 && (
         <div
@@ -393,7 +405,7 @@ export function ProductBuyBox({
                   <button
                     type="button"
                     onClick={() => setSizeRecOpen(!sizeRecOpen)}
-                    className="text-xs text-gray-500 hover:text-gray-900 transition-colors"
+                    className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:border-gray-400 rounded-full transition-all duration-200 hover:bg-gray-50"
                     aria-expanded={sizeRecOpen}
                   >
                     Size Guide
@@ -428,23 +440,23 @@ export function ProductBuyBox({
                       }
                       disabled={!isAvailable}
                       className={(() => {
-                        const base = 'px-4 py-2 text-sm rounded-md border transition-all';
+                        const base = 'px-5 py-3 text-sm font-medium rounded-full border transition-all duration-300 ease-out';
                         if (isColorOption) {
                           // for color options, rely on inline backgroundColor and vary the border and opacity
-                          const border = isSelected ? 'border-gray-300' : 'border-gray-300 hover:border-gray-900';
-                          const selectedRing = isSelected ? (isLightColor(cssColor!) ? 'ring-2 ring-black ring-offset-1' : 'ring-2 ring-white ring-offset-1') : '';
-                          const disabled = !isAvailable ? 'opacity-60 cursor-not-allowed filter grayscale-[85%] line-through' : '';
-                          const rec = isRec && !isSelected ? 'ring-2 ring-green-400' : '';
+                          const border = isSelected ? 'border-gray-800 shadow-sm' : 'border-gray-200 hover:border-gray-400';
+                          const selectedRing = isSelected ? (isLightColor(cssColor!) ? 'ring-2 ring-gray-800 ring-offset-2' : 'ring-2 ring-white ring-offset-2') : '';
+                          const disabled = !isAvailable ? 'opacity-30 cursor-not-allowed filter grayscale line-through' : '';
+                          const rec = isRec && !isSelected ? 'ring-2 ring-emerald-400 ring-offset-2' : '';
                           const classes = [base, border, disabled, selectedRing, rec].filter(Boolean).join(' ');
                           return classes;
                         }
-                        // Not a color option - keep existing behavior
+                        // Not a color option - soft, friendly styling
                         const classes = `${base} ${isSelected
-                          ? 'bg-black text-white border-black'
+                          ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
                           : isAvailable
-                            ? 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'
-                            : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed line-through'
-                        } ${isRec && !isSelected ? 'ring-2 ring-green-400' : ''}`;
+                            ? 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
+                            : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed line-through'
+                        } ${isRec && !isSelected ? 'ring-2 ring-emerald-400 ring-offset-2' : ''}`;
                         return classes;
                       })()}
                       style={isColorOption ? ({ backgroundColor: cssColor } as React.CSSProperties) : undefined}
@@ -493,11 +505,13 @@ export function ProductBuyBox({
               disabled={!selectedVariant.availableForSale || isAdding}
               onClick={handleAddToCart}
               className={`
-                w-full rounded-md px-6 py-3 text-sm font-medium transition-all
+                w-full rounded-full px-8 py-4 text-base font-semibold transition-all duration-200 ease-out relative overflow-hidden
                 ${
                   selectedVariant.availableForSale && !isAdding
-                    ? 'bg-black text-white hover:bg-gray-800'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? addedToCart
+                      ? 'bg-green-600 text-white shadow-lg'
+                      : 'bg-gray-900 text-white hover:bg-gray-800 shadow-md hover:shadow-lg active:scale-[0.98]'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }
               `}
               aria-label={
@@ -508,13 +522,22 @@ export function ProductBuyBox({
                     : 'Sold out'
               }
             >
-              {isAdding
-                ? 'Adding...'
-                : addedToCart
-                  ? '✓ Added to Cart'
-                  : selectedVariant.availableForSale
-                    ? 'Add to Cart'
-                    : 'Sold Out'}
+              <span className={`inline-flex items-center justify-center gap-2 ${addedToCart ? 'animate-fade-in-fast' : ''}`}>
+                {isAdding
+                  ? 'Adding...'
+                  : addedToCart
+                    ? (
+                      <>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Added
+                      </>
+                    )
+                    : selectedVariant.availableForSale
+                      ? 'Add to Cart'
+                      : 'Sold Out'}
+              </span>
             </button>
           );
         }}

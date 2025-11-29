@@ -112,9 +112,8 @@ All components have been verified and error handling added. Follow this checklis
 - [ ] Green banner shows selected location
 
 **Failure Case (map doesn't load):**
-- [ ] Yellow warning banner shows instead of map
-- [ ] Message: "Map couldn't load"
-- [ ] Explanation: "You can still proceed..."
+- [ ] Map fallback is non-intrusive (no yellow warning banner)
+- [ ] User can still proceed to checkout
 - [ ] Submit button stays enabled
 - [ ] Footer text changes to: "You'll provide your delivery address on the next page"
 

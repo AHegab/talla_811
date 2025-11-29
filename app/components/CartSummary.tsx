@@ -1,11 +1,11 @@
 import { CartForm, Money, type OptimisticCart } from '@shopify/hydrogen';
-import { Check, ShoppingBag, Tag, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Check, ShoppingBag } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import type { FetcherWithComponents } from 'react-router';
 import { useFetcher } from 'react-router';
 import type { CartApiQueryFragment } from 'storefrontapi.generated';
 import type { CartLayout } from '~/components/CartMain';
-import { CheckoutForm } from '~/components/CheckoutForm';
+// CheckoutForm has been removed — the checkout button now redirects directly to Shopify checkout.
 
 type CartSummaryProps = {
   cart: OptimisticCart<CartApiQueryFragment | null>;
@@ -13,17 +13,15 @@ type CartSummaryProps = {
 };
 
 export function CartSummary({cart, layout}: CartSummaryProps) {
-  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  // removed showCheckoutForm state since the custom checkout page was removed
 
   return (
     <>
-      <div aria-labelledby="cart-summary" className="border-t border-[#DDDEE2] bg-[#FBFBFB] px-6 py-4">
-        <div className="flex justify-between items-baseline mb-4">
-          <dt className="text-xs uppercase tracking-[0.15em] text-[#292929]/60 font-semibold flex items-center gap-2">
-            <Tag size={18} color="#292929" />
-            Subtotal
-          </dt>
-          <dd className="text-xl font-bold text-[#292929]" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>
+      <div aria-labelledby="cart-summary" className="border-t-2 border-gray-200 bg-white px-4 sm:px-6 py-6">
+        {/* Subtotal */}
+        <div className="flex justify-between items-center mb-3">
+          <dt className="text-base font-medium text-gray-600">Subtotal</dt>
+          <dd className="text-2xl sm:text-3xl font-bold text-gray-900">
             {cart?.cost?.subtotalAmount?.amount ? (
               <Money data={cart?.cost?.subtotalAmount} />
             ) : (
@@ -31,38 +29,44 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
             )}
           </dd>
         </div>
-        
-        <p className="text-[10px] text-center text-[#292929]/50 mb-4 tracking-wide flex items-center justify-center gap-2" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>
-          <Check size={12} color="#292929" className="opacity-50" />
-          All prices include taxes. Shipping calculated at checkout.
-        </p>
-        
-        <button
-          onClick={() => setShowCheckoutForm(true)}
-          disabled={!cart?.checkoutUrl}
-          className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-[#292929] text-[#FBFBFB] text-center text-xs font-bold uppercase tracking-[0.15em] rounded-xl hover:bg-[#1a1a1a] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-lg hover:transform hover:-translate-y-0.5 active:scale-[0.98]"
-          style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}
-        >
-          <ShoppingBag size={18} color="#FBFBFB" />
-          Continue to Checkout
-        </button>
-      </div>
 
-      {/* Checkout Form Modal */}
-      {showCheckoutForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setShowCheckoutForm(false)}
-              className="absolute top-6 right-6 z-10 w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-xl hover:bg-gray-100 transition-all duration-200 hover:scale-110"
-              aria-label="Close"
-            >
-              <X size={24} color="#292929" />
-            </button>
-            <CheckoutForm cart={cart as CartApiQueryFragment | null} />
+        {/* Shipping info */}
+        <p className="text-xs text-gray-500 mb-5 flex items-center gap-1.5">
+          <Check size={14} className="text-green-600 flex-shrink-0" />
+          <span>Shipping & taxes calculated at checkout</span>
+        </p>
+
+        <button
+          onClick={() => {
+            if (cart?.checkoutUrl) {
+              window.location.href = cart.checkoutUrl;
+            }
+          }}
+          disabled={!cart?.checkoutUrl}
+          className="flex items-center justify-center gap-3 w-full px-8 py-4 bg-gray-900 text-white text-center text-sm font-bold uppercase tracking-wider rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
+        >
+          <ShoppingBag size={18} strokeWidth={2} className="flex-shrink-0" />
+          Checkout Now
+        </button>
+
+        {/* Trust signals */}
+        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span>Secure checkout</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Easy returns</span>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Custom checkout was removed; checkout now redirects to Shopify checkout */}
     </>
   );
 }

@@ -135,7 +135,78 @@ async function loadCriticalData({
   return {
     product,
     similarProducts,
+    // brandSizeChart: optional brand-level size chart derived from vendor collection metafields
+    brandSizeChart: await loadBrandSizeChart(storefront, product.vendor),
   };
+}
+
+/**
+ * Attempts to load a size chart for a brand (collection) using multiple strategies
+ * - First: try collectionByHandle using a slugified vendor
+ * - Then: search collections by title using the vendor name
+ */
+async function loadBrandSizeChart(storefront: any, vendor?: string | null) {
+  if (!vendor) return null;
+  const vendorHandle = vendor.trim().toLowerCase().replace(/[^a-z0-9\-]+/g, '-').replace(/(^-|-$)/g, '');
+
+  try {
+    const byHandle = await storefront.query(COLLECTION_BY_HANDLE_FULL_QUERY, {
+      variables: { handle: vendorHandle },
+      cache: storefront.CacheShort(),
+    });
+    const collection = byHandle?.collectionByHandle;
+    if (collection) {
+      // check metafields similar to product
+      const nodes = collection.metafields?.nodes ?? [];
+      const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage'];
+      const found = nodes.find((m: any) => (m && m.key && keyNames.includes(m.key)) || (m && m.key && m.key.toLowerCase().includes('size')));
+      if (found) {
+        const ref = found.reference;
+        if (ref && ref.__typename === 'MediaImage' && ref.image?.url) {
+          return { url: ref.image.url, alt: ref.image.altText ?? 'Size chart', source: 'brand' };
+        }
+        if (ref && (ref.url)) {
+          return { url: ref.url, alt: found?.value ?? 'Size chart', source: 'brand' };
+        }
+        if (found.value && typeof found.value === 'string' && found.value.startsWith('http')) {
+          return { url: found.value, alt: 'Size chart', source: 'brand' };
+        }
+      }
+    }
+  } catch (err) {
+    // ignore and fallback
+  }
+
+  // Fallback: search collections by title
+  try {
+    const search = await storefront.query(COLLECTIONS_BY_TITLE_QUERY, {
+      variables: { title: vendor },
+      cache: storefront.CacheShort(),
+    });
+    const nodes = search?.collections?.nodes ?? [];
+    if (nodes.length) {
+      const collection = nodes[0];
+      const mfNodes = collection.metafields?.nodes ?? [];
+      const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage'];
+      const found = mfNodes.find((m: any) => (m && m.key && keyNames.includes(m.key)) || (m && m.key && m.key.toLowerCase().includes('size')));
+      if (found) {
+        const ref = found.reference;
+        if (ref && ref.__typename === 'MediaImage' && ref.image?.url) {
+          return { url: ref.image.url, alt: ref.image.altText ?? 'Size chart', source: 'brand' };
+        }
+        if (ref && (ref.url)) {
+          return { url: ref.url, alt: found?.value ?? 'Size chart', source: 'brand' };
+        }
+        if (found.value && typeof found.value === 'string' && found.value.startsWith('http')) {
+          return { url: found.value, alt: 'Size chart', source: 'brand' };
+        }
+      }
+    }
+  } catch (err) {
+    // ignore
+  }
+
+  return null;
 }
 
 /**
@@ -151,7 +222,7 @@ function loadDeferredData({
 }
 
 export default function Product() {
-  const {product, similarProducts} = useLoaderData<typeof loader>();
+  const {product, similarProducts, brandSizeChart} = useLoaderData<typeof loader>();
 
   // Optimistically select a variant based on availability/adjacent variants
   const selectedVariant = useOptimisticVariant(
@@ -164,7 +235,7 @@ export default function Product() {
 
   return (
     <>
-      <ProductPage product={product} selectedVariant={selectedVariant} similarProducts={similarProducts} />
+      <ProductPage product={product} selectedVariant={selectedVariant} similarProducts={similarProducts} brandSizeChart={brandSizeChart} />
 
       <Analytics.ProductView
         data={{
@@ -220,6 +291,88 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
     unitPrice {
       amount
       currencyCode
+    }
+  }
+` as const;
+
+// Collection query by handle with metafields (used for brand size charts)
+const COLLECTION_BY_HANDLE_FULL_QUERY = `#graphql
+  query CollectionByHandleFull($handle: String!) {
+    collectionByHandle(handle: $handle) {
+      id
+      title
+      handle
+      metafields(first: 10) {
+        nodes {
+          id
+          key
+          namespace
+          value
+          type
+          reference {
+            __typename
+            ... on MediaImage {
+              image {
+                id
+                url
+                altText
+                width
+                height
+              }
+            }
+            ... on GenericFile {
+              alt
+              mimeType
+              url
+            }
+          }
+        }
+      }
+      image {
+        id
+        url
+        altText
+        width
+        height
+      }
+    }
+  }
+` as const;
+
+const COLLECTIONS_BY_TITLE_QUERY = `#graphql
+  query CollectionsByTitle($title: String!) {
+    collections(first: 5, query: $title) {
+      nodes {
+        id
+        title
+        handle
+        metafields(first: 10) {
+          nodes {
+            id
+            key
+            namespace
+            value
+            type
+            reference {
+              __typename
+              ... on MediaImage {
+                image {
+                  id
+                  url
+                  altText
+                  width
+                  height
+                }
+              }
+              ... on GenericFile {
+                alt
+                mimeType
+                url
+              }
+            }
+          }
+        }
+      }
     }
   }
 ` as const;

@@ -38,6 +38,8 @@ export interface PDPProduct {
   images?: { nodes: any[] };
   // optional size chart image url
   sizeChartImage?: { url: string; alt?: string } | null;
+  // optional brand-level size chart image
+  brandSizeChartImage?: { url: string; alt?: string } | null;
 }
 
 export interface SimilarProduct {
@@ -69,6 +71,7 @@ export function ProductBuyBox({
 }: ProductBuyBoxProps) {
   const [sizeRecOpen, setSizeRecOpen] = useState(false);
   const [sizeChartOpen, setSizeChartOpen] = useState(false);
+  const [brandSizeChartOpen, setBrandSizeChartOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const [showSizePrompt, setShowSizePrompt] = useState(false); // reserved if you want to show a separate prompt later
   const [hasMeasurements, setHasMeasurements] = useState(false);
@@ -265,6 +268,14 @@ export function ProductBuyBox({
           </p>
         </div>
       )}
+      {/* Brand size chart link */}
+      {product.brandSizeChartImage && (
+        <div className="pb-2">
+          <button type="button" onClick={() => setBrandSizeChartOpen(true)} className="text-xs text-gray-600 underline hover:text-black">
+            View Brand Size Chart
+          </button>
+        </div>
+      )}
 
       {/* Title */}
       <h1 className="mb-2 text-lg font-medium text-gray-900">
@@ -425,6 +436,15 @@ export function ProductBuyBox({
                     Size Chart
                   </button>
                 )}
+                {product.brandSizeChartImage && (
+                  <button
+                    type="button"
+                    onClick={() => setBrandSizeChartOpen(true)}
+                    className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:border-gray-400 rounded-full transition-all duration-200 hover:bg-gray-50"
+                  >
+                    Brand Size Chart
+                  </button>
+                )}
               </div>
 
               {/* Options - Smaller, friendlier buttons */}
@@ -513,6 +533,17 @@ export function ProductBuyBox({
               <button onClick={() => setSizeChartOpen(false)} className="text-gray-600">Close</button>
             </div>
             <SizeChart imageUrl={product.sizeChartImage?.url} alt={product.sizeChartImage?.alt || 'Size chart'} />
+          </div>
+        </div>
+      )}
+      {brandSizeChartOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="max-w-4xl w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold">Brand Size Chart</h4>
+              <button onClick={() => setBrandSizeChartOpen(false)} className="text-gray-600">Close</button>
+            </div>
+            <SizeChart imageUrl={product.brandSizeChartImage?.url} alt={product.brandSizeChartImage?.alt || 'Brand size chart'} />
           </div>
         </div>
       )}

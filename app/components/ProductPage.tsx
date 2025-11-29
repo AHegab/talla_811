@@ -27,9 +27,10 @@ interface ProductPageProps {
   product: ShopifyProduct;
   selectedVariant: ShopifyProduct['selectedOrFirstAvailableVariant'];
   similarProducts?: SimilarProduct[];
+  brandSizeChart?: { url: string; alt?: string; source?: string } | null;
 }
 
-export function ProductPage({product, selectedVariant, similarProducts}: ProductPageProps) {
+export function ProductPage({product, selectedVariant, similarProducts, brandSizeChart}: ProductPageProps) {
   // Transform selectedVariant to PDPVariant
   const transformVariant = (
     v: NonNullable<ShopifyProduct['selectedOrFirstAvailableVariant']>,
@@ -118,6 +119,11 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
     variants: pdpVariants,
     // sizeChartImage will be mapped later
   };
+
+  // Map brand size chart if provided by loader
+  if (brandSizeChart && brandSizeChart.url) {
+    pdpProduct.brandSizeChartImage = { url: brandSizeChart.url, alt: brandSizeChart.alt ?? 'Brand size chart' } as any;
+  }
 
   // Extract size chart metafield and map to pdpProduct.sizeChartImage
   try {
@@ -295,6 +301,14 @@ export function ProductPage({product, selectedVariant, similarProducts}: Product
                       <img src={pdpProduct.sizeChartImage.url} alt={pdpProduct.sizeChartImage.alt || 'Size chart'} className="h-16 w-auto object-contain rounded-md border border-gray-100" />
                       <a href={pdpProduct.sizeChartImage.url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-gray-700 hover:text-black underline">
                         View Size Chart
+                      </a>
+                    </div>
+                  )}
+                  {pdpProduct.brandSizeChartImage && (
+                    <div className="mt-4 flex items-center gap-4">
+                      <img src={pdpProduct.brandSizeChartImage.url} alt={pdpProduct.brandSizeChartImage.alt || 'Brand size chart'} className="h-16 w-auto object-contain rounded-md border border-gray-100" />
+                      <a href={pdpProduct.brandSizeChartImage.url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-gray-700 hover:text-black underline">
+                        View Brand Size Chart
                       </a>
                     </div>
                   )}

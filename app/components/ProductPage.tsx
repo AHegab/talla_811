@@ -167,7 +167,7 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
   };
 
   try {
-    const nodes = (product as any)?.metafields ?? [];
+    const nodes = (product as any)?.metafields?.nodes ?? [];
     const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage', 'size_map', 'size-map'];
     const found = nodes.find((m: any) => {
       if (!m) return false;

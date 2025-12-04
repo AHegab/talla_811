@@ -4,7 +4,9 @@
       "Bash(dir:*)",
       "Bash(npm run typecheck:*)",
       "Bash(npm run codegen:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

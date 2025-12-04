@@ -651,7 +651,7 @@ button, .button {
 }
 
 /* Override global button style for product gallery thumbnails */
-.product-gallery button {
+.product-gallery button:not([aria-label="Close image viewer"]) {
   background: #ffffff;
   color: inherit;
   border-radius: 8px;
@@ -660,9 +660,23 @@ button, .button {
   box-shadow: none;
 }
 
-.product-gallery button:hover {
+.product-gallery button:not([aria-label="Close image viewer"]):hover {
   background: #ffffff;
   color: inherit;
+}
+
+/* Ensure close button X is perfectly centered */
+.product-gallery button[aria-label="Close image viewer"] {
+  padding: 0 !important;
+  margin: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.product-gallery button[aria-label="Close image viewer"] svg {
+  display: block;
+  margin: 0 auto;
 }
 
 

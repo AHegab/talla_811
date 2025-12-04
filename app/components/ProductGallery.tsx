@@ -23,6 +23,9 @@ export function ProductGallery({
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
   const thumbRef = useRef<HTMLDivElement | null>(null);
+  const modalThumbRef = useRef<HTMLDivElement | null>(null);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
   const currentImage = images[selectedIndex] || images[0];
 
@@ -30,6 +33,26 @@ export function ProductGallery({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  // Touch handlers for swipe gestures
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current - touchEndX.current > 50) {
+      // Swiped left - go to next image
+      handleNext();
+    }
+    if (touchStartX.current - touchEndX.current < -50) {
+      // Swiped right - go to previous image
+      handlePrev();
+    }
+  };
 
   // Keyboard navigation
   useEffect(() => {
@@ -86,6 +109,33 @@ export function ProductGallery({
     });
     // nothing extra needed when a thumbnail is selected (scrollIntoView handles layout)
   }, [selectedIndex]);
+
+  // Scroll modal thumbnail into view
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const node = modalThumbRef.current;
+    if (!node) return;
+    const currentThumb = node.querySelector(
+      `button[data-modal-idx="${selectedIndex}"]`,
+    ) as HTMLElement | null;
+    currentThumb?.scrollIntoView({
+      behavior: 'smooth',
+      inline: 'center',
+      block: 'nearest',
+    });
+  }, [selectedIndex, isModalOpen]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isModalOpen]);
 
   // No arrow buttons or event listeners needed for thumbnail strip.
 
@@ -191,14 +241,49 @@ export function ProductGallery({
 
         {/* Modal viewer - Fullscreen */}
         {isModalOpen && (
-               <div
-                 className="fixed inset-0 z-[200] flex items-center justify-center bg-transparent backdrop-blur-none animate-fadeIn cursor-pointer"
+          <div
+            className="fixed inset-0 z-[200] bg-black animate-fadeIn"
             role="dialog"
             aria-modal="true"
-            onClick={closeModal}
           >
-            {/* Main image - Fullscreen */}
-            <div className="w-full h-full flex items-center justify-center p-4">
+            {/* Close button */}
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-0 z-50 w-12 h-12 flex items-center justify-center bg-gray-900/80 hover:bg-gray-900 backdrop-blur-sm rounded-full transition-all shadow-lg"
+              aria-label="Close image viewer"
+            >
+              <svg
+                className="text-white"
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ display: 'block' }}
+              >
+                <line x1="2" y1="2" x2="16" y2="16"></line>
+                <line x1="16" y1="2" x2="2" y2="16"></line>
+              </svg>
+            </button>
+
+            {/* Main image - Full screen with space for thumbnails */}
+            <div
+              className={`w-full flex items-center justify-center ${
+                images.length > 1 ? 'h-[calc(100vh-120px)]' : 'h-screen'
+              }`}
+              onClick={(e) => {
+                // Only close on desktop when clicking the background
+                if (e.target === e.currentTarget && window.innerWidth >= 768) {
+                  closeModal();
+                }
+              }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               <Image
                 data={{
                   url: images[selectedIndex]?.url,
@@ -206,9 +291,54 @@ export function ProductGallery({
                   width: images[selectedIndex]?.width,
                   height: images[selectedIndex]?.height,
                 }}
-                className="max-h-full max-w-full object-contain"
+                className="w-full h-full object-contain"
               />
             </div>
+
+            {/* Thumbnail carousel at bottom */}
+            {images.length > 1 && (
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent py-6 px-4">
+                <div
+                  ref={modalThumbRef}
+                  className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-2"
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    WebkitOverflowScrolling: 'touch',
+                  } as React.CSSProperties}
+                >
+                  {images.map((img, idx) => {
+                    const isSelected = idx === selectedIndex;
+                    return (
+                      <button
+                        key={img.id || idx}
+                        data-modal-idx={idx}
+                        type="button"
+                        aria-label={`View image ${idx + 1}`}
+                        aria-pressed={isSelected}
+                        onClick={() => setSelectedIndex(idx)}
+                        className={`snap-center flex-shrink-0 rounded-md overflow-hidden transition-all duration-200 ${
+                          isSelected
+                            ? 'ring-2 ring-white scale-110'
+                            : 'ring-1 ring-white/40 opacity-50 hover:opacity-80'
+                        }`}
+                        style={{
+                          width: '56px',
+                          height: '74px',
+                        }}
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.alt || `${productTitle} ${idx + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
       </div>

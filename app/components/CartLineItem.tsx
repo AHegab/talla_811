@@ -23,7 +23,7 @@ export function CartLineItem({
 }) {
   const {id, merchandise} = line;
   const {product, title, image, selectedOptions} = merchandise;
-  const lineItemUrl = useVariantUrl(product.handle, selectedOptions);
+  const lineItemUrl = useVariantUrl(product?.handle ?? '', selectedOptions);
   const {close} = useAside();
 
   return (
@@ -65,7 +65,7 @@ export function CartLineItem({
             }}
             className="block hover:text-gray-700 transition-colors"
           >
-            <h3 className="font-semibold text-sm leading-tight text-gray-900 whitespace-normal">{product.title}</h3>
+            <h3 className="font-semibold text-sm leading-tight text-gray-900 whitespace-normal">{product?.title ?? title}</h3>
           </Link>
 
           <div className="text-xs text-gray-500 mt-0.5">

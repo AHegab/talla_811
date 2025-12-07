@@ -463,21 +463,20 @@ export function WomenCollectionPage({
                       <button
                         key={color.value}
                         onClick={() => toggleColor(color.value)}
-                        className="group flex flex-col items-center gap-2 transition-all"
+                        className="group flex flex-col items-center gap-2 transition-all bg-transparent border-0 p-0"
                         title={color.name}
                       >
                         <div className="relative w-12 h-12 flex-shrink-0">
                           <div
                             className={`absolute inset-0 rounded-full transition-all duration-200 ${
                               selectedColors.includes(color.value)
-                                ? 'ring-2 ring-[#292929] ring-offset-[3px] scale-105'
+                                ? 'ring-2 ring-[#292929] ring-offset-2 scale-105'
                                 : 'group-hover:scale-105'
+                            } ${
+                              color.value === 'white' ? 'border border-gray-200' : ''
                             }`}
                             style={{
-                              backgroundColor: color.hex,
-                              boxShadow: color.value === 'white'
-                                ? 'inset 0 0 0 1px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)'
-                                : '0 2px 4px rgba(0,0,0,0.06)'
+                              backgroundColor: color.hex
                             }}
                           />
                           {selectedColors.includes(color.value) && (

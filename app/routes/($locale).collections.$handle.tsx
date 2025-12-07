@@ -136,7 +136,7 @@ export default function Collection() {
     if (updated.priceMax) params.set('priceMax', updated.priceMax);
     if (updated.priceRange) params.set('priceRange', updated.priceRange);
 
-    setSearchParams(params, {replace: true});
+    setSearchParams(params, {replace: true, preventScrollReset: true});
   };
 
   // Toggle array filter (size, color, brand)
@@ -158,7 +158,7 @@ export default function Collection() {
       priceMax: '',
       priceRange: '',
     });
-    setSearchParams(new URLSearchParams(), {replace: true});
+    setSearchParams(new URLSearchParams(), {replace: true, preventScrollReset: true});
   };
 
   // Filter products client-side
@@ -199,87 +199,114 @@ export default function Collection() {
     filters.priceRange !== '';
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Breadcrumb */}
-      <div className="mx-auto max-w-[1920px] px-6 py-6 sm:px-8 lg:px-16 xl:px-20">
-        <nav className="flex items-center space-x-2 text-xs font-medium uppercase tracking-[0.18em] text-gray-600">
-          <Link to="/" className="transition-colors hover:text-black">
-            Home
-          </Link>
-          <span>/</span>
-          <Link
-            to="/collections"
-            className="transition-colors hover:text-black"
-          >
-            Collections
-          </Link>
-          <span>/</span>
-          <span className="text-black">{collection.title}</span>
-        </nav>
-      </div>
+    <div className="min-h-screen bg-[#FDF8F7]">
+      {/* HERO SECTION WITH BRAND IMAGE */}
+      <section className="relative py-12 sm:py-16 lg:py-20 bg-white">
+        <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-16">
+          {/* Breadcrumb */}
+          <nav className="mb-10 flex items-center space-x-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[#5A4A4C]">
+            <Link to="/" className="transition-colors hover:text-[#1F191A]">
+              Home
+            </Link>
+            <span>/</span>
+            <Link to="/collections" className="transition-colors hover:text-[#1F191A]">
+              Collections
+            </Link>
+            <span>/</span>
+            <span className="text-[#1F191A]">{collection.title}</span>
+          </nav>
 
-      {/* Header with title */}
-      <div className="mx-auto max-w-[1920px] px-6 pb-8 sm:px-8 lg:px-16 xl:px-20">
-        <div className="text-center">
-          <h1
-            className="mb-3 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl uppercase text-black"
-            style={{
-              fontFamily: 'Aeonik, sans-serif',
-              letterSpacing: '0.05em'
-            }}
-          >
-            {collection.title}
-          </h1>
-          {collection.description && (
-            <p className="mx-auto max-w-2xl text-base text-gray-600" style={{fontFamily: 'Quicking, sans-serif'}}>
-              {collection.description}
-            </p>
-          )}
+          <div className="grid lg:grid-cols-[1.5fr,1fr] gap-10 lg:gap-20 items-center">
+            {/* Brand Logo/Image */}
+            <div className="flex items-center justify-center lg:justify-start">
+              {collection.image ? (
+                <div className="relative w-full">
+                  <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-gradient-to-br from-white to-[#FAFAFA] border border-[#E8E9EC] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-10 sm:p-16 lg:p-20">
+                    <img
+                      src={collection.image.url}
+                      alt={collection.image.altText || collection.title}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="aspect-[16/9] w-full rounded-2xl bg-gradient-to-br from-white to-[#FAFAFA] border border-[#E8E9EC] flex items-center justify-center">
+                  <span
+                    className="text-6xl sm:text-7xl lg:text-8xl font-bold text-[#E8E9EC] uppercase tracking-[0.1em]"
+                    style={{ fontFamily: 'Aeonik, sans-serif' }}
+                  >
+                    {collection.title.charAt(0)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Brand Info */}
+            <div className="text-center lg:text-left">
+              <p
+                className="text-[11px] tracking-[0.28em] uppercase text-[#5A4A4C]/70 mb-4"
+                style={{
+                  fontFamily: 'Georgia, "Playfair Display SC", serif',
+                }}
+              >
+                Brand Collection
+              </p>
+              <h1
+                className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-[0.15em] uppercase text-[#1F191A] mb-6"
+                style={{fontFamily: 'Aeonik, sans-serif'}}
+              >
+                {collection.title}
+              </h1>
+              <div className="h-[2px] w-20 rounded-full bg-[#1F191A] mb-6 mx-auto lg:mx-0" />
+              {collection.description && (
+                <p
+                  className="text-base sm:text-lg leading-relaxed text-[#5A4A4C] max-w-xl mx-auto lg:mx-0"
+                  style={{fontFamily: 'Quicking, sans-serif'}}
+                >
+                  {collection.description}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
+      </section>
 
-        {/* Mobile: Filter button */}
-        <div className="mt-6 flex items-center justify-center gap-4 lg:hidden">
-          <button
-            type="button"
-            onClick={() => setFiltersOpen(true)}
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg border border-gray-300 px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-gray-800 hover:shadow-md active:scale-95"
-            style={{fontFamily: 'Aeonik, sans-serif'}}
-          >
-            <svg
-              className="relative z-10 h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      {/* Mobile Filter Button - Outside hero */}
+      <div className="bg-[#FDF8F7] sticky top-0 z-10 border-b border-[#E8E9EC]">
+        <div className="mx-auto max-w-[1440px] px-6 py-4 sm:px-10 lg:px-16">
+
+          {/* Mobile: Filter button */}
+          <div className="flex items-center justify-between gap-4 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-[#E8E9EC] bg-white px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-[#292929] hover:shadow-md active:scale-95"
+              style={{fontFamily: 'Aeonik, sans-serif'}}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-              />
-            </svg>
-            <span className="relative z-10">Filters</span>
-            {hasActiveFilters && (
-              <span className="ml-1 rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white">
-                {filters.sizes.length + filters.colors.length + filters.brands.length + (filters.priceRange ? 1 : 0) + (filters.priceMin || filters.priceMax ? 1 : 0)}
-              </span>
-            )}
-          </button>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <span>Filters</span>
+              {hasActiveFilters && (
+                <span className="rounded-full bg-[#292929] px-2 py-0.5 text-xs text-white">
+                  {filters.sizes.length + filters.colors.length + filters.brands.length + (filters.priceRange ? 1 : 0) + (filters.priceMin || filters.priceMax ? 1 : 0)}
+                </span>
+              )}
+            </button>
 
-          <select
-            value={sortBy}
-            onChange={(e) =>
-              setSortBy(e.target.value as typeof sortBy)
-            }
-            className="cursor-pointer rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-gray-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300"
-            style={{fontFamily: 'Aeonik, sans-serif'}}
-          >
-            <option value="featured">Featured</option>
-            <option value="price-low-high">Price: Low to High</option>
-            <option value="price-high-low">Price: High to Low</option>
-            <option value="newest">Newest</option>
-            <option value="best-selling">Best Selling</option>
-          </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="cursor-pointer rounded-lg border border-[#E8E9EC] bg-white px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-[#292929] focus:outline-none focus:ring-2 focus:ring-[#E8E9EC]"
+              style={{fontFamily: 'Aeonik, sans-serif'}}
+            >
+              <option value="featured">Featured</option>
+              <option value="price-low-high">Price: Low to High</option>
+              <option value="price-high-low">Price: High to Low</option>
+              <option value="newest">Newest</option>
+              <option value="best-selling">Best Selling</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -526,10 +553,10 @@ export default function Collection() {
       )}
 
       {/* Main Content - Sidebar + Products */}
-      <div className="mx-auto max-w-[1920px] px-6 pb-16 sm:px-8 lg:px-16 xl:px-20">
-        <div className="flex gap-8">
-          {/* Desktop Sidebar - always visible for testing */}
-          <aside className="w-64 flex-shrink-0 bg-white rounded-lg border border-gray-200 p-4 h-fit">
+      <div className="mx-auto max-w-[1440px] px-6 pb-16 sm:px-10 lg:px-16">
+        <div className="flex gap-8 lg:gap-10">
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:block w-64 flex-shrink-0 bg-white rounded-2xl border border-[#E8E9EC] p-6 h-fit sticky top-24 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
             <div className="sticky top-4 space-y-6">
               {/* Filters Header */}
               <div className="flex items-center justify-between">
@@ -697,35 +724,129 @@ export default function Collection() {
 
           {/* Products Section */}
           <div className="flex-1 min-w-0">
-            {/* Sort + Active Filters - Desktop only */}
-            <div className="hidden lg:flex items-center justify-between mb-6">
-              <div className="text-sm text-gray-600">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+            {/* Enhanced Product Controls Bar - Desktop */}
+            <div className="hidden lg:block mb-8">
+              <div className="bg-white rounded-2xl border border-[#E8E9EC] p-8 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+                {/* Header Row */}
+                <div className="flex items-start justify-between pb-6 border-b border-[#E8E9EC]">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-[#1F191A] mb-2 uppercase tracking-[0.12em]" style={{fontFamily: 'Aeonik, sans-serif'}}>
+                      Products
+                    </h2>
+                    <p className="text-sm text-[#5A4A4C]" style={{fontFamily: 'Quicking, sans-serif'}}>
+                      Showing <span className="font-semibold text-[#1F191A]">{filteredProducts.length}</span> {filteredProducts.length === 1 ? 'product' : 'products'}
+                    </p>
+                  </div>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="cursor-pointer rounded-lg border border-[#E8E9EC] bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] transition-all duration-200 hover:border-[#292929] focus:outline-none focus:ring-2 focus:ring-[#E8E9EC]"
+                    style={{fontFamily: 'Aeonik, sans-serif'}}
+                  >
+                    <option value="featured">Featured</option>
+                    <option value="price-low-high">Price: Low to High</option>
+                    <option value="price-high-low">Price: High to Low</option>
+                    <option value="newest">Newest</option>
+                    <option value="best-selling">Best Selling</option>
+                  </select>
+                </div>
+
+                {/* Quick Filters Row */}
+                <div className="flex items-center gap-4 pt-6">
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#1F191A] whitespace-nowrap" style={{fontFamily: 'Aeonik, sans-serif'}}>
+                    Quick Filters:
+                  </span>
+
+                  {/* Size Quick Filters */}
+                  <div className="flex items-center gap-2.5">
+                    {['S', 'M', 'L', 'XL'].map((size) => {
+                      const isSelected = filters.sizes.includes(size);
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => toggleFilter('sizes', size)}
+                          className="px-4 py-2 rounded-lg border text-xs font-semibold transition-all duration-200 hover:shadow-md active:scale-95 min-w-[44px]"
+                          style={{
+                            fontFamily: 'Aeonik, sans-serif',
+                            borderColor: isSelected ? accentColor : '#E8E9EC',
+                            backgroundColor: isSelected ? accentColor : 'white',
+                            color: isSelected ? '#FFFFFF' : '#5A4A4C',
+                          }}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="h-5 w-px bg-[#E8E9EC]" />
+
+                  {/* Color Quick Filters */}
+                  <div className="flex items-center gap-2.5">
+                    {[
+                      {name: 'Black', color: '#000000'},
+                      {name: 'White', color: '#FFFFFF'},
+                      {name: 'Gray', color: '#9CA3AF'},
+                      {name: 'Navy', color: '#1E3A8A'},
+                    ].map((colorOption) => {
+                      const isSelected = filters.colors.includes(colorOption.name);
+                      return (
+                        <button
+                          key={colorOption.name}
+                          type="button"
+                          onClick={() => toggleFilter('colors', colorOption.name)}
+                          className="relative h-9 w-9 rounded-full shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95"
+                          style={{
+                            backgroundColor: colorOption.color,
+                            borderWidth: '2.5px',
+                            borderStyle: 'solid',
+                            borderColor: isSelected ? accentColor : '#E8E9EC',
+                          }}
+                          aria-label={colorOption.name}
+                          title={colorOption.name}
+                        >
+                          {isSelected && (
+                            <svg
+                              className="absolute inset-0 m-auto h-4 w-4"
+                              fill="none"
+                              stroke={colorOption.name === 'White' ? '#000' : '#FFF'}
+                              viewBox="0 0 24 24"
+                              strokeWidth={3}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {hasActiveFilters && (
+                    <>
+                      <div className="h-5 w-px bg-[#E8E9EC] ml-1" />
+                      <button
+                        onClick={clearFilters}
+                        className="text-xs font-semibold text-[#5A4A4C] hover:text-[#1F191A] underline transition-colors whitespace-nowrap"
+                        style={{fontFamily: 'Aeonik, sans-serif'}}
+                      >
+                        Clear All
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-              <select
-                value={sortBy}
-                onChange={(e) =>
-                  setSortBy(e.target.value as typeof sortBy)
-                }
-                className="cursor-pointer rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                style={{fontFamily: 'Aeonik, sans-serif'}}
-              >
-                <option value="featured">Featured</option>
-                <option value="price-low-high">Price: Low to High</option>
-                <option value="price-high-low">Price: High to Low</option>
-                <option value="newest">Newest</option>
-                <option value="best-selling">Best Selling</option>
-              </select>
             </div>
 
             {/* Active Filters Chips */}
             {hasActiveFilters && (
-              <div className="mb-6 flex flex-wrap items-center gap-2">
+              <div className="mb-8 flex flex-wrap items-center gap-2">
                 {filters.sizes.map(size => (
                   <button
                     key={`size-${size}`}
                     onClick={() => toggleFilter('sizes', size)}
-                    className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs transition-all hover:border-gray-800"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
+                    style={{fontFamily: 'Aeonik, sans-serif'}}
                   >
                     <span>Size: {size}</span>
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -737,7 +858,8 @@ export default function Collection() {
                   <button
                     key={`color-${color}`}
                     onClick={() => toggleFilter('colors', color)}
-                    className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs transition-all hover:border-gray-800"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
+                    style={{fontFamily: 'Aeonik, sans-serif'}}
                   >
                     <span>Color: {color}</span>
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -749,7 +871,8 @@ export default function Collection() {
                   <button
                     key={`brand-${brand}`}
                     onClick={() => toggleFilter('brands', brand)}
-                    className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs transition-all hover:border-gray-800"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
+                    style={{fontFamily: 'Aeonik, sans-serif'}}
                   >
                     <span>Brand: {brand}</span>
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -760,7 +883,8 @@ export default function Collection() {
                 {filters.priceRange && (
                   <button
                     onClick={() => updateFilters({priceRange: ''})}
-                    className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs transition-all hover:border-gray-800"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
+                    style={{fontFamily: 'Aeonik, sans-serif'}}
                   >
                     <span>Price: {filters.priceRange.replace('-', ' - ')}</span>
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -771,7 +895,8 @@ export default function Collection() {
                 {(filters.priceMin || filters.priceMax) && (
                   <button
                     onClick={() => updateFilters({priceMin: '', priceMax: ''})}
-                    className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs transition-all hover:border-gray-800"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
+                    style={{fontFamily: 'Aeonik, sans-serif'}}
                   >
                     <span>
                       Price: ${filters.priceMin || '0'} - ${filters.priceMax || '∞'}
@@ -792,15 +917,18 @@ export default function Collection() {
                 ))}
               </ProductGrid>
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <svg className="mb-4 h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3 className="mb-2 text-xl font-semibold text-gray-900">No products found</h3>
-                <p className="mb-4 text-gray-600">Try adjusting your filters</p>
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="mb-6 rounded-full bg-[#FAFAFA] p-6">
+                  <svg className="h-12 w-12 text-[#C4C5CB]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="mb-2 text-xl font-semibold text-[#1F191A]" style={{fontFamily: 'Aeonik, sans-serif'}}>No products found</h3>
+                <p className="mb-6 text-[#5A4A4C]" style={{fontFamily: 'Quicking, sans-serif'}}>Try adjusting your filters to see more results</p>
                 <button
                   onClick={clearFilters}
-                  className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium uppercase tracking-wider transition-all hover:border-gray-800 hover:bg-gray-50"
+                  className="rounded-lg border border-[#E8E9EC] bg-white px-6 py-3 text-sm font-medium uppercase tracking-[0.12em] transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
+                  style={{fontFamily: 'Aeonik, sans-serif'}}
                 >
                   Clear All Filters
                 </button>
@@ -884,6 +1012,13 @@ const COLLECTION_QUERY = `#graphql
       handle
       title
       description
+      image {
+        id
+        url
+        altText
+        width
+        height
+      }
       products(
         first: $first
         last: $last

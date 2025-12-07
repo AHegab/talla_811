@@ -46,20 +46,53 @@ export default function Collections() {
   const {collections} = useLoaderData<typeof loader>();
 
   return (
-    <div className="collections">
-      <h1>Collections</h1>
-      <PaginatedResourceSection<CollectionFragment>
-        connection={collections}
-        resourcesClassName="collections-grid"
-      >
-        {({node: collection, index}) => (
-          <CollectionItem
-            key={collection.id}
-            collection={collection}
-            index={index}
-          />
-        )}
-      </PaginatedResourceSection>
+    <div className="min-h-screen bg-[#FDF8F7]">
+      {/* HERO SECTION */}
+      <section className="relative py-16 sm:py-20 lg:py-24">
+        <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-16">
+          <div className="text-center">
+            <p
+              className="text-[11px] tracking-[0.28em] uppercase text-[#5A4A4C]/70 mb-3"
+              style={{
+                fontFamily: 'Georgia, "Playfair Display SC", serif',
+              }}
+            >
+              Explore Our
+            </p>
+            <h1
+              className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-[0.18em] uppercase text-[#1F191A] mb-4"
+              style={{fontFamily: 'Aeonik, sans-serif'}}
+            >
+              Collections
+            </h1>
+            <div className="mx-auto h-[2px] w-16 rounded-full bg-[#1F191A] mb-5" />
+            <p
+              className="mx-auto max-w-2xl text-sm sm:text-base leading-relaxed text-[#5A4A4C]"
+              style={{fontFamily: 'Quicking, sans-serif'}}
+            >
+              Discover our curated collections of premium fashion pieces, thoughtfully designed for the modern wardrobe.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* COLLECTIONS GRID */}
+      <section className="pb-20 lg:pb-24">
+        <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-16">
+          <PaginatedResourceSection<CollectionFragment>
+            connection={collections}
+            resourcesClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10"
+          >
+            {({node: collection, index}) => (
+              <CollectionItem
+                key={collection.id}
+                collection={collection}
+                index={index}
+              />
+            )}
+          </PaginatedResourceSection>
+        </div>
+      </section>
     </div>
   );
 }
@@ -73,21 +106,50 @@ function CollectionItem({
 }) {
   return (
     <Link
-      className="collection-item"
+      className="group block"
       key={collection.id}
       to={`/collections/${collection.handle}`}
       prefetch="intent"
     >
-      {collection?.image && (
-        <Image
-          alt={collection.image.altText || collection.title}
-          aspectRatio="1/1"
-          data={collection.image}
-          loading={index < 3 ? 'eager' : undefined}
-          sizes="(min-width: 45em) 400px, 100vw"
-        />
-      )}
-      <h5>{collection.title}</h5>
+      <div className="relative overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition-all duration-300 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] group-hover:-translate-y-1">
+        {collection?.image && (
+          <div className="relative aspect-[4/5] overflow-hidden">
+            <Image
+              alt={collection.image.altText || collection.title}
+              data={collection.image}
+              loading={index < 3 ? 'eager' : undefined}
+              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </div>
+        )}
+
+        {/* Collection Title */}
+        <div className="p-5 sm:p-6">
+          <h3
+            className="text-base sm:text-lg font-semibold tracking-[0.12em] uppercase text-[#1F191A] transition-colors duration-200 group-hover:text-[#5A4A4C]"
+            style={{fontFamily: 'Aeonik, sans-serif'}}
+          >
+            {collection.title}
+          </h3>
+
+          {/* Explore link */}
+          <div className="mt-3 flex items-center gap-2 text-[11px] tracking-[0.12em] uppercase text-[#5A4A4C] font-medium transition-all duration-200 group-hover:gap-3 group-hover:text-[#1F191A]">
+            <span>Explore</span>
+            <svg
+              className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </div>
+        </div>
+      </div>
     </Link>
   );
 }

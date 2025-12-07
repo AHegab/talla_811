@@ -150,72 +150,92 @@ export async function loader({ context }: Route.LoaderArgs) {
 
 export default function BrandsIndex() {
   const { brands } = useLoaderData<typeof loader>();
-  console.log(brands);
-  // Debug logging removed
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg,#FBFBFB)] overflow-x-hidden">
-      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-12 lg:py-16">
-        {/* Page Header */}
-        <header className="mb-12 text-center">
-          <h1
-            className="text-4xl md:text-5xl lg:text-6xl tracking-tight text-[var(--color-text,#292929)] mb-4"
-            style={{ fontFamily: '"Playfair Display SC", serif' }}
-          >
-            Brands
-          </h1>
-          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover our curated selection of premium fashion brands
-          </p>
-        </header>
-
-        {/* Debug box removed */}
-
-        {/* Brands Grid */}
-        {brands.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No brands available at the moment.</p>
+    <div className="min-h-screen bg-[#FDF8F7]">
+      {/* HERO SECTION */}
+      <section className="relative py-16 sm:py-20 lg:py-24">
+        <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-16">
+          <div className="text-center">
+            <p
+              className="text-[11px] tracking-[0.28em] uppercase text-[#5A4A4C]/70 mb-3"
+              style={{
+                fontFamily: 'Georgia, "Playfair Display SC", serif',
+              }}
+            >
+              Explore Our
+            </p>
+            <h1
+              className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-[0.18em] uppercase text-[#1F191A] mb-4"
+              style={{fontFamily: 'Aeonik, sans-serif'}}
+            >
+              Brands
+            </h1>
+            <div className="mx-auto h-[2px] w-16 rounded-full bg-[#1F191A] mb-5" />
+            <p
+              className="mx-auto max-w-2xl text-sm sm:text-base leading-relaxed text-[#5A4A4C]"
+              style={{fontFamily: 'Quicking, sans-serif'}}
+            >
+              Discover our curated selection of premium fashion brands, each chosen for their exceptional quality and timeless style.
+            </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 lg:gap-8">
-            {brands.map((brand) => (
-              <Link
-                key={brand.id}
-                to={brand.url}
-                prefetch="intent"
-                className="group flex flex-col items-center justify-center rounded-2xl border border-[var(--color-surface,#DDDEE2)] bg-[var(--color-bg,#FBFBFB)] p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-              >
-                {/* Brand Logo */}
-                <div className="w-full aspect-square mb-4 flex items-center justify-center">
-                  {brand.image ? (
-                    <Image
-                      data={brand.image}
-                      alt={brand.imageAlt || brand.title}
-                      aspectRatio="1/1"
-                      className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                      sizes="(min-width: 45em) 400px, 100vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                      <span
-                        className="text-2xl font-semibold text-gray-400 uppercase tracking-wider"
-                        style={{ fontFamily: '"Playfair Display SC", serif' }}
-                      >
-                        {brand.title.charAt(0)}
-                      </span>
+        </div>
+      </section>
+
+      {/* BRANDS GRID */}
+      <section className="pb-20 lg:pb-24">
+        <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-16">
+          {brands.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-[#5A4A4C] text-base">No brands available at the moment.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
+              {brands.map((brand) => (
+                <Link
+                  key={brand.id}
+                  to={brand.url}
+                  prefetch="intent"
+                  className="group block"
+                >
+                  <div className="relative overflow-hidden rounded-2xl bg-white border border-[#E8E9EC] shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition-all duration-300 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] group-hover:-translate-y-1">
+                    {/* Brand Logo Container */}
+                    <div className="aspect-square p-8 flex items-center justify-center bg-gradient-to-br from-white to-[#FAFAFA]">
+                      {brand.image ? (
+                        <Image
+                          data={brand.image}
+                          alt={brand.imageAlt || brand.title}
+                          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span
+                            className="text-4xl sm:text-5xl font-bold text-[#E8E9EC] uppercase tracking-[0.1em]"
+                            style={{ fontFamily: 'Aeonik, sans-serif' }}
+                          >
+                            {brand.title.charAt(0)}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* Brand Name */}
-                <h2 className="text-sm md:text-base font-medium uppercase tracking-wider text-[var(--color-text,#292929)] text-center">
-                  {brand.title}
-                </h2>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+                    {/* Brand Name */}
+                    <div className="px-5 py-4 border-t border-[#E8E9EC] bg-white">
+                      <h2
+                        className="text-sm sm:text-base font-semibold tracking-[0.12em] uppercase text-[#1F191A] text-center transition-colors duration-200 group-hover:text-[#5A4A4C]"
+                        style={{fontFamily: 'Aeonik, sans-serif'}}
+                      >
+                        {brand.title}
+                      </h2>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

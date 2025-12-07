@@ -401,13 +401,13 @@ export function WomenCollectionPage({
             onClick={() => setFiltersOpen(!filtersOpen)}
             className="w-full group"
           >
-            <div className="relative overflow-hidden bg-white border border-[#E8E9EC] rounded-2xl transition-all duration-300 hover:border-[#C4C5CB] hover:shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
-              <div className="flex items-center justify-between px-6 sm:px-8 py-5 sm:py-6">
+            <div className="relative overflow-hidden bg-white border border-[#E8E9EC] rounded-xl sm:rounded-2xl transition-all duration-300 hover:border-[#C4C5CB] hover:shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center justify-between px-4 sm:px-8 py-4 sm:py-6 gap-2 sm:gap-4">
                 {/* Left Section */}
-                <div className="flex items-center gap-5">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <svg
-                      className={`w-5 h-5 text-[#292929] transition-transform duration-300 ${filtersOpen ? 'rotate-180' : ''}`}
+                      className={`w-4 h-4 sm:w-5 sm:h-5 text-[#292929] transition-transform duration-300 flex-shrink-0 ${filtersOpen ? 'rotate-180' : ''}`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -415,15 +415,15 @@ export function WomenCollectionPage({
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
-                    <span className="text-sm font-medium tracking-[0.08em] uppercase text-[#292929]">
+                    <span className="text-xs sm:text-sm font-medium tracking-[0.08em] uppercase text-[#292929]">
                       Filters
                     </span>
                   </div>
 
                   {activeFilterCount > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-[#292929] rounded-full">
+                    <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 bg-[#292929] rounded-full">
                       <span className="text-xs font-semibold text-white">{activeFilterCount}</span>
-                      <span className="text-[10px] text-white/70 uppercase tracking-wider">Active</span>
+                      <span className="hidden sm:inline text-[10px] text-white/70 uppercase tracking-wider">Active</span>
                     </div>
                   )}
                 </div>
@@ -435,7 +435,7 @@ export function WomenCollectionPage({
                       e.stopPropagation();
                       clearAllFilters();
                     }}
-                    className="px-5 py-2 text-[10px] font-medium tracking-[0.08em] uppercase text-[#292929] hover:text-[#1a1a1a] border border-[#E8E9EC] rounded-full hover:border-[#292929] transition-all duration-200"
+                    className="px-3 sm:px-5 py-1.5 sm:py-2 text-[9px] sm:text-[10px] font-medium tracking-[0.08em] uppercase text-[#292929] hover:text-[#1a1a1a] border border-[#E8E9EC] rounded-full hover:border-[#292929] transition-all duration-200 whitespace-nowrap flex-shrink-0"
                   >
                     Clear All
                   </button>
@@ -675,7 +675,7 @@ export function WomenCollectionPage({
 
         {/* GRID HEADER */}
         <div ref={sentinelRef} />
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-5 mt-16 sm:mt-20 lg:mt-32 xl:mt-40 flex items-center justify-between">
           <h2 className="text-xs tracking-[0.22em] uppercase text-gray-700">
             All womenswear ({filteredProducts.length} items)
           </h2>

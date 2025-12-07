@@ -1,8 +1,7 @@
 import { Analytics, getPaginationVariables } from '@shopify/hydrogen';
 import { useEffect, useState, type ReactNode } from 'react';
-import { redirect, useLoaderData, useSearchParams, Link } from 'react-router';
+import { Link, redirect, useLoaderData, useSearchParams } from 'react-router';
 import type { ProductItemFragment } from 'storefrontapi.generated';
-import { PaginatedResourceSection } from '~/components/PaginatedResourceSection';
 import { ProductItem } from '~/components/ProductItem';
 import { ProductGrid } from '~/components/ui';
 import { MenCollectionPage } from '~/components/ui/MenCollectionPage';
@@ -94,7 +93,6 @@ export default function Collection() {
   const {collection} = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<'featured' | 'price-low-high' | 'price-high-low' | 'newest' | 'best-selling'>('featured');
 
   const handleLower = collection?.handle?.toLowerCase?.() ?? '';
   const isMale = Boolean(handleLower === 'men' || /\bmen\b/i.test(collection?.title || ''));
@@ -286,43 +284,6 @@ export default function Collection() {
           </div>
         </div>
       </section>
-
-      {/* Mobile Filter Button */}
-      <div className="bg-[#FDF8F7] sticky top-0 z-10 border-b border-[#E8E9EC]">
-        <div className="mx-auto max-w-[1440px] px-6 py-4 sm:px-10 lg:px-16">
-          <div className="flex items-center justify-between gap-4 lg:hidden">
-            <button
-              type="button"
-              onClick={() => setFiltersOpen(true)}
-              className="flex items-center gap-2 rounded-lg border border-[#E8E9EC] bg-white px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-[#292929] hover:shadow-md active:scale-95"
-              style={{fontFamily: 'Aeonik, sans-serif'}}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              <span>Filters</span>
-              {hasActiveFilters && (
-                <span className="rounded-full bg-[#292929] px-2 py-0.5 text-xs text-white">
-                  {filters.sizes.length + filters.colors.length + filters.brands.length + (filters.priceRange ? 1 : 0) + (filters.priceMin || filters.priceMax ? 1 : 0)}
-                </span>
-              )}
-            </button>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="cursor-pointer rounded-lg border border-[#E8E9EC] bg-white px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-[#292929] focus:outline-none focus:ring-2 focus:ring-[#E8E9EC]"
-              style={{fontFamily: 'Aeonik, sans-serif'}}
-            >
-              <option value="featured">Featured</option>
-              <option value="price-low-high">Price: Low to High</option>
-              <option value="price-high-low">Price: High to Low</option>
-              <option value="newest">Newest</option>
-              <option value="best-selling">Best Selling</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
       {/* Filters Drawer - Mobile */}
       {filtersOpen && (
@@ -679,18 +640,6 @@ export default function Collection() {
                       Showing <span className="font-semibold text-[#1F191A]">{filteredProducts.length}</span> {filteredProducts.length === 1 ? 'product' : 'products'}
                     </p>
                   </div>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="cursor-pointer rounded-lg border border-[#E8E9EC] bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] transition-all duration-200 hover:border-[#292929] focus:outline-none focus:ring-2 focus:ring-[#E8E9EC]"
-                    style={{fontFamily: 'Aeonik, sans-serif'}}
-                  >
-                    <option value="featured">Featured</option>
-                    <option value="price-low-high">Price: Low to High</option>
-                    <option value="price-high-low">Price: High to Low</option>
-                    <option value="newest">Newest</option>
-                    <option value="best-selling">Best Selling</option>
-                  </select>
                 </div>
 
                 {/* Quick Filters Row */}

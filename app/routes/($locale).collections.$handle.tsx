@@ -95,7 +95,6 @@ export default function Collection() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<'featured' | 'price-low-high' | 'price-high-low' | 'newest' | 'best-selling'>('featured');
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState<FilterState>({
@@ -270,45 +269,6 @@ export default function Collection() {
           </div>
         </div>
       </section>
-
-      {/* Mobile Filter Button - Outside hero */}
-      <div className="bg-[#FDF8F7] sticky top-0 z-10 border-b border-[#E8E9EC]">
-        <div className="mx-auto max-w-[1440px] px-6 py-4 sm:px-10 lg:px-16">
-
-          {/* Mobile: Filter button */}
-          <div className="flex items-center justify-between gap-4 lg:hidden">
-            <button
-              type="button"
-              onClick={() => setFiltersOpen(true)}
-              className="flex items-center gap-2 rounded-lg border border-[#E8E9EC] bg-white px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-[#292929] hover:shadow-md active:scale-95"
-              style={{fontFamily: 'Aeonik, sans-serif'}}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              <span>Filters</span>
-              {hasActiveFilters && (
-                <span className="rounded-full bg-[#292929] px-2 py-0.5 text-xs text-white">
-                  {filters.sizes.length + filters.colors.length + filters.brands.length + (filters.priceRange ? 1 : 0) + (filters.priceMin || filters.priceMax ? 1 : 0)}
-                </span>
-              )}
-            </button>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="cursor-pointer rounded-lg border border-[#E8E9EC] bg-white px-5 py-2.5 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 hover:border-[#292929] focus:outline-none focus:ring-2 focus:ring-[#E8E9EC]"
-              style={{fontFamily: 'Aeonik, sans-serif'}}
-            >
-              <option value="featured">Featured</option>
-              <option value="price-low-high">Price: Low to High</option>
-              <option value="price-high-low">Price: High to Low</option>
-              <option value="newest">Newest</option>
-              <option value="best-selling">Best Selling</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
       {/* Filters Drawer */}
       {filtersOpen && (
@@ -724,120 +684,6 @@ export default function Collection() {
 
           {/* Products Section */}
           <div className="flex-1 min-w-0">
-            {/* Enhanced Product Controls Bar - Desktop */}
-            <div className="hidden lg:block mb-8">
-              <div className="bg-white rounded-2xl border border-[#E8E9EC] p-8 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
-                {/* Header Row */}
-                <div className="flex items-start justify-between pb-6 border-b border-[#E8E9EC]">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-[#1F191A] mb-2 uppercase tracking-[0.12em]" style={{fontFamily: 'Aeonik, sans-serif'}}>
-                      Products
-                    </h2>
-                    <p className="text-sm text-[#5A4A4C]" style={{fontFamily: 'Quicking, sans-serif'}}>
-                      Showing <span className="font-semibold text-[#1F191A]">{filteredProducts.length}</span> {filteredProducts.length === 1 ? 'product' : 'products'}
-                    </p>
-                  </div>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="cursor-pointer rounded-lg border border-[#E8E9EC] bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] transition-all duration-200 hover:border-[#292929] focus:outline-none focus:ring-2 focus:ring-[#E8E9EC]"
-                    style={{fontFamily: 'Aeonik, sans-serif'}}
-                  >
-                    <option value="featured">Featured</option>
-                    <option value="price-low-high">Price: Low to High</option>
-                    <option value="price-high-low">Price: High to Low</option>
-                    <option value="newest">Newest</option>
-                    <option value="best-selling">Best Selling</option>
-                  </select>
-                </div>
-
-                {/* Quick Filters Row */}
-                <div className="flex items-center gap-4 pt-6">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#1F191A] whitespace-nowrap" style={{fontFamily: 'Aeonik, sans-serif'}}>
-                    Quick Filters:
-                  </span>
-
-                  {/* Size Quick Filters */}
-                  <div className="flex items-center gap-2.5">
-                    {['S', 'M', 'L', 'XL'].map((size) => {
-                      const isSelected = filters.sizes.includes(size);
-                      return (
-                        <button
-                          key={size}
-                          type="button"
-                          onClick={() => toggleFilter('sizes', size)}
-                          className="px-4 py-2 rounded-lg border text-xs font-semibold transition-all duration-200 hover:shadow-md active:scale-95 min-w-[44px]"
-                          style={{
-                            fontFamily: 'Aeonik, sans-serif',
-                            borderColor: isSelected ? accentColor : '#E8E9EC',
-                            backgroundColor: isSelected ? accentColor : 'white',
-                            color: isSelected ? '#FFFFFF' : '#5A4A4C',
-                          }}
-                        >
-                          {size}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="h-5 w-px bg-[#E8E9EC]" />
-
-                  {/* Color Quick Filters */}
-                  <div className="flex items-center gap-2.5">
-                    {[
-                      {name: 'Black', color: '#000000'},
-                      {name: 'White', color: '#FFFFFF'},
-                      {name: 'Gray', color: '#9CA3AF'},
-                      {name: 'Navy', color: '#1E3A8A'},
-                    ].map((colorOption) => {
-                      const isSelected = filters.colors.includes(colorOption.name);
-                      return (
-                        <button
-                          key={colorOption.name}
-                          type="button"
-                          onClick={() => toggleFilter('colors', colorOption.name)}
-                          className="relative h-9 w-9 rounded-full shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95"
-                          style={{
-                            backgroundColor: colorOption.color,
-                            borderWidth: '2.5px',
-                            borderStyle: 'solid',
-                            borderColor: isSelected ? accentColor : '#E8E9EC',
-                          }}
-                          aria-label={colorOption.name}
-                          title={colorOption.name}
-                        >
-                          {isSelected && (
-                            <svg
-                              className="absolute inset-0 m-auto h-4 w-4"
-                              fill="none"
-                              stroke={colorOption.name === 'White' ? '#000' : '#FFF'}
-                              viewBox="0 0 24 24"
-                              strokeWidth={3}
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {hasActiveFilters && (
-                    <>
-                      <div className="h-5 w-px bg-[#E8E9EC] ml-1" />
-                      <button
-                        onClick={clearFilters}
-                        className="text-xs font-semibold text-[#5A4A4C] hover:text-[#1F191A] underline transition-colors whitespace-nowrap"
-                        style={{fontFamily: 'Aeonik, sans-serif'}}
-                      >
-                        Clear All
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
             {/* Active Filters Chips */}
             {hasActiveFilters && (
               <div className="mb-8 flex flex-wrap items-center gap-2">

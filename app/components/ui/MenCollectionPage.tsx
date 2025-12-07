@@ -437,10 +437,10 @@ export function MenCollectionPage({collection, products}: MenCollectionPageProps
                       <button
                         key={color.value}
                         onClick={() => toggleColor(color.value)}
-                        className="group flex flex-col items-center gap-2 transition-all bg-transparent border-0 p-0"
+                        className="group flex flex-col items-center justify-center gap-2 transition-all bg-transparent border-0 p-0 mx-auto"
                         title={color.name}
                       >
-                        <div className="relative w-12 h-12 flex-shrink-0">
+                        <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
                           <div
                             className={`absolute inset-0 rounded-full transition-all duration-200 ${
                               selectedColors.includes(color.value)

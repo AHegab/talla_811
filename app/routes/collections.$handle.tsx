@@ -631,19 +631,17 @@ export default function Collection() {
             <div className="hidden lg:block mb-8">
               <div className="bg-white rounded-2xl border border-[#E8E9EC] p-8 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 {/* Header Row */}
-                <div className="flex items-start justify-between pb-6 border-b border-[#E8E9EC]">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-[#1F191A] mb-2 uppercase tracking-[0.12em]" style={{fontFamily: 'Aeonik, sans-serif'}}>
-                      Products
-                    </h2>
-                    <p className="text-sm text-[#5A4A4C]" style={{fontFamily: 'Quicking, sans-serif'}}>
-                      Showing <span className="font-semibold text-[#1F191A]">{filteredProducts.length}</span> {filteredProducts.length === 1 ? 'product' : 'products'}
-                    </p>
-                  </div>
+                <div className="pb-6 border-b border-[#E8E9EC]">
+                  <h2 className="text-2xl font-semibold text-[#1F191A] mb-2 uppercase tracking-[0.12em]" style={{fontFamily: 'Aeonik, sans-serif'}}>
+                    Products
+                  </h2>
+                  <p className="text-sm text-[#5A4A4C]" style={{fontFamily: 'Quicking, sans-serif'}}>
+                    Showing <span className="font-semibold text-[#1F191A]">{filteredProducts.length}</span> {filteredProducts.length === 1 ? 'product' : 'products'}
+                  </p>
                 </div>
 
                 {/* Quick Filters Row */}
-                <div className="flex items-center gap-4 pt-6">
+                <div className="flex items-center flex-wrap gap-4 pt-6">
                   <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#1F191A] whitespace-nowrap" style={{fontFamily: 'Aeonik, sans-serif'}}>
                     Quick Filters:
                   </span>
@@ -797,9 +795,11 @@ export default function Collection() {
               </div>
             )}
 
-            {filteredProducts.length > 0 ? (
-              <ProductGrid>
-                {filteredProducts.map((p: any) => (
+            {/* Products Grid */}
+            <div className="mt-16">
+              {filteredProducts.length > 0 ? (
+                <ProductGrid>
+                  {filteredProducts.map((p: any) => (
                   <ProductItem key={p.id} product={p as any} loading="lazy" />
                 ))}
               </ProductGrid>
@@ -821,6 +821,7 @@ export default function Collection() {
                 </button>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>

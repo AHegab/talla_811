@@ -42,17 +42,25 @@ type MenGridProduct = {
 
 // Filter configuration
 const COLORS = [
-  { name: 'Black', value: 'black', hex: '#1a1a1a' },
-  { name: 'White', value: 'white', hex: '#FAFAFA' },
-  { name: 'Navy', value: 'navy', hex: '#1e3a5f' },
-  { name: 'Gray', value: 'gray', hex: '#8b8b8b' },
-  { name: 'Brown', value: 'brown', hex: '#8B5A2B' },
-  { name: 'Green', value: 'green', hex: '#3d5c3d' },
-  { name: 'Beige', value: 'beige', hex: '#c8b896' },
-  { name: 'Red', value: 'red', hex: '#c41e3a' },
+  { name: 'Black', value: 'black', hex: '#000000' },
+  { name: 'White', value: 'white', hex: '#FFFFFF' },
+  { name: 'Navy', value: 'navy', hex: '#1B3A5F' },
+  { name: 'Gray', value: 'gray', hex: '#9E9E9E' },
+  { name: 'Brown', value: 'brown', hex: '#A0652A' },
+  { name: 'Green', value: 'green', hex: '#2F5A1F' },
+  { name: 'Beige', value: 'beige', hex: '#D4C4A8' },
+  { name: 'Red', value: 'red', hex: '#C62828' },
 ];
 
-const TYPES = ['All', 'T-Shirts', 'Shirts', 'Pants', 'Jackets', 'Sweaters', 'Accessories'];
+// Category keywords to look for in product titles/tags
+const CATEGORY_KEYWORDS = [
+  { name: 'T-Shirts', keywords: ['t-shirt', 'tshirt', 'tee'] },
+  { name: 'Shirts', keywords: ['shirt', 'polo'] },
+  { name: 'Pants', keywords: ['pant', 'trouser', 'jean', 'chino'] },
+  { name: 'Jackets', keywords: ['jacket', 'coat', 'blazer', 'outerwear'] },
+  { name: 'Sweaters', keywords: ['sweater', 'knit', 'cardigan', 'pullover', 'hoodie', 'sweatshirt'] },
+  { name: 'Accessories', keywords: ['accessory', 'belt', 'bag', 'hat', 'scarf', 'tie', 'wallet'] },
+];
 
 export function MenCollectionPage({collection, products}: MenCollectionPageProps) {
   // Normalize products into the shape ProductGrid expects
@@ -79,11 +87,25 @@ export function MenCollectionPage({collection, products}: MenCollectionPageProps
   const loopSlides = [...slides, ...slides];
   const slideCount = slides.length;
   const startRawIndex = slideCount;
-  
+
   // Calculate price range from products
   const allPrices = gridProducts.map(p => Number(p.priceRange?.minVariantPrice?.amount || 0));
   const minProductPrice = Math.floor(Math.min(...allPrices));
   const maxProductPrice = Math.ceil(Math.max(...allPrices));
+
+  // Dynamically extract available categories from products
+  const availableCategories = new Set<string>();
+  gridProducts.forEach(product => {
+    const title = product.title.toLowerCase();
+    CATEGORY_KEYWORDS.forEach(category => {
+      if (category.keywords.some(keyword => title.includes(keyword))) {
+        availableCategories.add(category.name);
+      }
+    });
+  });
+
+  // Build dynamic TYPES array: always start with 'All', then add found categories
+  const TYPES = ['All', ...Array.from(availableCategories).sort()];
   
   // Filter state
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
@@ -99,25 +121,28 @@ export function MenCollectionPage({collection, products}: MenCollectionPageProps
   const filteredProducts = gridProducts.filter((p) => {
     const price = p.priceRange?.minVariantPrice?.amount ? Number(p.priceRange.minVariantPrice.amount) : 0;
     const title = p.title.toLowerCase();
-    
+
     // Color filter (check if product title contains the color)
     if (selectedColors.length > 0) {
       const hasColor = selectedColors.some(color => title.includes(color.toLowerCase()));
       if (!hasColor) return false;
     }
-    
-    // Type filter
+
+    // Type filter - use dynamic category keywords
     if (selectedType !== 'All') {
-      const typeKeyword = selectedType.toLowerCase().replace('s', ''); // Remove plural
-      if (!title.includes(typeKeyword)) return false;
+      const categoryMatch = CATEGORY_KEYWORDS.find(cat => cat.name === selectedType);
+      if (categoryMatch) {
+        const hasCategory = categoryMatch.keywords.some(keyword => title.includes(keyword));
+        if (!hasCategory) return false;
+      }
     }
-    
+
     // Price filter (slider)
     if (price < priceRange[0] || price > priceRange[1]) return false;
-    
+
     // Brand filter
     if (selectedBrands.length > 0 && (!p.vendor || !selectedBrands.includes(p.vendor))) return false;
-    
+
     return true;
   });
   
@@ -343,239 +368,282 @@ export function MenCollectionPage({collection, products}: MenCollectionPageProps
           </div>
         )}
 
-        {/* COLLAPSIBLE FILTERS - Premium Design */}
-        <div className="mb-12">
-          <div className="rounded-3xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-            {/* Filter Header - Dark elegant toggle */}
-            <button
-              onClick={() => setFiltersOpen(!filtersOpen)}
-              className="w-full px-6 sm:px-8 py-5 bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] flex items-center justify-between transition-all group"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 flex-shrink-0">
-                  <svg 
-                    className={`w-4 h-4 sm:w-5 sm:h-5 text-white transition-transform duration-300 ${filtersOpen ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  {activeFilterCount > 0 ? (
-                    <p className="text-sm sm:text-base font-medium text-white tracking-wide">
-                      <span className="text-[#C9A962]">{activeFilterCount}</span> {activeFilterCount === 1 ? 'Filter' : 'Filters'} Active
-                    </p>
-                  ) : (
-                    <h3 className="text-sm sm:text-lg font-light text-white tracking-[0.15em] uppercase">
-                      Refine Selection
-                    </h3>
+        {/* FILTERS - Ultra Premium Minimal Design */}
+        <div className="mb-16">
+          {/* Filter Toggle Bar */}
+          <button
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className="w-full group"
+          >
+            <div className="relative overflow-hidden bg-white border border-[#E8E9EC] rounded-2xl transition-all duration-300 hover:border-[#C4C5CB] hover:shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center justify-between px-6 sm:px-8 py-5 sm:py-6">
+                {/* Left Section */}
+                <div className="flex items-center gap-5">
+                  <div className="flex items-center gap-3">
+                    <svg
+                      className={`w-5 h-5 text-[#292929] transition-transform duration-300 ${filtersOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <span className="text-sm font-medium tracking-[0.08em] uppercase text-[#292929]">
+                      Filters
+                    </span>
+                  </div>
+
+                  {activeFilterCount > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-1 bg-[#292929] rounded-full">
+                      <span className="text-xs font-semibold text-white">{activeFilterCount}</span>
+                      <span className="text-[10px] text-white/70 uppercase tracking-wider">Active</span>
+                    </div>
                   )}
-                  <p className="text-[10px] sm:text-[11px] text-white/40 mt-0.5 tracking-[0.1em] uppercase">
-                    Color • Category • Price
-                  </p>
-                </div>
-              </div>
-              {activeFilterCount > 0 && (
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearAllFilters();
-                  }}
-                  className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-[#1a1a1a] text-[9px] sm:text-[10px] font-semibold rounded-full hover:bg-white/90 transition-all duration-200 uppercase tracking-[0.15em] flex-shrink-0"
-                >
-                  Clear All
-                </span>
-              )}
-            </button>
-
-            {/* Collapsible Filter Content - Premium Layout */}
-            <div className={`transition-all duration-500 ease-out overflow-hidden ${filtersOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="px-6 sm:px-8 py-6 sm:py-8 bg-white border-t border-[#E5E5E5]">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-                  
-                  {/* Color Filter - Elegant swatches */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                        </svg>
-                      </div>
-                      <p className="text-[11px] font-semibold text-[#1a1a1a] uppercase tracking-[0.15em]">Color</p>
-                    </div>
-                    <div className="grid grid-cols-4 gap-3">
-                      {COLORS.map((color) => (
-                        <button
-                          key={color.value}
-                          onClick={() => toggleColor(color.value)}
-                          className="group flex flex-col items-center gap-1.5"
-                          title={color.name}
-                        >
-                          <div className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl transition-all duration-200 ${
-                            selectedColors.includes(color.value)
-                              ? 'ring-2 ring-[#1a1a1a] ring-offset-2 scale-105'
-                              : 'hover:scale-105'
-                          }`}>
-                            <span
-                              className="absolute inset-0 rounded-xl"
-                              style={{ 
-                                backgroundColor: color.hex,
-                                boxShadow: color.value === 'white' ? 'inset 0 0 0 1px rgba(0,0,0,0.1)' : 'inset 0 0 0 1px rgba(0,0,0,0.05)'
-                              }}
-                            />
-                            {selectedColors.includes(color.value) && (
-                              <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/20">
-                                <svg className={`w-4 h-4 ${color.value === 'white' || color.value === 'beige' ? 'text-[#1a1a1a]' : 'text-white'}`} fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              </span>
-                            )}
-                          </div>
-                          <span className={`text-[8px] uppercase tracking-wide transition-colors ${
-                            selectedColors.includes(color.value) ? 'text-[#1a1a1a] font-semibold' : 'text-[#888]'
-                          }`}>
-                            {color.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Type Filter - Refined pills */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                      </div>
-                      <p className="text-[11px] font-semibold text-[#1a1a1a] uppercase tracking-[0.15em]">Category</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {TYPES.map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => setSelectedType(type)}
-                          className={`px-4 py-2 text-[10px] font-semibold tracking-[0.1em] uppercase rounded-full transition-all duration-200 ${
-                            selectedType === type
-                              ? 'bg-[#1a1a1a] text-white'
-                              : 'bg-[#F3F3F3] text-[#555] hover:bg-[#E8E8E8]'
-                          }`}
-                        >
-                          {type}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Price Range Slider - Premium */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <p className="text-[11px] font-semibold text-[#1a1a1a] uppercase tracking-[0.15em]">Price Range</p>
-                    </div>
-                    
-                    {/* Price Display Cards */}
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="flex-1 px-3 py-2.5 bg-[#F5F5F5] rounded-lg">
-                        <span className="text-[8px] text-[#888] uppercase tracking-wide block">From</span>
-                        <p className="text-sm font-semibold text-[#1a1a1a]">{priceRange[0].toLocaleString()} <span className="text-[9px] font-normal text-[#666]">EGP</span></p>
-                      </div>
-                      <div className="w-4 h-px bg-[#CCC]"></div>
-                      <div className="flex-1 px-3 py-2.5 bg-[#F5F5F5] rounded-lg text-right">
-                        <span className="text-[8px] text-[#888] uppercase tracking-wide block">To</span>
-                        <p className="text-sm font-semibold text-[#1a1a1a]">{priceRange[1].toLocaleString()} <span className="text-[9px] font-normal text-[#666]">EGP</span></p>
-                      </div>
-                    </div>
-                    
-                    {/* Dual Range Slider */}
-                    <div className="relative h-2 mt-2 mb-4 mx-1">
-                      {/* Track background */}
-                      <div className="absolute inset-0 bg-[#E0E0E0] rounded-full"></div>
-                      {/* Active track */}
-                      <div 
-                        className="absolute h-full bg-[#1a1a1a] rounded-full"
-                        style={{
-                          left: `${((priceRange[0] - minProductPrice) / (maxProductPrice - minProductPrice)) * 100}%`,
-                          right: `${100 - ((priceRange[1] - minProductPrice) / (maxProductPrice - minProductPrice)) * 100}%`
-                        }}
-                      ></div>
-                      {/* Min slider */}
-                      <input
-                        type="range"
-                        min={minProductPrice}
-                        max={maxProductPrice}
-                        step={50}
-                        value={priceRange[0]}
-                        onChange={(e) => {
-                          const value = Number(e.target.value);
-                          if (value < priceRange[1]) {
-                            setPriceRange([value, priceRange[1]]);
-                          }
-                        }}
-                        className="absolute w-full h-full appearance-none bg-transparent cursor-pointer z-10 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#1a1a1a] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-all"
-                      />
-                      {/* Max slider */}
-                      <input
-                        type="range"
-                        min={minProductPrice}
-                        max={maxProductPrice}
-                        step={50}
-                        value={priceRange[1]}
-                        onChange={(e) => {
-                          const value = Number(e.target.value);
-                          if (value > priceRange[0]) {
-                            setPriceRange([priceRange[0], value]);
-                          }
-                        }}
-                        className="absolute w-full h-full appearance-none bg-transparent cursor-pointer z-20 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#1a1a1a] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-all"
-                      />
-                    </div>
-                    
-                    {/* Price labels */}
-                    <div className="flex justify-between px-1">
-                      <span className="text-[9px] text-[#888] uppercase tracking-wide">{minProductPrice.toLocaleString()} EGP</span>
-                      <span className="text-[9px] text-[#888] uppercase tracking-wide">{maxProductPrice.toLocaleString()} EGP</span>
-                    </div>
-                  </div>
-
                 </div>
 
-                {/* Brand Filter - If vendors exist */}
-                {vendors.length > 0 && (
-                  <div className="mt-10 pt-8 border-t border-[#EBEBEB]">
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                        </svg>
-                      </div>
-                      <p className="text-[11px] font-semibold text-[#1a1a1a] uppercase tracking-[0.2em]">Brand</p>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      {vendors.map((vendor) => (
-                        <button
-                          key={vendor}
-                          onClick={() => toggleBrand(vendor)}
-                          className={`px-5 py-3 text-[10px] font-semibold tracking-[0.15em] uppercase rounded-full transition-all duration-300 ${
-                            selectedBrands.includes(vendor)
-                              ? 'bg-[#1a1a1a] text-white shadow-lg'
-                              : 'bg-[#F5F5F5] text-[#666] hover:bg-[#EBEBEB] hover:text-[#1a1a1a]'
-                          }`}
-                        >
-                          {vendor}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                {/* Right Section */}
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearAllFilters();
+                    }}
+                    className="px-5 py-2 text-[10px] font-medium tracking-[0.08em] uppercase text-[#292929] hover:text-[#1a1a1a] border border-[#E8E9EC] rounded-full hover:border-[#292929] transition-all duration-200"
+                  >
+                    Clear All
+                  </button>
                 )}
               </div>
+            </div>
+          </button>
+
+          {/* Expanded Filter Panel */}
+          <div
+            className={`transition-all duration-500 ease-in-out overflow-hidden ${
+              filtersOpen ? 'max-h-[1000px] opacity-100 mt-6' : 'max-h-0 opacity-0 mt-0'
+            }`}
+          >
+            <div className="bg-white border border-[#E8E9EC] rounded-2xl p-6 sm:p-8 lg:p-10">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12">
+
+                {/* Color Filter */}
+                <div className="space-y-5">
+                  <h4 className="text-xs font-semibold tracking-[0.12em] uppercase text-[#292929] pb-3 border-b border-[#E8E9EC]">
+                    Color
+                  </h4>
+                  <div className="grid grid-cols-4 gap-3.5">
+                    {COLORS.map((color) => (
+                      <button
+                        key={color.value}
+                        onClick={() => toggleColor(color.value)}
+                        className="group flex flex-col items-center gap-2 transition-all"
+                        title={color.name}
+                      >
+                        <div className="relative w-12 h-12 flex-shrink-0">
+                          <div
+                            className={`absolute inset-0 rounded-full transition-all duration-200 ${
+                              selectedColors.includes(color.value)
+                                ? 'ring-2 ring-[#292929] ring-offset-[3px] scale-105'
+                                : 'group-hover:scale-105'
+                            }`}
+                            style={{
+                              backgroundColor: color.hex,
+                              boxShadow: color.value === 'white'
+                                ? 'inset 0 0 0 1px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)'
+                                : '0 2px 4px rgba(0,0,0,0.06)'
+                            }}
+                          />
+                          {selectedColors.includes(color.value) && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <svg
+                                className={`w-5 h-5 ${
+                                  color.value === 'white' || color.value === 'beige'
+                                    ? 'text-[#292929]'
+                                    : 'text-white'
+                                }`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-[9px] tracking-[0.05em] uppercase transition-colors text-center ${
+                          selectedColors.includes(color.value)
+                            ? 'text-[#292929] font-semibold'
+                            : 'text-[#9A9BA3] font-medium'
+                        }`}>
+                          {color.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Category Filter */}
+                <div className="space-y-5">
+                  <h4 className="text-xs font-semibold tracking-[0.12em] uppercase text-[#292929] pb-3 border-b border-[#E8E9EC]">
+                    Category
+                  </h4>
+                  <div className="flex flex-wrap gap-2.5">
+                    {TYPES.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setSelectedType(type)}
+                        className={`px-4 py-2.5 text-[10px] font-medium tracking-[0.06em] uppercase rounded-lg transition-all duration-200 ${
+                          selectedType === type
+                            ? 'bg-[#292929] text-white shadow-sm'
+                            : 'bg-[#F5F5F5] text-[#6B6C75] hover:bg-[#E8E9EC] hover:text-[#292929]'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price Range Filter */}
+                <div className="space-y-5">
+                  <h4 className="text-xs font-semibold tracking-[0.12em] uppercase text-[#292929] pb-3 border-b border-[#E8E9EC]">
+                    Price Range
+                  </h4>
+
+                  <div className="space-y-6">
+                    {/* Price Display */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-[#FAFAFA] border border-[#E8E9EC] rounded-lg px-4 py-3">
+                        <span className="block text-[9px] font-medium tracking-[0.08em] uppercase text-[#9A9BA3] mb-1">
+                          Min
+                        </span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-base font-semibold text-[#292929]">
+                            {priceRange[0].toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-[#6B6C75]">EGP</span>
+                        </div>
+                      </div>
+                      <div className="bg-[#FAFAFA] border border-[#E8E9EC] rounded-lg px-4 py-3">
+                        <span className="block text-[9px] font-medium tracking-[0.08em] uppercase text-[#9A9BA3] mb-1">
+                          Max
+                        </span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-base font-semibold text-[#292929]">
+                            {priceRange[1].toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-[#6B6C75]">EGP</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Slider */}
+                    <div className="relative pt-2 pb-1 px-1">
+                      <div className="relative h-1.5">
+                        <div className="absolute inset-0 bg-[#E8E9EC] rounded-full"></div>
+                        <div
+                          className="absolute h-full bg-[#292929] rounded-full"
+                          style={{
+                            left: `${((priceRange[0] - minProductPrice) / (maxProductPrice - minProductPrice)) * 100}%`,
+                            right: `${100 - ((priceRange[1] - minProductPrice) / (maxProductPrice - minProductPrice)) * 100}%`
+                          }}
+                        ></div>
+                        <input
+                          type="range"
+                          min={minProductPrice}
+                          max={maxProductPrice}
+                          step={50}
+                          value={priceRange[0]}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            if (value < priceRange[1]) {
+                              setPriceRange([value, priceRange[1]]);
+                            }
+                          }}
+                          className="absolute w-full h-full appearance-none bg-transparent cursor-pointer z-10
+                            [&::-webkit-slider-thumb]:appearance-none
+                            [&::-webkit-slider-thumb]:w-4
+                            [&::-webkit-slider-thumb]:h-4
+                            [&::-webkit-slider-thumb]:bg-white
+                            [&::-webkit-slider-thumb]:border-2
+                            [&::-webkit-slider-thumb]:border-[#292929]
+                            [&::-webkit-slider-thumb]:rounded-full
+                            [&::-webkit-slider-thumb]:cursor-pointer
+                            [&::-webkit-slider-thumb]:shadow-[0_1px_3px_rgba(0,0,0,0.12)]
+                            [&::-webkit-slider-thumb]:hover:scale-125
+                            [&::-webkit-slider-thumb]:transition-transform
+                            [&::-moz-range-thumb]:w-4
+                            [&::-moz-range-thumb]:h-4
+                            [&::-moz-range-thumb]:bg-white
+                            [&::-moz-range-thumb]:border-2
+                            [&::-moz-range-thumb]:border-[#292929]
+                            [&::-moz-range-thumb]:rounded-full
+                            [&::-moz-range-thumb]:cursor-pointer
+                            [&::-moz-range-thumb]:shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
+                        />
+                        <input
+                          type="range"
+                          min={minProductPrice}
+                          max={maxProductPrice}
+                          step={50}
+                          value={priceRange[1]}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            if (value > priceRange[0]) {
+                              setPriceRange([priceRange[0], value]);
+                            }
+                          }}
+                          className="absolute w-full h-full appearance-none bg-transparent cursor-pointer z-20
+                            [&::-webkit-slider-thumb]:appearance-none
+                            [&::-webkit-slider-thumb]:w-4
+                            [&::-webkit-slider-thumb]:h-4
+                            [&::-webkit-slider-thumb]:bg-white
+                            [&::-webkit-slider-thumb]:border-2
+                            [&::-webkit-slider-thumb]:border-[#292929]
+                            [&::-webkit-slider-thumb]:rounded-full
+                            [&::-webkit-slider-thumb]:cursor-pointer
+                            [&::-webkit-slider-thumb]:shadow-[0_1px_3px_rgba(0,0,0,0.12)]
+                            [&::-webkit-slider-thumb]:hover:scale-125
+                            [&::-webkit-slider-thumb]:transition-transform
+                            [&::-moz-range-thumb]:w-4
+                            [&::-moz-range-thumb]:h-4
+                            [&::-moz-range-thumb]:bg-white
+                            [&::-moz-range-thumb]:border-2
+                            [&::-moz-range-thumb]:border-[#292929]
+                            [&::-moz-range-thumb]:rounded-full
+                            [&::-moz-range-thumb]:cursor-pointer
+                            [&::-moz-range-thumb]:shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Brand Filter - Full Width */}
+              {vendors.length > 0 && (
+                <div className="mt-10 pt-10 border-t border-[#E8E9EC]">
+                  <h4 className="text-xs font-semibold tracking-[0.12em] uppercase text-[#292929] mb-5">
+                    Brand
+                  </h4>
+                  <div className="flex flex-wrap gap-2.5">
+                    {vendors.map((vendor) => (
+                      <button
+                        key={vendor}
+                        onClick={() => toggleBrand(vendor)}
+                        className={`px-5 py-2.5 text-[10px] font-medium tracking-[0.06em] uppercase rounded-lg transition-all duration-200 ${
+                          selectedBrands.includes(vendor)
+                            ? 'bg-[#292929] text-white shadow-sm'
+                            : 'bg-[#F5F5F5] text-[#6B6C75] hover:bg-[#E8E9EC] hover:text-[#292929]'
+                        }`}
+                      >
+                        {vendor}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

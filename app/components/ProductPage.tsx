@@ -260,7 +260,7 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
     <>
       {/* MAIN PAGE */}
       <div className="min-h-screen bg-white overflow-x-hidden">
-        <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-2 lg:px-12 lg:py-14 max-w-full">
+        <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-[55%_45%] lg:grid-cols-[50%_50%] lg:px-12 lg:py-14 max-w-[1600px] mx-auto">
           {/* Gallery: product gallery with hero image and static thumbnail carousel */}
           <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start overflow-x-hidden">
             <ProductGallery images={images} productTitle={product.title} />

@@ -230,7 +230,7 @@ export function ProductBuyBox({
   // No fallback similar products; we require server-side filter for >=2 tags overlap
 
   return (
-    <div className="space-y-4 animate-fadein relative">
+    <div className="space-y-4 animate-fadein relative w-full max-w-3xl">
       {/* Success Ripple Effect */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
@@ -280,7 +280,7 @@ export function ProductBuyBox({
       )}
 
       {/* Title */}
-      <h1 className="mb-2 text-lg font-medium text-gray-900">
+      <h1 className="mb-2 text-xl font-semibold text-gray-900 break-words leading-tight">
         {product.title}
       </h1>
 
@@ -417,7 +417,7 @@ export function ProductBuyBox({
                   {option.name}
                 </label>
 
-                {/* Size guide link for Size option */}
+                {/* Size guide button - only show once for Size option */}
                 {option.name.toLowerCase() === 'size' && (
                   <button
                     type="button"
@@ -433,36 +433,10 @@ export function ProductBuyBox({
                         setSizeRecOpen(!sizeRecOpen);
                       }
                     }}
-                    className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:border-gray-400 rounded-full transition-all duration-200 hover:bg-gray-50"
+                    className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:border-gray-900 hover:bg-gray-50 rounded-full transition-all duration-200 shadow-sm"
                     aria-expanded={sizeRecOpen}
                   >
                     Size Guide
-                  </button>
-                )}
-                {/* Size Chart button (from product metafield) */}
-                {(product.sizeChartImage || product.brandSizeChartImage) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (product.sizeChartImage) {
-                        setChartSource('product');
-                      } else if (product.brandSizeChartImage) {
-                        setChartSource('brand');
-                      }
-                      setSizeChartOpen(true);
-                    }}
-                    className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:border-gray-400 rounded-full transition-all duration-200 hover:bg-gray-50"
-                  >
-                    Size Chart
-                  </button>
-                )}
-                {product.brandSizeChartImage && (
-                  <button
-                    type="button"
-                    onClick={() => setBrandSizeChartOpen(true)}
-                    className="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:border-gray-400 rounded-full transition-all duration-200 hover:bg-gray-50"
-                  >
-                    Brand Size Chart
                   </button>
                 )}
               </div>

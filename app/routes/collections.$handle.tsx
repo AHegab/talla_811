@@ -235,7 +235,7 @@ export default function Collection() {
             <div className="flex items-center justify-center lg:justify-start">
               {collection.image ? (
                 <div className="relative w-full">
-                  <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-gradient-to-br from-white to-[#FAFAFA] border border-[#E8E9EC] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-10 sm:p-16 lg:p-20">
+                  <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-gradient-to-br from-white to-[#FAFAFA] border border-[#E8E9EC] shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-center p-10 sm:p-16 lg:p-20">
                     <img
                       src={collection.image.url}
                       alt={collection.image.altText || collection.title}

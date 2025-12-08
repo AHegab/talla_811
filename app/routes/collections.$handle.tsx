@@ -880,6 +880,16 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
         ...MoneyProductItem
       }
     }
+    variants(first: 1) {
+      nodes {
+        id
+        availableForSale
+        selectedOptions {
+          name
+          value
+        }
+      }
+    }
   }
 ` as const;
 
@@ -908,9 +918,9 @@ const COLLECTION_QUERY = `#graphql
         height
       }
       products(
-        first: $first,
-        last: $last,
-        before: $startCursor,
+        first: $first
+        last: $last
+        before: $startCursor
         after: $endCursor
       ) {
         nodes {
@@ -922,6 +932,15 @@ const COLLECTION_QUERY = `#graphql
           endCursor
           startCursor
         }
+      }
+      metafields(identifiers: [
+        {namespace: "custom", key: "brand_logo"}
+        {namespace: "custom", key: "collection_type"}
+      ]) {
+        namespace
+        key
+        value
+        type
       }
     }
   }

@@ -157,7 +157,7 @@ async function loadBrandSizeChart(storefront: any, vendor?: string | null) {
     const collection = byHandle?.collectionByHandle;
     if (collection) {
     // check metafields similar to product
-    const nodes = collection.metafields?.nodes ?? [];
+    const nodes = collection.metafields ?? [];
       const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage'];
         const found = nodes.find((m: any) => {
           if (!m) return false;
@@ -217,7 +217,7 @@ async function loadBrandSizeChart(storefront: any, vendor?: string | null) {
     const nodes = search?.collections?.nodes ?? [];
     if (nodes.length) {
       const collection = nodes[0];
-      const mfNodes = collection.metafields?.nodes ?? [];
+      const mfNodes = collection.metafields ?? [];
       const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage'];
       const found = mfNodes.find((m: any) => {
         if (!m) return false;
@@ -346,29 +346,37 @@ const COLLECTION_BY_HANDLE_FULL_QUERY = `#graphql
       id
       title
       handle
-      metafields(first: 10) {
-        nodes {
-          id
-          key
-          namespace
-          value
-          type
-          reference {
-            __typename
-            ... on MediaImage {
-              image {
-                id
-                url
-                altText
-                width
-                height
-              }
-            }
-            ... on GenericFile {
-              alt
-              mimeType
+      metafields(identifiers: [
+        {namespace: "custom", key: "size_chart"},
+        {namespace: "custom", key: "size-chart"},
+        {namespace: "custom", key: "sizeChart"},
+        {namespace: "custom", key: "sizechart"},
+        {namespace: "custom", key: "size_chart_image"},
+        {namespace: "custom", key: "size-chart-image"},
+        {namespace: "custom", key: "sizechartimage"},
+        {namespace: "size", key: "chart"},
+        {namespace: "size", key: "guide"}
+      ]) {
+        id
+        key
+        namespace
+        value
+        type
+        reference {
+          __typename
+          ... on MediaImage {
+            image {
+              id
               url
+              altText
+              width
+              height
             }
+          }
+          ... on GenericFile {
+            alt
+            mimeType
+            url
           }
         }
       }
@@ -390,29 +398,37 @@ const COLLECTIONS_BY_TITLE_QUERY = `#graphql
         id
         title
         handle
-        metafields(first: 10) {
-          nodes {
-            id
-            key
-            namespace
-            value
-            type
-            reference {
-              __typename
-              ... on MediaImage {
-                image {
-                  id
-                  url
-                  altText
-                  width
-                  height
-                }
-              }
-              ... on GenericFile {
-                alt
-                mimeType
+        metafields(identifiers: [
+          {namespace: "custom", key: "size_chart"},
+          {namespace: "custom", key: "size-chart"},
+          {namespace: "custom", key: "sizeChart"},
+          {namespace: "custom", key: "sizechart"},
+          {namespace: "custom", key: "size_chart_image"},
+          {namespace: "custom", key: "size-chart-image"},
+          {namespace: "custom", key: "sizechartimage"},
+          {namespace: "size", key: "chart"},
+          {namespace: "size", key: "guide"}
+        ]) {
+          id
+          key
+          namespace
+          value
+          type
+          reference {
+            __typename
+            ... on MediaImage {
+              image {
+                id
                 url
+                altText
+                width
+                height
               }
+            }
+            ... on GenericFile {
+              alt
+              mimeType
+              url
             }
           }
         }
@@ -446,29 +462,37 @@ const PRODUCT_FRAGMENT = `#graphql
         height
       }
     }
-    metafields(first: 10) {
-      nodes {
-        id
-        key
-        namespace
-        value
-        type
-        reference {
-          __typename
-          ... on MediaImage {
-            image {
-              id
-              url
-              altText
-              width
-              height
-            }
-          }
-          ... on GenericFile {
-            alt
-            mimeType
+    metafields(identifiers: [
+      {namespace: "custom", key: "size_chart"},
+      {namespace: "custom", key: "size-chart"},
+      {namespace: "custom", key: "sizeChart"},
+      {namespace: "custom", key: "sizechart"},
+      {namespace: "custom", key: "size_chart_image"},
+      {namespace: "custom", key: "size-chart-image"},
+      {namespace: "custom", key: "sizechartimage"},
+      {namespace: "size", key: "chart"},
+      {namespace: "size", key: "guide"}
+    ]) {
+      id
+      key
+      namespace
+      value
+      type
+      reference {
+        __typename
+        ... on MediaImage {
+          image {
+            id
             url
+            altText
+            width
+            height
           }
+        }
+        ... on GenericFile {
+          alt
+          mimeType
+          url
         }
       }
     }

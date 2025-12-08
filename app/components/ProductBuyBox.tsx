@@ -6,6 +6,7 @@ import {
 } from '@shopify/hydrogen';
 import { Flame, Heart, Leaf, Shirt, Sparkles, Sun, Tag, Tags, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 
 import SizeChart from './SizeChart';
 import { SizeRecommendation } from './SizeRecommendation';
@@ -59,16 +60,15 @@ export interface SimilarProduct {
 interface ProductBuyBoxProps {
   product: PDPProduct;
   selectedVariant: PDPVariant;
-  onVariantChange?: (variant: PDPVariant) => void;
   recommendedSize?: string | null;
 }
 
 export function ProductBuyBox({
   product,
   selectedVariant,
-  onVariantChange,
   recommendedSize,
 }: ProductBuyBoxProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sizeRecOpen, setSizeRecOpen] = useState(false);
   const [sizeChartOpen, setSizeChartOpen] = useState(false);
   const [brandSizeChartOpen, setBrandSizeChartOpen] = useState(false);
@@ -78,6 +78,9 @@ export function ProductBuyBox({
   const [showSizePrompt, setShowSizePrompt] = useState(false); // reserved if you want to show a separate prompt later
   const [hasMeasurements, setHasMeasurements] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showNotifyForm, setShowNotifyForm] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState('');
+  const [notifySubmitted, setNotifySubmitted] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
     () => {
       const initial: Record<string, string> = {};
@@ -88,9 +91,9 @@ export function ProductBuyBox({
     },
   );
 
-  // Simple name -> hex map for common colors used in product option labels.
-  // If you add uncommon color names, extend the map here so the UI renders correctly.
+  // Comprehensive color name to hex map
   const colorNameToHex: Record<string, string> = {
+    // Basic colors
     navy: '#0b3d91',
     black: '#000000',
     white: '#ffffff',
@@ -105,21 +108,113 @@ export function ProductBuyBox({
     brown: '#7c3f00',
     tan: '#d2b48c',
     orange: '#f97316',
+    beige: '#f5f5dc',
+    cream: '#fffdd0',
+    ivory: '#fffff0',
+
+    // Light variants
+    'light grey': '#d1d5db',
+    'light gray': '#d1d5db',
+    lightgrey: '#d1d5db',
+    lightgray: '#d1d5db',
+    'light blue': '#93c5fd',
+    lightblue: '#93c5fd',
+    'light pink': '#fbbf24',
+    lightpink: '#fbbf24',
+    'light green': '#86efac',
+    lightgreen: '#86efac',
+
+    // Dark variants
+    'dark grey': '#4b5563',
+    'dark gray': '#4b5563',
+    darkgrey: '#4b5563',
+    darkgray: '#4b5563',
+    'dark blue': '#1e3a8a',
+    darkblue: '#1e3a8a',
+    'dark green': '#065f46',
+    darkgreen: '#065f46',
+
+    // Sky and other shades
     skyblue: '#38bdf8',
     'sky blue': '#38bdf8',
+    charcoal: '#36454f',
+    maroon: '#800000',
+    olive: '#808000',
+    teal: '#14b8a6',
+    turquoise: '#06b6d4',
+    lavender: '#e9d5ff',
+    mint: '#d1fae5',
+    coral: '#fb7185',
+    salmon: '#fb923c',
+    khaki: '#f0e68c',
+    burgundy: '#800020',
+
+    // Additional common variants
+    silver: '#c0c0c0',
+    gold: '#ffd700',
+    rose: '#ff66b2',
+    peach: '#ffdab9',
+    azure: '#007fff',
+    indigo: '#4f46e5',
+    violet: '#7c3aed',
+    magenta: '#d946ef',
+    cyan: '#06b6d4',
+    lime: '#84cc16',
+    emerald: '#10b981',
+    amber: '#f59e0b',
+    slate: '#64748b',
+    zinc: '#71717a',
+    stone: '#78716c',
+    neutral: '#737373',
+    'off white': '#fafafa',
+    offwhite: '#fafafa',
+    'off-white': '#fafafa',
+    ecru: '#c2b280',
+  };
+
+  // Parse multi-color values (e.g., "WHITE X LIGHT GREY")
+  const parseColorValue = (val: string): { colors: string[]; displayName: string } => {
+    // Look for explicit separators: X, x, /, |, +, & (with optional spaces around them)
+    const separatorRegex = /\s*[xX\/\|+&]\s*/;
+
+    // Check if the value contains an explicit separator
+    if (separatorRegex.test(val)) {
+      const parts = val.split(separatorRegex)
+        .map(p => p.trim())
+        .filter(Boolean);
+
+      return {
+        colors: parts,
+        displayName: val.toUpperCase() // Keep original formatting for display
+      };
+    }
+
+    // Single color - format nicely
+    return {
+      colors: [val],
+      displayName: val
+        .split(/\s+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ')
+    };
   };
 
   const toHex = (val: string) => {
     const key = val.trim().toLowerCase();
     if (key.startsWith('#')) return key; // already a hex value
-    // Normalize common misspellings or multiple-word names by removing spaces/hyphens
+
+    // Normalize: remove spaces/hyphens/underscores
     const normalized = key.replace(/\s+|[-_]/g, '');
-    if (colorNameToHex[key as keyof typeof colorNameToHex]) return colorNameToHex[key as keyof typeof colorNameToHex];
-    if (colorNameToHex[normalized as keyof typeof colorNameToHex]) return colorNameToHex[normalized as keyof typeof colorNameToHex];
-    // If the value is a CSS color label without spaces (e.g., skyblue), use it directly
+
+    // Direct match
+    if (colorNameToHex[key]) return colorNameToHex[key];
+    if (colorNameToHex[normalized]) return colorNameToHex[normalized];
+
+    // Try CSS color names (browser built-in)
     if (/^[a-z]+$/.test(normalized)) return normalized;
-    // fallback: return the original value and let the browser try to resolve it
-    return val;
+
+    // Fallback to gray for unknown colors
+    return '#6b7280';
   };
 
   const hexToRgb = (hex: string) => {
@@ -149,6 +244,8 @@ export function ProductBuyBox({
 
   const isLightColor = (cssColor: string) => {
     const normalized = cssColor.trim().toLowerCase();
+
+    // Handle hex colors
     if (normalized.startsWith('#')) {
       try {
         const { r, g, b } = hexToRgb(normalized);
@@ -157,14 +254,30 @@ export function ProductBuyBox({
         return false;
       }
     }
-    // Named color heuristics
-    if (normalized.includes('white') || normalized.includes('cream') || normalized.includes('ivory') || normalized.includes('light')) return true;
-    if (normalized.includes('black') || normalized.includes('navy') || normalized.includes('dark') || normalized.includes('brown')) return false;
-    // fallback: if map contains an entry return computed luminance
+
+    // Named color heuristics - specific checks first
+    const lightColors = ['white', 'cream', 'ivory', 'light', 'beige', 'tan', 'khaki', 'yellow', 'pale', 'pastel'];
+    const darkColors = ['black', 'navy', 'dark', 'brown', 'charcoal', 'maroon', 'burgundy'];
+
+    // Check if any light color keyword is present
+    if (lightColors.some(lc => normalized.includes(lc))) return true;
+
+    // Check if any dark color keyword is present
+    if (darkColors.some(dc => normalized.includes(dc))) return false;
+
+    // fallback: if map contains an entry, compute luminance
     if (colorNameToHex[normalized]) {
       const { r, g, b } = hexToRgb(colorNameToHex[normalized]);
       return luminance(r, g, b) > 0.6;
     }
+
+    // Try removing spaces/hyphens for compound names
+    const compactKey = normalized.replace(/[\s-_]+/g, '');
+    if (colorNameToHex[compactKey]) {
+      const { r, g, b } = hexToRgb(colorNameToHex[compactKey]);
+      return luminance(r, g, b) > 0.6;
+    }
+
     // default: dark (so we use white text)
     return false;
   };
@@ -177,21 +290,28 @@ export function ProductBuyBox({
     }
   }, []);
 
-  // Find variant based on selected options
+  // Sync local selectedOptions state with selectedVariant prop changes
+  // Only sync when the variant ID actually changes (not on every option change)
   useEffect(() => {
-    const variant = product.variants.find((v) =>
-      v.selectedOptions.every(
-        (option) => selectedOptions[option.name] === option.value,
-      ),
-    );
-
-    if (variant && variant.id !== selectedVariant.id && onVariantChange) {
-      onVariantChange(variant);
-    }
-  }, [product.variants, selectedOptions, selectedVariant.id, onVariantChange]);
+    const newSelectedOptions: Record<string, string> = {};
+    selectedVariant.selectedOptions.forEach((option) => {
+      newSelectedOptions[option.name] = option.value;
+    });
+    setSelectedOptions(newSelectedOptions);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVariant.id]); // Only depend on variant ID, not the full object
 
   const handleOptionChange = (optionName: string, value: string) => {
+    // Update local state for immediate UI feedback
     setSelectedOptions((prev) => ({ ...prev, [optionName]: value }));
+
+    // Update URL search params to trigger Hydrogen's variant selection
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set(optionName, value);
+    setSearchParams(newParams, {
+      replace: true,
+      preventScrollReset: true,
+    });
   };
 
   const handleSizeRecommendation = (size: string) => {
@@ -212,6 +332,64 @@ export function ProductBuyBox({
       setAddedToCart(false);
       setShowConfetti(false);
     }, 800);
+  };
+
+  const handleNotifySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!notifyEmail || !notifyEmail.includes('@')) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      // Send notification request to API
+      const response = await fetch('/api/restock-notify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: notifyEmail,
+          productId: product.id,
+          variantId: selectedVariant.id,
+          productTitle: product.title,
+          variantTitle: selectedVariant.title,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit notification request');
+      }
+
+      // Success!
+      setNotifySubmitted(true);
+      setNotifyEmail('');
+
+      // Also save to localStorage as backup
+      try {
+        const localNotifications = JSON.parse(
+          localStorage.getItem('talla_restock_notifications') || '[]'
+        );
+        localNotifications.push(data.notification);
+        localStorage.setItem('talla_restock_notifications', JSON.stringify(localNotifications));
+      } catch (err) {
+        // Ignore localStorage errors
+        console.warn('Failed to save to localStorage:', err);
+      }
+
+      // Reset after 3 seconds
+      setTimeout(() => {
+        setShowNotifyForm(false);
+        setNotifySubmitted(false);
+      }, 3000);
+
+    } catch (err) {
+      console.error('Failed to submit notification request:', err);
+      alert('Something went wrong. Please try again.');
+    }
   };
 
   const lines: OptimisticCartLineInput[] = [
@@ -453,12 +631,46 @@ export function ProductBuyBox({
                       ),
                   );
                   const isSelected = selectedOptions[option.name] === value;
-                      const isColorOption = option.name.toLowerCase() === 'color';
-                  const cssColor = isColorOption ? toHex(value) : undefined;
-                  const textColorClass = cssColor ? (isLightColor(cssColor) ? 'text-gray-900' : 'text-white') : '';
+                  const isColorOption = option.name.toLowerCase() === 'color';
                   const isRec = recommendedSize === value && option.name.toLowerCase() === 'size';
 
-                      return (
+                  // Parse color value for multi-color support with error handling
+                  let colorData: { colors: string[]; displayName: string } | null = null;
+                  let isMultiColor = false;
+                  let singleColor: string | undefined = undefined;
+                  let textColorClass = '';
+                  let multiColorGradient: string | undefined = undefined;
+
+                  if (isColorOption) {
+                    try {
+                      colorData = parseColorValue(value);
+                      isMultiColor = colorData.colors.length > 1;
+
+                      // For single color
+                      if (colorData.colors.length === 1) {
+                        singleColor = toHex(colorData.colors[0]);
+                        textColorClass = isLightColor(singleColor) ? 'text-gray-900' : 'text-white';
+                      }
+
+                      // For multi-color gradient
+                      if (isMultiColor) {
+                        multiColorGradient = `linear-gradient(to right, ${colorData.colors.map((c, idx) => {
+                          const hex = toHex(c);
+                          const pct1 = (idx / colorData.colors.length) * 100;
+                          const pct2 = ((idx + 1) / colorData.colors.length) * 100;
+                          return `${hex} ${pct1}%, ${hex} ${pct2}%`;
+                        }).join(', ')})`;
+                      }
+                    } catch (err) {
+                      // Fallback to simple gray if parsing fails
+                      console.warn('Failed to parse color value:', value, err);
+                      colorData = { colors: [value], displayName: value };
+                      singleColor = '#6b7280';
+                      textColorClass = 'text-white';
+                    }
+                  }
+
+                  return (
                     <button
                       key={value}
                       type="button"
@@ -468,11 +680,11 @@ export function ProductBuyBox({
                       }
                       disabled={!isAvailable}
                       className={(() => {
-                        const base = 'px-5 py-3 text-sm font-medium rounded-full border transition-all duration-300 ease-out';
+                        const base = 'px-5 py-3 text-sm font-medium rounded-full border transition-all duration-300 ease-out relative overflow-hidden';
                         if (isColorOption) {
                           // for color options, rely on inline backgroundColor and vary the border and opacity
                           const border = isSelected ? 'border-gray-900 shadow-lg' : 'border-gray-200 hover:border-gray-400';
-                          const selectedRing = isSelected ? (isLightColor(cssColor!) ? 'ring-2 ring-gray-900 ring-offset-2' : 'ring-2 ring-gray-900 ring-offset-2') : '';
+                          const selectedRing = isSelected ? 'ring-2 ring-gray-900 ring-offset-2' : '';
                           const disabled = !isAvailable ? 'opacity-30 cursor-not-allowed filter grayscale line-through' : '';
                           const rec = isRec && !isSelected ? 'ring-2 ring-emerald-400 ring-offset-2' : '';
                           const classes = [base, border, disabled, selectedRing, rec, isSelected ? 'transform scale-105' : ''].filter(Boolean).join(' ');
@@ -487,7 +699,13 @@ export function ProductBuyBox({
                         } ${isRec && !isSelected ? 'ring-2 ring-emerald-400 ring-offset-2' : ''}`;
                         return classes;
                       })()}
-                      style={isColorOption ? ({ backgroundColor: cssColor } as React.CSSProperties) : undefined}
+                      style={
+                        isColorOption
+                          ? isMultiColor
+                            ? ({ backgroundImage: multiColorGradient } as React.CSSProperties)
+                            : ({ backgroundColor: singleColor } as React.CSSProperties)
+                          : undefined
+                      }
                       aria-label={`Select ${option.name.toLowerCase()} ${value}${
                         isRec ? ' (Recommended)' : ''
                       }`}
@@ -495,14 +713,14 @@ export function ProductBuyBox({
                       aria-disabled={!isAvailable}
                     >
                       {isColorOption ? (
-                        <span className={`inline-block min-w-[48px] text-center ${textColorClass}`}>
-                          {value}
+                        <span className={`inline-block min-w-[96px] text-center font-semibold relative z-10 ${isMultiColor ? 'text-gray-900 bg-white/90 px-2 py-1 rounded-md' : textColorClass}`}>
+                          {colorData?.displayName}
                         </span>
                       ) : (
                         value
                       )}
                       {isSelected && (
-                        <span className="ml-2 inline-flex items-center text-sm text-white">
+                        <span className={`ml-2 inline-flex items-center text-sm ${isMultiColor ? 'text-gray-900' : 'text-white'}`}>
                           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="20 6 9 17 4 12" />
                           </svg>
@@ -545,6 +763,75 @@ export function ProductBuyBox({
               <button onClick={() => setBrandSizeChartOpen(false)} className="text-gray-600">Close</button>
             </div>
             <SizeChart imageUrl={product.brandSizeChartImage?.url} alt={product.brandSizeChartImage?.alt || 'Brand size chart'} />
+          </div>
+        </div>
+      )}
+
+      {/* Out of Stock Banner */}
+      {!selectedVariant.availableForSale && (
+        <div className="rounded-xl border-2 border-red-200 bg-red-50 p-4 mb-4">
+          <div className="flex items-start gap-3">
+            <svg className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-red-900 mb-1">This item is currently sold out</h3>
+              <p className="text-xs text-red-700 mb-3">
+                The selected size/color combination is not available right now.
+              </p>
+
+              {!showNotifyForm && !notifySubmitted && (
+                <button
+                  type="button"
+                  onClick={() => setShowNotifyForm(true)}
+                  className="text-xs font-semibold text-red-700 hover:text-red-900 underline transition-colors"
+                >
+                  Notify me when available
+                </button>
+              )}
+
+              {showNotifyForm && !notifySubmitted && (
+                <form onSubmit={handleNotifySubmit} className="mt-3 space-y-2">
+                  <input
+                    type="email"
+                    value={notifyEmail}
+                    onChange={(e) => setNotifyEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                    className="w-full px-3 py-2 text-sm border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                    >
+                      Notify Me
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNotifyForm(false);
+                        setNotifyEmail('');
+                      }}
+                      className="px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {notifySubmitted && (
+                <div className="mt-3 flex items-center gap-2 text-green-700">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    Thanks! We'll notify you when this item is back in stock.
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

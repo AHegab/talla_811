@@ -499,6 +499,9 @@ export type CollectionQuery = {
       StorefrontAPI.Collection,
       'id' | 'handle' | 'title' | 'description'
     > & {
+      image?: StorefrontAPI.Maybe<
+        Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
+      >;
       products: {
         nodes: Array<
           Pick<StorefrontAPI.Product, 'id' | 'handle' | 'title' | 'vendor'> & {
@@ -1608,7 +1611,7 @@ export type MoneyProductItemFragment = Pick<
 
 export type ProductItemFragment = Pick<
   StorefrontAPI.Product,
-  'id' | 'handle' | 'title'
+  'id' | 'handle' | 'title' | 'vendor'
 > & {
   featuredImage?: StorefrontAPI.Maybe<
     Pick<StorefrontAPI.Image, 'id' | 'altText' | 'url' | 'width' | 'height'>
@@ -1616,6 +1619,15 @@ export type ProductItemFragment = Pick<
   priceRange: {
     minVariantPrice: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
     maxVariantPrice: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
+  };
+  variants: {
+    nodes: Array<
+      Pick<StorefrontAPI.ProductVariant, 'id' | 'availableForSale'> & {
+        selectedOptions: Array<
+          Pick<StorefrontAPI.SelectedOption, 'name' | 'value'>
+        >;
+      }
+    >;
   };
 };
 
@@ -1644,7 +1656,7 @@ export type CollectionPageQuery = {
       >;
       products: {
         nodes: Array<
-          Pick<StorefrontAPI.Product, 'id' | 'handle' | 'title'> & {
+          Pick<StorefrontAPI.Product, 'id' | 'handle' | 'title' | 'vendor'> & {
             featuredImage?: StorefrontAPI.Maybe<
               Pick<
                 StorefrontAPI.Image,
@@ -1661,6 +1673,18 @@ export type CollectionPageQuery = {
                 'amount' | 'currencyCode'
               >;
             };
+            variants: {
+              nodes: Array<
+                Pick<
+                  StorefrontAPI.ProductVariant,
+                  'id' | 'availableForSale'
+                > & {
+                  selectedOptions: Array<
+                    Pick<StorefrontAPI.SelectedOption, 'name' | 'value'>
+                  >;
+                }
+              >;
+            };
           }
         >;
         pageInfo: Pick<
@@ -1668,6 +1692,11 @@ export type CollectionPageQuery = {
           'hasPreviousPage' | 'hasNextPage' | 'endCursor' | 'startCursor'
         >;
       };
+      metafields: Array<
+        StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.Metafield, 'namespace' | 'key' | 'value' | 'type'>
+        >
+      >;
     }
   >;
 };
@@ -2019,7 +2048,7 @@ interface GeneratedQueryTypes {
     return: BlogsQuery;
     variables: BlogsQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment MoneyProductItem on MoneyV2 {\n    amount\n    currencyCode\n  }\n  fragment ProductItem on Product {\n    id\n    handle\n    title\n    featuredImage {\n      id\n      altText\n      url\n      width\n      height\n    }\n    priceRange {\n      minVariantPrice {\n        ...MoneyProductItem\n      }\n      maxVariantPrice {\n        ...MoneyProductItem\n      }\n    }\n  }\n\n  query Collection(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      description\n      products(\n        first: $first\n        last: $last\n        before: $startCursor\n        after: $endCursor\n      ) {\n        nodes {\n          ...ProductItemCollection\n        }\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment MoneyProductItem on MoneyV2 {\n    amount\n    currencyCode\n  }\n  fragment ProductItem on Product {\n    id\n    handle\n    title\n    vendor\n    featuredImage {\n      id\n      altText\n      url\n      width\n      height\n    }\n    priceRange {\n      minVariantPrice {\n        ...MoneyProductItem\n      }\n      maxVariantPrice {\n        ...MoneyProductItem\n      }\n    }\n    variants(first: 1) {\n      nodes {\n        id\n        availableForSale\n        selectedOptions {\n          name\n          value\n        }\n      }\n    }\n  }\n\n  query Collection(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      description\n      image {\n        id\n        url\n        altText\n        width\n        height\n      }\n      products(\n        first: $first\n        last: $last\n        before: $startCursor\n        after: $endCursor\n      ) {\n        nodes {\n          ...ProductItemCollection\n        }\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n    }\n  }\n': {
     return: CollectionQuery;
     variables: CollectionQueryVariables;
   };
@@ -2043,11 +2072,11 @@ interface GeneratedQueryTypes {
     return: PoliciesQuery;
     variables: PoliciesQueryVariables;
   };
-  '#graphql\n  query CollectionByHandleFull($handle: String!) {\n    collectionByHandle(handle: $handle) {\n      id\n      title\n      handle\n      metafields(identifiers: [\n        {namespace: "custom", key: "size_chart"},\n        {namespace: "custom", key: "size-chart"},\n        {namespace: "custom", key: "sizeChart"},\n        {namespace: "custom", key: "sizechart"},\n        {namespace: "custom", key: "size_chart_image"},\n        {namespace: "custom", key: "size-chart-image"},\n        {namespace: "custom", key: "sizechartimage"},\n        {namespace: "global", key: "size_chart"},\n        {namespace: "global", key: "size-chart"},\n        {namespace: "global", key: "sizeChart"}\n      ]) {\n        id\n        key\n        namespace\n        value\n        type\n        reference {\n          __typename\n          ... on MediaImage {\n            image {\n              id\n              url\n              altText\n              width\n              height\n            }\n          }\n          ... on GenericFile {\n            alt\n            mimeType\n            url\n          }\n        }\n      }\n      image {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n  }\n': {
+  '#graphql\n  query CollectionByHandleFull($handle: String!) {\n    collectionByHandle(handle: $handle) {\n      id\n      title\n      handle\n      metafields(identifiers: [\n        {namespace: "custom", key: "size_chart"},\n        {namespace: "custom", key: "size-chart"},\n        {namespace: "custom", key: "sizeChart"},\n        {namespace: "custom", key: "sizechart"},\n        {namespace: "custom", key: "size_chart_image"},\n        {namespace: "custom", key: "size-chart-image"},\n        {namespace: "custom", key: "sizechartimage"},\n        {namespace: "size", key: "chart"},\n        {namespace: "size", key: "guide"}\n      ]) {\n        id\n        key\n        namespace\n        value\n        type\n        reference {\n          __typename\n          ... on MediaImage {\n            image {\n              id\n              url\n              altText\n              width\n              height\n            }\n          }\n          ... on GenericFile {\n            alt\n            mimeType\n            url\n          }\n        }\n      }\n      image {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n  }\n': {
     return: CollectionByHandleFullQuery;
     variables: CollectionByHandleFullQueryVariables;
   };
-  '#graphql\n  query CollectionsByTitle($title: String!) {\n    collections(first: 5, query: $title) {\n      nodes {\n        id\n        title\n        handle\n        metafields(identifiers: [\n          {namespace: "custom", key: "size_chart"},\n          {namespace: "custom", key: "size-chart"},\n          {namespace: "custom", key: "sizeChart"},\n          {namespace: "custom", key: "sizechart"},\n          {namespace: "custom", key: "size_chart_image"},\n          {namespace: "custom", key: "size-chart-image"},\n          {namespace: "custom", key: "sizechartimage"},\n          {namespace: "global", key: "size_chart"},\n          {namespace: "global", key: "size-chart"},\n          {namespace: "global", key: "sizeChart"}\n        ]) {\n          id\n          key\n          namespace\n          value\n          type\n          reference {\n            __typename\n            ... on MediaImage {\n              image {\n                id\n                url\n                altText\n                width\n                height\n              }\n            }\n            ... on GenericFile {\n              alt\n              mimeType\n              url\n            }\n          }\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  query CollectionsByTitle($title: String!) {\n    collections(first: 5, query: $title) {\n      nodes {\n        id\n        title\n        handle\n        metafields(identifiers: [\n          {namespace: "custom", key: "size_chart"},\n          {namespace: "custom", key: "size-chart"},\n          {namespace: "custom", key: "sizeChart"},\n          {namespace: "custom", key: "sizechart"},\n          {namespace: "custom", key: "size_chart_image"},\n          {namespace: "custom", key: "size-chart-image"},\n          {namespace: "custom", key: "sizechartimage"},\n          {namespace: "size", key: "chart"},\n          {namespace: "size", key: "guide"}\n        ]) {\n          id\n          key\n          namespace\n          value\n          type\n          reference {\n            __typename\n            ... on MediaImage {\n              image {\n                id\n                url\n                altText\n                width\n                height\n              }\n            }\n            ... on GenericFile {\n              alt\n              mimeType\n              url\n            }\n          }\n        }\n      }\n    }\n  }\n': {
     return: CollectionsByTitleQuery;
     variables: CollectionsByTitleQueryVariables;
   };
@@ -2095,7 +2124,7 @@ interface GeneratedQueryTypes {
     return: CollectionByHandleQuery;
     variables: CollectionByHandleQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment MoneyProductItem on MoneyV2 {\n    amount\n    currencyCode\n  }\n  fragment ProductItem on Product {\n    id\n    handle\n    title\n    featuredImage {\n      id\n      altText\n      url\n      width\n      height\n    }\n    priceRange {\n      minVariantPrice {\n        ...MoneyProductItem\n      }\n      maxVariantPrice {\n        ...MoneyProductItem\n      }\n    }\n  }\n\n  query CollectionPage(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      image { id url altText width height }\n      id\n      handle\n      title\n      description\n      products(\n        first: $first,\n        last: $last,\n        before: $startCursor,\n        after: $endCursor\n      ) {\n        nodes {\n          ...ProductItem\n        }\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment MoneyProductItem on MoneyV2 {\n    amount\n    currencyCode\n  }\n  fragment ProductItem on Product {\n    id\n    handle\n    title\n    vendor\n    featuredImage {\n      id\n      altText\n      url\n      width\n      height\n    }\n    priceRange {\n      minVariantPrice {\n        ...MoneyProductItem\n      }\n      maxVariantPrice {\n        ...MoneyProductItem\n      }\n    }\n    variants(first: 1) {\n      nodes {\n        id\n        availableForSale\n        selectedOptions {\n          name\n          value\n        }\n      }\n    }\n  }\n\n  query CollectionPage(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      description\n      image {\n        id\n        url\n        altText\n        width\n        height\n      }\n      products(\n        first: $first\n        last: $last\n        before: $startCursor\n        after: $endCursor\n      ) {\n        nodes {\n          ...ProductItem\n        }\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n      metafields(identifiers: [\n        {namespace: "custom", key: "brand_logo"}\n        {namespace: "custom", key: "collection_type"}\n      ]) {\n        namespace\n        key\n        value\n        type\n      }\n    }\n  }\n': {
     return: CollectionPageQuery;
     variables: CollectionPageQueryVariables;
   };

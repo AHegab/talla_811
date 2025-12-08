@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import type { ProductQuery } from 'storefrontapi.generated';
 import {
@@ -46,9 +46,9 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
     sku: v.sku || undefined,
   });
 
-  const initialVariant = selectedVariant ? transformVariant(selectedVariant) : null;
-  const [currentVariant, setCurrentVariant] =
-    useState<PDPVariant | null>(initialVariant);
+  // Don't maintain local variant state - use the prop directly
+  const currentVariant = selectedVariant ? transformVariant(selectedVariant) : null;
+
   const [userMeasurements, setUserMeasurements] =
     useState<UserMeasurements | null>(null);
   const [recommendedSize, setRecommendedSize] = useState<string | null>(null);
@@ -66,7 +66,8 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
   // }, [product]);
 
   // Transform Shopify product data to PDP format
-  const images: PDPImage[] =
+  // Prioritize selected variant image first, then show all product images
+  const allImages: PDPImage[] =
     product.images?.nodes?.map((img) => ({
       id: img.id || undefined,
       url: img.url,
@@ -74,6 +75,56 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
       width: img.width || undefined,
       height: img.height || undefined,
     })) ?? [];
+
+  // Get the selected variant's image (from Shopify if assigned)
+  let variantImage = selectedVariant?.image;
+
+  // Fallback: If no variant image is assigned, try to find one by matching color name
+  if (!variantImage && selectedVariant) {
+    // Get color option value
+    const colorOption = selectedVariant.selectedOptions?.find(
+      opt => opt.name.toLowerCase() === 'color' || opt.name.toLowerCase() === 'colour'
+    );
+
+    if (colorOption) {
+      const colorValue = colorOption.value.toLowerCase();
+
+      // Try to find an image with the color in the alt text or URL
+      const matchingImage = product.images?.nodes?.find((img) => {
+        const altText = (img.altText || '').toLowerCase();
+        const url = (img.url || '').toLowerCase();
+
+        // Check if color name appears in alt text or URL
+        return altText.includes(colorValue) || url.includes(colorValue);
+      });
+
+      if (matchingImage) {
+        variantImage = matchingImage;
+        console.log('✅ Matched image by color:', colorValue, matchingImage.url);
+      }
+    }
+  }
+
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Selected Variant:', selectedVariant?.title);
+    console.log('Variant Image:', variantImage?.url);
+    console.log('All Images Count:', allImages.length);
+  }
+
+  // Reorder images to show variant image first
+  const images: PDPImage[] = variantImage
+    ? [
+        {
+          id: variantImage.id || undefined,
+          url: variantImage.url,
+          alt: variantImage.altText || product.title,
+          width: variantImage.width || undefined,
+          height: variantImage.height || undefined,
+        },
+        ...allImages.filter((img) => img.id !== variantImage.id),
+      ]
+    : allImages;
 
   const pdpVariants: PDPVariant[] =
     product.variants?.nodes?.map((v) => ({
@@ -263,7 +314,11 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
         <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-[55%_45%] lg:grid-cols-[50%_50%] lg:px-12 lg:py-14 max-w-[1600px] mx-auto">
           {/* Gallery: product gallery with hero image and static thumbnail carousel */}
           <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start overflow-x-hidden">
-            <ProductGallery images={images} productTitle={product.title} />
+            <ProductGallery
+              key={selectedVariant?.id}
+              images={images}
+              productTitle={product.title}
+            />
 
             {/* Similar Products Section - Desktop Only */}
             {similarProducts && similarProducts.length > 0 && (
@@ -321,7 +376,6 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
               <ProductBuyBox
                 product={pdpProduct}
                 selectedVariant={currentVariant}
-                onVariantChange={setCurrentVariant}
                 recommendedSize={recommendedSize}
               />
             )}

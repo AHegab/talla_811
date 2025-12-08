@@ -166,14 +166,14 @@ export default function BrandsIndex() {
               Explore Our
             </p>
             <h1
-              className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-[0.18em] uppercase text-[#1F191A] mb-4"
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-[0.18em] uppercase text-[#1F191A] mb-6"
               style={{fontFamily: 'Aeonik, sans-serif'}}
             >
               Brands
             </h1>
             <div className="mx-auto h-[2px] w-16 rounded-full bg-[#1F191A] mb-5" />
             <p
-              className="mx-auto max-w-2xl text-sm sm:text-base leading-relaxed text-[#5A4A4C]"
+              className="mx-auto max-w-2xl text-sm sm:text-base leading-relaxed text-[#5A4A4C] text-center"
               style={{fontFamily: 'Quicking, sans-serif'}}
             >
               Discover our curated selection of premium fashion brands, each chosen for their exceptional quality and timeless style.

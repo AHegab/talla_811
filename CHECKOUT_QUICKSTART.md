@@ -24,7 +24,7 @@ script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_K
 Replace `YOUR_GOOGLE_MAPS_API_KEY` with your actual key:
 ```typescript
 script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyD...&libraries=places`;
-```
+``` 
 
 ### 3. Test It
 1. Save the file

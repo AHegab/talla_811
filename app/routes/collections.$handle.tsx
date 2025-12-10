@@ -598,7 +598,10 @@ export default function Collection() {
                       max={maxPrice}
                       value={filters.priceMax || maxPrice}
                       onChange={(e) => updateFilters({priceMax: e.target.value, priceMin: filters.priceMin || minPrice.toString(), priceRange: ''})}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb"
+                      style={{
+                        background: `linear-gradient(to right, #000 0%, #000 ${((parseFloat(filters.priceMax || maxPrice.toString()) - minPrice) / (maxPrice - minPrice)) * 100}%, #E5E7EB ${((parseFloat(filters.priceMax || maxPrice.toString()) - minPrice) / (maxPrice - minPrice)) * 100}%, #E5E7EB 100%)`
+                      }}
                     />
                   </div>
                 </div>

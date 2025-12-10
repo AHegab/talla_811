@@ -30,7 +30,7 @@ The design follows an **editorial magazine aesthetic** with:
 
 ## 📝 Typography
 
- ### Font Families
+### Font Families
 - **Serif (Georgia)**: Headlines, section titles, featured content
 - **Sans-serif (System fonts)**: Body text, navigation, buttons
 

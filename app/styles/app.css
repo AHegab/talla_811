@@ -3545,6 +3545,40 @@ label {
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Price Range Slider Styling */
+input[type="range"].slider-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #000000;
+  cursor: pointer;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"].slider-thumb::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #000000;
+  cursor: pointer;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"].slider-thumb::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+}
+
+input[type="range"].slider-thumb::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: #E5E7EB;
+}
+
 /*
 * --------------------------------------------------
 * Professional Add to Cart Animations

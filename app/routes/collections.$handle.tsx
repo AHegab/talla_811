@@ -127,20 +127,16 @@ export default function Collection() {
     return <WomenCollectionPage collection={collection as any} products={productsArray as ProductItemFragment[]} />;
   }
 
-  // Initialize filters from URL params
-  const [filters, setFilters] = useState<FilterState>({
-    sizes: searchParams.get('sizes')?.split(',').filter(Boolean) ?? [],
-    colors: searchParams.get('colors')?.split(',').filter(Boolean) ?? [],
-    brands: searchParams.get('brands')?.split(',').filter(Boolean) ?? [],
-    categories: searchParams.get('categories')?.split(',').filter(Boolean) ?? [],
-    types: searchParams.get('types')?.split(',').filter(Boolean) ?? [],
-    priceMin: searchParams.get('priceMin') ?? '',
-    priceMax: searchParams.get('priceMax') ?? '',
-    priceRange: searchParams.get('priceRange') ?? '',
-  });
-
   const products = productsArray;
   const accentColor = '#000000';
+
+  // Extract price range from products
+  const prices = products
+    .map((p: any) => parseFloat(p.priceRange?.minVariantPrice?.amount ?? '0'))
+    .filter(price => price > 0);
+
+  const minPrice = prices.length > 0 ? Math.floor(Math.min(...prices)) : 0;
+  const maxPrice = prices.length > 0 ? Math.ceil(Math.max(...prices)) : 1000;
 
   // Extract unique colors from products
   const availableColors = Array.from(
@@ -153,17 +149,24 @@ export default function Collection() {
     )
   ).sort();
 
-  // Extract price range from products
-  const prices = products.map((p: any) => parseFloat(p.priceRange?.minVariantPrice?.amount ?? '0'));
-  const minPrice = Math.floor(Math.min(...prices, 0));
-  const maxPrice = Math.ceil(Math.max(...prices, 1000));
-
   // Extract product types
   const availableTypes = Array.from(
     new Set(
       products.map((product: any) => product.productType).filter(Boolean)
     )
   ).sort();
+
+  // Initialize filters from URL params
+  const [filters, setFilters] = useState<FilterState>({
+    sizes: searchParams.get('sizes')?.split(',').filter(Boolean) ?? [],
+    colors: searchParams.get('colors')?.split(',').filter(Boolean) ?? [],
+    brands: searchParams.get('brands')?.split(',').filter(Boolean) ?? [],
+    categories: searchParams.get('categories')?.split(',').filter(Boolean) ?? [],
+    types: searchParams.get('types')?.split(',').filter(Boolean) ?? [],
+    priceMin: searchParams.get('priceMin') ?? minPrice.toString(),
+    priceMax: searchParams.get('priceMax') ?? maxPrice.toString(),
+    priceRange: searchParams.get('priceRange') ?? '',
+  });
 
   // Color mapping for common colors
   const colorHexMap: Record<string, string> = {
@@ -248,8 +251,8 @@ export default function Collection() {
       brands: [],
       categories: [],
       types: [],
-      priceMin: '',
-      priceMax: '',
+      priceMin: minPrice.toString(),
+      priceMax: maxPrice.toString(),
       priceRange: '',
     });
     setSearchParams(new URLSearchParams(), {replace: true, preventScrollReset: true});
@@ -303,12 +306,12 @@ export default function Collection() {
       if (!hasMatchingCategory) return false;
     }
 
-    // Price filter
-    if (filters.priceMin || filters.priceMax) {
+    // Price filter (only filter if user changed from default)
+    const currentMin = parseFloat(filters.priceMin || '0');
+    const currentMax = parseFloat(filters.priceMax || maxPrice.toString());
+    if (currentMin !== minPrice || currentMax !== maxPrice) {
       const price = parseFloat(product.priceRange?.minVariantPrice?.amount ?? '0');
-      const min = filters.priceMin ? parseFloat(filters.priceMin) : 0;
-      const max = filters.priceMax ? parseFloat(filters.priceMax) : Infinity;
-      if (price < min || price > max) return false;
+      if (price < currentMin || price > currentMax) return false;
     }
 
     // Price range filter
@@ -333,8 +336,8 @@ export default function Collection() {
     filters.brands.length > 0 ||
     filters.categories.length > 0 ||
     filters.types.length > 0 ||
-    filters.priceMin !== '' ||
-    filters.priceMax !== '' ||
+    (filters.priceMin !== '' && parseFloat(filters.priceMin) !== minPrice) ||
+    (filters.priceMax !== '' && parseFloat(filters.priceMax) !== maxPrice) ||
     filters.priceRange !== '';
 
   // Default collection UI (non-men/non-women) with premium design
@@ -964,16 +967,6 @@ export default function Collection() {
                     })}
                   </div>
 
-                  <div className="h-5 w-px bg-[#E8E9EC]" />
-
-                  {/* Price Range Display */}
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#E8E9EC] bg-white">
-                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide" style={{fontFamily: 'Aeonik, sans-serif'}}>Price:</span>
-                    <span className="text-xs font-semibold text-[#1F191A]" style={{fontFamily: 'Quicking, sans-serif'}}>
-                      {filters.priceMin || minPrice} - {filters.priceMax || maxPrice} EGP
-                    </span>
-                  </div>
-
                   {hasActiveFilters && (
                     <>
                       <div className="h-5 w-px bg-[#E8E9EC]" />
@@ -986,6 +979,56 @@ export default function Collection() {
                       </button>
                     </>
                   )}
+                </div>
+
+                {/* Price Range Section */}
+                <div className="pt-6 border-t border-[#E8E9EC] mt-6">
+                  <h3 className="text-xs font-bold uppercase tracking-[0.12em] mb-4 text-[#1F191A]" style={{fontFamily: 'Aeonik, sans-serif'}}>
+                    Price Range
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <label className="text-[10px] text-gray-600 uppercase tracking-wide mb-1.5 block" style={{fontFamily: 'Aeonik, sans-serif'}}>MIN</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={filters.priceMin}
+                            onChange={(e) => updateFilters({priceMin: e.target.value, priceRange: ''})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-12 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-black"
+                            style={{fontFamily: 'Quicking, sans-serif'}}
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">EGP</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-[10px] text-gray-600 uppercase tracking-wide mb-1.5 block" style={{fontFamily: 'Aeonik, sans-serif'}}>MAX</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={filters.priceMax}
+                            onChange={(e) => updateFilters({priceMax: e.target.value, priceRange: ''})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-12 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-black"
+                            style={{fontFamily: 'Quicking, sans-serif'}}
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">EGP</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative pt-1">
+                      <input
+                        type="range"
+                        min={minPrice}
+                        max={maxPrice}
+                        value={filters.priceMax || maxPrice}
+                        onChange={(e) => updateFilters({priceMax: e.target.value, priceMin: filters.priceMin || minPrice.toString(), priceRange: ''})}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb"
+                        style={{
+                          background: `linear-gradient(to right, #000 0%, #000 ${((parseFloat(filters.priceMax || maxPrice.toString()) - minPrice) / (maxPrice - minPrice)) * 100}%, #E5E7EB ${((parseFloat(filters.priceMax || maxPrice.toString()) - minPrice) / (maxPrice - minPrice)) * 100}%, #E5E7EB 100%)`
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1069,9 +1112,9 @@ export default function Collection() {
                     </svg>
                   </button>
                 )}
-                {(filters.priceMin || filters.priceMax) && (
+                {((filters.priceMin && parseFloat(filters.priceMin) !== minPrice) || (filters.priceMax && parseFloat(filters.priceMax) !== maxPrice)) && (
                   <button
-                    onClick={() => updateFilters({priceMin: '', priceMax: ''})}
+                    onClick={() => updateFilters({priceMin: minPrice.toString(), priceMax: maxPrice.toString()})}
                     className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
                     style={{fontFamily: 'Aeonik, sans-serif'}}
                   >

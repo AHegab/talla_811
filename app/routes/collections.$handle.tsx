@@ -14,6 +14,8 @@ interface FilterState {
   sizes: string[];
   colors: string[];
   brands: string[];
+  categories: string[];
+  types: string[];
   priceMin: string;
   priceMax: string;
   priceRange: string;
@@ -130,6 +132,8 @@ export default function Collection() {
     sizes: searchParams.get('sizes')?.split(',').filter(Boolean) ?? [],
     colors: searchParams.get('colors')?.split(',').filter(Boolean) ?? [],
     brands: searchParams.get('brands')?.split(',').filter(Boolean) ?? [],
+    categories: searchParams.get('categories')?.split(',').filter(Boolean) ?? [],
+    types: searchParams.get('types')?.split(',').filter(Boolean) ?? [],
     priceMin: searchParams.get('priceMin') ?? '',
     priceMax: searchParams.get('priceMax') ?? '',
     priceRange: searchParams.get('priceRange') ?? '',
@@ -137,6 +141,76 @@ export default function Collection() {
 
   const products = productsArray;
   const accentColor = '#000000';
+
+  // Extract unique colors from products
+  const availableColors = Array.from(
+    new Set(
+      products.flatMap((product: any) =>
+        product.options
+          ?.find((opt: any) => opt.name.toLowerCase() === 'color')
+          ?.values?.map((v: string) => v) || []
+      )
+    )
+  ).sort();
+
+  // Extract price range from products
+  const prices = products.map((p: any) => parseFloat(p.priceRange?.minVariantPrice?.amount ?? '0'));
+  const minPrice = Math.floor(Math.min(...prices, 0));
+  const maxPrice = Math.ceil(Math.max(...prices, 1000));
+
+  // Extract product types
+  const availableTypes = Array.from(
+    new Set(
+      products.map((product: any) => product.productType).filter(Boolean)
+    )
+  ).sort();
+
+  // Color mapping for common colors
+  const colorHexMap: Record<string, string> = {
+    'black': '#000000',
+    'white': '#FFFFFF',
+    'gray': '#9CA3AF',
+    'grey': '#9CA3AF',
+    'beige': '#D4C5B9',
+    'navy': '#1E3A8A',
+    'blue': '#3B82F6',
+    'green': '#10B981',
+    'red': '#EF4444',
+    'yellow': '#F59E0B',
+    'orange': '#F97316',
+    'pink': '#EC4899',
+    'purple': '#A855F7',
+    'brown': '#92400E',
+    'olive': '#84CC16',
+    'cream': '#FFFDD0',
+    'tan': '#D2B48C',
+    'khaki': '#C3B091',
+    'maroon': '#800000',
+    'burgundy': '#800020',
+    'silver': '#C0C0C0',
+    'gold': '#FFD700',
+    'bronze': '#CD7F32',
+    'light grey': '#D3D3D3',
+    'dark grey': '#696969',
+    'light gray': '#D3D3D3',
+    'dark gray': '#696969',
+  };
+
+  const getColorHex = (colorName: string): string => {
+    const name = colorName.toLowerCase().trim();
+    return colorHexMap[name] || '#D1D5DB';
+  };
+
+  // Format price range label
+  const formatPriceRangeLabel = (rangeValue: string): string => {
+    const labels: Record<string, string> = {
+      'under-500': 'Under 500 EGP',
+      '500-1000': '500-1000 EGP',
+      '1000-2000': '1000-2000 EGP',
+      '2000-plus': '2000+ EGP',
+    };
+    return labels[rangeValue] || rangeValue;
+  };
 
   // Update URL when filters change
   const updateFilters = (newFilters: Partial<FilterState>) => {
@@ -148,6 +222,8 @@ export default function Collection() {
     if (updated.sizes.length) params.set('sizes', updated.sizes.join(','));
     if (updated.colors.length) params.set('colors', updated.colors.join(','));
     if (updated.brands.length) params.set('brands', updated.brands.join(','));
+    if (updated.categories.length) params.set('categories', updated.categories.join(','));
+    if (updated.types.length) params.set('types', updated.types.join(','));
     if (updated.priceMin) params.set('priceMin', updated.priceMin);
     if (updated.priceMax) params.set('priceMax', updated.priceMax);
     if (updated.priceRange) params.set('priceRange', updated.priceRange);
@@ -155,8 +231,8 @@ export default function Collection() {
     setSearchParams(params, {replace: true, preventScrollReset: true});
   };
 
-  // Toggle array filter (size, color, brand)
-  const toggleFilter = (type: 'sizes' | 'colors' | 'brands', value: string) => {
+  // Toggle array filter (size, color, brand, category, type)
+  const toggleFilter = (type: 'sizes' | 'colors' | 'brands' | 'categories' | 'types', value: string) => {
     const current = filters[type];
     const updated = current.includes(value)
       ? current.filter(v => v !== value)
@@ -170,6 +246,8 @@ export default function Collection() {
       sizes: [],
       colors: [],
       brands: [],
+      categories: [],
+      types: [],
       priceMin: '',
       priceMax: '',
       priceRange: '',
@@ -179,6 +257,52 @@ export default function Collection() {
 
   // Filter products client-side
   const filteredProducts = products.filter((product: any) => {
+    // Size filter
+    if (filters.sizes.length > 0) {
+      const productSizes = product.options
+        ?.find((opt: any) => opt.name.toLowerCase() === 'size')
+        ?.values || [];
+      const hasMatchingSize = filters.sizes.some(size =>
+        productSizes.some((ps: string) => ps.toLowerCase() === size.toLowerCase())
+      );
+      if (!hasMatchingSize) return false;
+    }
+
+    // Color filter
+    if (filters.colors.length > 0) {
+      const productColors = product.options
+        ?.find((opt: any) => opt.name.toLowerCase() === 'color')
+        ?.values || [];
+      const hasMatchingColor = filters.colors.some(color =>
+        productColors.some((pc: string) => pc.toLowerCase() === color.toLowerCase())
+      );
+      if (!hasMatchingColor) return false;
+    }
+
+    // Brand filter
+    if (filters.brands.length > 0) {
+      const productBrand = product.vendor || '';
+      if (!filters.brands.includes(productBrand)) return false;
+    }
+
+    // Product Type filter
+    if (filters.types.length > 0) {
+      const productType = product.productType || '';
+      if (!filters.types.includes(productType)) return false;
+    }
+
+    // Category filter (Men/Women/Unisex)
+    if (filters.categories.length > 0) {
+      // Check product tags or title for category matching
+      const productTags = product.tags?.map((t: string) => t.toLowerCase()) || [];
+      const productTitle = (product.title || '').toLowerCase();
+      const hasMatchingCategory = filters.categories.some(category => {
+        const cat = category.toLowerCase();
+        return productTags.includes(cat) || productTitle.includes(cat);
+      });
+      if (!hasMatchingCategory) return false;
+    }
+
     // Price filter
     if (filters.priceMin || filters.priceMax) {
       const price = parseFloat(product.priceRange?.minVariantPrice?.amount ?? '0');
@@ -191,10 +315,10 @@ export default function Collection() {
     if (filters.priceRange) {
       const price = parseFloat(product.priceRange?.minVariantPrice?.amount ?? '0');
       const ranges: Record<string, [number, number]> = {
-        'under-50': [0, 50],
-        '50-100': [50, 100],
-        '100-200': [100, 200],
-        '200-plus': [200, Infinity],
+        'under-500': [0, 500],
+        '500-1000': [500, 1000],
+        '1000-2000': [1000, 2000],
+        '2000-plus': [2000, Infinity],
       };
       const [min, max] = ranges[filters.priceRange] ?? [0, Infinity];
       if (price < min || price > max) return false;
@@ -207,6 +331,8 @@ export default function Collection() {
     filters.sizes.length > 0 ||
     filters.colors.length > 0 ||
     filters.brands.length > 0 ||
+    filters.categories.length > 0 ||
+    filters.types.length > 0 ||
     filters.priceMin !== '' ||
     filters.priceMax !== '' ||
     filters.priceRange !== '';
@@ -337,14 +463,8 @@ export default function Collection() {
 
               <FilterSection title="Color">
                 <div className="grid grid-cols-6 gap-3">
-                  {[
-                    {name: 'Black', color: '#000000'},
-                    {name: 'White', color: '#FFFFFF'},
-                    {name: 'Gray', color: '#9CA3AF'},
-                    {name: 'Beige', color: '#D4C5B9'},
-                    {name: 'Navy', color: '#1E3A8A'},
-                    {name: 'Green', color: '#065F46'},
-                  ].map((colorOption) => {
+                  {availableColors.map((colorName) => {
+                    const colorOption = {name: colorName, color: getColorHex(colorName)};
                     const isSelected = filters.colors.includes(colorOption.name);
                     return (
                       <button
@@ -397,48 +517,86 @@ export default function Collection() {
                 </div>
               </FilterSection>
 
+              <FilterSection title="Category">
+                <div className="space-y-3">
+                  {['Men', 'Women', 'Unisex', 'Kids'].map((category) => (
+                    <label key={category} className="group flex cursor-pointer items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={filters.categories.includes(category)}
+                        onChange={() => toggleFilter('categories', category)}
+                        className="h-4 w-4 rounded border-gray-300 focus:ring-2"
+                        style={{accentColor: accentColor}}
+                      />
+                      <span className="text-sm transition-colors group-hover:text-black" style={{fontFamily: 'Quicking, sans-serif'}}>
+                        {category}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </FilterSection>
+
+              <FilterSection title="Product Type">
+                <div className="space-y-3">
+                  {availableTypes.map((type) => (
+                    <label key={type} className="group flex cursor-pointer items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={filters.types.includes(type)}
+                        onChange={() => toggleFilter('types', type)}
+                        className="h-4 w-4 rounded border-gray-300 focus:ring-2"
+                        style={{accentColor: accentColor}}
+                      />
+                      <span className="text-sm transition-colors group-hover:text-black" style={{fontFamily: 'Quicking, sans-serif'}}>
+                        {type}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </FilterSection>
+
               <FilterSection title="Price Range">
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-600 uppercase tracking-wide" style={{fontFamily: 'Aeonik, sans-serif'}}>MIN</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={filters.priceMin}
+                            onChange={(e) => updateFilters({priceMin: e.target.value, priceRange: ''})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-12 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-black"
+                            style={{fontFamily: 'Quicking, sans-serif'}}
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">EGP</span>
+                        </div>
+                      </div>
+                      <span className="text-gray-400 pt-5">—</span>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-600 uppercase tracking-wide" style={{fontFamily: 'Aeonik, sans-serif'}}>MAX</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            placeholder={maxPrice.toString()}
+                            value={filters.priceMax}
+                            onChange={(e) => updateFilters({priceMax: e.target.value, priceRange: ''})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-12 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-black"
+                            style={{fontFamily: 'Quicking, sans-serif'}}
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">EGP</span>
+                        </div>
+                      </div>
+                    </div>
                     <input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.priceMin}
-                      onChange={(e) => updateFilters({priceMin: e.target.value, priceRange: ''})}
-                      className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                      style={{fontFamily: 'Quicking, sans-serif'}}
+                      type="range"
+                      min={minPrice}
+                      max={maxPrice}
+                      value={filters.priceMax || maxPrice}
+                      onChange={(e) => updateFilters({priceMax: e.target.value, priceMin: filters.priceMin || minPrice.toString(), priceRange: ''})}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
                     />
-                    <span className="text-gray-500">—</span>
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.priceMax}
-                      onChange={(e) => updateFilters({priceMax: e.target.value, priceRange: ''})}
-                      className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                      style={{fontFamily: 'Quicking, sans-serif'}}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      {label: 'Under $50', value: 'under-50'},
-                      {label: '$50 - $100', value: '50-100'},
-                      {label: '$100 - $200', value: '100-200'},
-                      {label: '$200+', value: '200-plus'},
-                    ].map((range) => (
-                      <label key={range.value} className="group flex cursor-pointer items-center gap-3">
-                        <input
-                          type="radio"
-                          name="price"
-                          checked={filters.priceRange === range.value}
-                          onChange={() => updateFilters({priceRange: range.value, priceMin: '', priceMax: ''})}
-                          className="h-4 w-4 border-gray-300 focus:ring-2"
-                          style={{accentColor: accentColor}}
-                        />
-                        <span className="text-sm transition-colors group-hover:text-black" style={{fontFamily: 'Quicking, sans-serif'}}>
-                          {range.label}
-                        </span>
-                      </label>
-                    ))}
                   </div>
                 </div>
               </FilterSection>
@@ -511,14 +669,8 @@ export default function Collection() {
 
               <FilterSection title="Color">
                 <div className="grid grid-cols-6 gap-2">
-                  {[
-                    {name: 'Black', color: '#000000'},
-                    {name: 'White', color: '#FFFFFF'},
-                    {name: 'Gray', color: '#9CA3AF'},
-                    {name: 'Beige', color: '#D4C5B9'},
-                    {name: 'Navy', color: '#1E3A8A'},
-                    {name: 'Green', color: '#065F46'},
-                  ].map((colorOption) => {
+                  {availableColors.map((colorName) => {
+                    const colorOption = {name: colorName, color: getColorHex(colorName)};
                     const isSelected = filters.colors.includes(colorOption.name);
                     return (
                       <button
@@ -587,20 +739,15 @@ export default function Collection() {
                 </div>
               </FilterSection>
 
-              <FilterSection title="Price Range">
+              <FilterSection title="Category">
                 <div className="space-y-2">
-                  {[
-                    {label: 'Under $50', value: 'under-50'},
-                    {label: '$50 - $100', value: '50-100'},
-                    {label: '$100 - $200', value: '100-200'},
-                    {label: '$200+', value: '200-plus'},
-                  ].map((range) => {
-                    const isSelected = filters.priceRange === range.value;
+                  {['Men', 'Women', 'Unisex', 'Kids'].map((category) => {
+                    const isSelected = filters.categories.includes(category);
                     return (
                       <button
-                        key={range.value}
+                        key={category}
                         type="button"
-                        onClick={() => updateFilters({priceRange: isSelected ? '' : range.value})}
+                        onClick={() => toggleFilter('categories', category)}
                         className="flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-all duration-200 hover:bg-gray-50 active:scale-95"
                         style={{
                           fontFamily: 'Aeonik, sans-serif',
@@ -609,17 +756,102 @@ export default function Collection() {
                         }}
                       >
                         <div
-                          className="h-4 w-4 flex-shrink-0 rounded-full border-2 flex items-center justify-center"
-                          style={{borderColor: isSelected ? accentColor : '#D1D5DB'}}
+                          className="h-4 w-4 flex-shrink-0 rounded border-2 flex items-center justify-center"
+                          style={{
+                            borderColor: isSelected ? accentColor : '#D1D5DB',
+                            backgroundColor: isSelected ? accentColor : 'transparent',
+                          }}
                         >
                           {isSelected && (
-                            <div className="h-2 w-2 rounded-full" style={{backgroundColor: accentColor}} />
+                            <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
                           )}
                         </div>
-                        <span>{range.label}</span>
+                        <span>{category}</span>
                       </button>
                     );
                   })}
+                </div>
+              </FilterSection>
+
+              <FilterSection title="Product Type">
+                <div className="space-y-2">
+                  {availableTypes.map((type) => {
+                    const isSelected = filters.types.includes(type);
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => toggleFilter('types', type)}
+                        className="flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-all duration-200 hover:bg-gray-50 active:scale-95"
+                        style={{
+                          fontFamily: 'Aeonik, sans-serif',
+                          borderColor: isSelected ? accentColor : '#D1D5DB',
+                          backgroundColor: isSelected ? `${accentColor}10` : 'transparent',
+                        }}
+                      >
+                        <div
+                          className="h-4 w-4 flex-shrink-0 rounded border-2 flex items-center justify-center"
+                          style={{
+                            borderColor: isSelected ? accentColor : '#D1D5DB',
+                            backgroundColor: isSelected ? accentColor : 'transparent',
+                          }}
+                        >
+                          {isSelected && (
+                            <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span>{type}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </FilterSection>
+
+              <FilterSection title="Price Range">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-gray-600 uppercase tracking-wide mb-1 block" style={{fontFamily: 'Aeonik, sans-serif'}}>MIN</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={filters.priceMin}
+                          onChange={(e) => updateFilters({priceMin: e.target.value, priceRange: ''})}
+                          className="w-full border border-gray-300 rounded-lg px-2 py-1.5 pr-10 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-black"
+                          style={{fontFamily: 'Quicking, sans-serif'}}
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-medium">EGP</span>
+                      </div>
+                    </div>
+                    <span className="text-gray-400 pt-4 text-sm">—</span>
+                    <div className="flex-1">
+                      <label className="text-[10px] text-gray-600 uppercase tracking-wide mb-1 block" style={{fontFamily: 'Aeonik, sans-serif'}}>MAX</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          placeholder={maxPrice.toString()}
+                          value={filters.priceMax}
+                          onChange={(e) => updateFilters({priceMax: e.target.value, priceRange: ''})}
+                          className="w-full border border-gray-300 rounded-lg px-2 py-1.5 pr-10 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-black"
+                          style={{fontFamily: 'Quicking, sans-serif'}}
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-medium">EGP</span>
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min={minPrice}
+                    max={maxPrice}
+                    value={filters.priceMax || maxPrice}
+                    onChange={(e) => updateFilters({priceMax: e.target.value, priceMin: filters.priceMin || minPrice.toString(), priceRange: ''})}
+                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
+                  />
                 </div>
               </FilterSection>
             </div>
@@ -641,13 +873,13 @@ export default function Collection() {
                 </div>
 
                 {/* Quick Filters Row */}
-                <div className="flex items-center flex-wrap gap-4 pt-6">
+                <div className="flex items-center flex-wrap gap-3 pt-6">
                   <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#1F191A] whitespace-nowrap" style={{fontFamily: 'Aeonik, sans-serif'}}>
                     Quick Filters:
                   </span>
 
                   {/* Size Quick Filters */}
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     {['S', 'M', 'L', 'XL'].map((size) => {
                       const isSelected = filters.sizes.includes(size);
                       return (
@@ -672,13 +904,9 @@ export default function Collection() {
                   <div className="h-5 w-px bg-[#E8E9EC]" />
 
                   {/* Color Quick Filters */}
-                  <div className="flex items-center gap-2.5">
-                    {[
-                      {name: 'Black', color: '#000000'},
-                      {name: 'White', color: '#FFFFFF'},
-                      {name: 'Gray', color: '#9CA3AF'},
-                      {name: 'Navy', color: '#1E3A8A'},
-                    ].map((colorOption) => {
+                  <div className="flex items-center gap-2">
+                    {availableColors.slice(0, 6).map((colorName) => {
+                      const colorOption = {name: colorName, color: getColorHex(colorName)};
                       const isSelected = filters.colors.includes(colorOption.name);
                       return (
                         <button
@@ -711,15 +939,50 @@ export default function Collection() {
                     })}
                   </div>
 
+                  <div className="h-5 w-px bg-[#E8E9EC]" />
+
+                  {/* Category Quick Filters */}
+                  <div className="flex items-center gap-2">
+                    {['Men', 'Women', 'Unisex'].map((category) => {
+                      const isSelected = filters.categories.includes(category);
+                      return (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() => toggleFilter('categories', category)}
+                          className="px-3 py-2 rounded-lg border text-xs font-semibold transition-all duration-200 hover:shadow-md active:scale-95"
+                          style={{
+                            fontFamily: 'Aeonik, sans-serif',
+                            borderColor: isSelected ? accentColor : '#E8E9EC',
+                            backgroundColor: isSelected ? accentColor : 'white',
+                            color: isSelected ? '#FFFFFF' : '#5A4A4C',
+                          }}
+                        >
+                          {category}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="h-5 w-px bg-[#E8E9EC]" />
+
+                  {/* Price Range Display */}
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#E8E9EC] bg-white">
+                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide" style={{fontFamily: 'Aeonik, sans-serif'}}>Price:</span>
+                    <span className="text-xs font-semibold text-[#1F191A]" style={{fontFamily: 'Quicking, sans-serif'}}>
+                      {filters.priceMin || minPrice} - {filters.priceMax || maxPrice} EGP
+                    </span>
+                  </div>
+
                   {hasActiveFilters && (
                     <>
-                      <div className="h-5 w-px bg-[#E8E9EC] ml-1" />
+                      <div className="h-5 w-px bg-[#E8E9EC]" />
                       <button
                         onClick={clearFilters}
-                        className="text-xs font-semibold text-[#5A4A4C] hover:text-[#1F191A] underline transition-colors whitespace-nowrap"
+                        className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-[#1F191A] transition-all duration-200 active:scale-95 whitespace-nowrap"
                         style={{fontFamily: 'Aeonik, sans-serif'}}
                       >
-                        Clear All
+                        CLEAR ALL
                       </button>
                     </>
                   )}
@@ -768,13 +1031,39 @@ export default function Collection() {
                     </svg>
                   </button>
                 ))}
+                {filters.categories.map(category => (
+                  <button
+                    key={`category-${category}`}
+                    onClick={() => toggleFilter('categories', category)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
+                    style={{fontFamily: 'Aeonik, sans-serif'}}
+                  >
+                    <span>{category}</span>
+                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                ))}
+                {filters.types.map(type => (
+                  <button
+                    key={`type-${type}`}
+                    onClick={() => toggleFilter('types', type)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
+                    style={{fontFamily: 'Aeonik, sans-serif'}}
+                  >
+                    <span>Type: {type}</span>
+                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                ))}
                 {filters.priceRange && (
                   <button
                     onClick={() => updateFilters({priceRange: ''})}
                     className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
                     style={{fontFamily: 'Aeonik, sans-serif'}}
                   >
-                    <span>Price: {filters.priceRange.replace('-', ' - ')}</span>
+                    <span>{formatPriceRangeLabel(filters.priceRange)}</span>
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -786,7 +1075,7 @@ export default function Collection() {
                     className="inline-flex items-center gap-2 rounded-full border border-[#E8E9EC] bg-white px-4 py-2 text-xs font-medium transition-all hover:border-[#292929] hover:bg-[#FAFAFA]"
                     style={{fontFamily: 'Aeonik, sans-serif'}}
                   >
-                    <span>Price: ${filters.priceMin || '0'} - ${filters.priceMax || '∞'}</span>
+                    <span>Price: {filters.priceMin || minPrice} - {filters.priceMax || maxPrice} EGP</span>
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -865,6 +1154,8 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
     handle
     title
     vendor
+    productType
+    tags
     featuredImage {
       id
       altText
@@ -879,6 +1170,10 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
       maxVariantPrice {
         ...MoneyProductItem
       }
+    }
+    options {
+      name
+      values
     }
     variants(first: 1) {
       nodes {

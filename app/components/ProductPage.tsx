@@ -392,51 +392,6 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
                 </div>
               </div>
 
-              {/* Details & Care Panel */}
-              <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-                <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-                  <span className="tracking-wide">Details &amp; Care</span>
-                </div>
-                <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
-                  <ul className="list-disc pl-4">
-                    <li>Premium materials for comfort</li>
-                    <li>Machine washable</li>
-                    <li>Made with care for the environment</li>
-                  </ul>
-                  {/* Size chart preview and link */}
-                  {pdpProduct.sizeChartImage && (
-                    <div className="mt-4 flex items-center gap-4">
-                      <img src={pdpProduct.sizeChartImage.url} alt={pdpProduct.sizeChartImage.alt || 'Size chart'} className="h-16 w-auto object-contain rounded-md border border-gray-100" />
-                      <a href={pdpProduct.sizeChartImage.url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-gray-700 hover:text-black underline">
-                        View Size Chart
-                      </a>
-                    </div>
-                  )}
-                  {pdpProduct.brandSizeChartImage && (
-                    <div className="mt-4 flex items-center gap-4">
-                      <img src={pdpProduct.brandSizeChartImage.url} alt={pdpProduct.brandSizeChartImage.alt || 'Brand size chart'} className="h-16 w-auto object-contain rounded-md border border-gray-100" />
-                      <a href={pdpProduct.brandSizeChartImage.url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-gray-700 hover:text-black underline">
-                        View Brand Size Chart
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Shipping & Returns Panel */}
-              <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-                <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-                  <span className="tracking-wide">Shipping &amp; Returns</span>
-                </div>
-                <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
-                  <ul className="list-disc pl-4">
-                    <li>Free shipping on orders over $100</li>
-                    <li>Easy 30-day returns</li>
-                    <li>Fast delivery (2–5 business days)</li>
-                  </ul>
-                </div>
-              </div>
-
               {/* Similar Products Section - Mobile Only */}
               {similarProducts && similarProducts.length > 0 && (
                 <div className="w-full md:hidden">

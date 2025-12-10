@@ -249,7 +249,7 @@ export function ProductGallery({
             {/* Close button */}
             <button
               onClick={closeModal}
-              className="absolute top-4 right-0 z-50 w-12 h-12 flex items-center justify-center bg-gray-900/80 hover:bg-gray-900 backdrop-blur-sm rounded-full transition-all shadow-lg"
+              className="absolute top-4 right-4 md:top-6 md:right-6 z-50 w-12 h-12 flex items-center justify-center bg-gray-900/80 hover:bg-gray-900 backdrop-blur-sm rounded-full transition-all shadow-lg"
               aria-label="Close image viewer"
             >
               <svg
@@ -271,7 +271,7 @@ export function ProductGallery({
 
             {/* Main image - Full screen with space for thumbnails */}
             <div
-              className={`w-full flex items-center justify-center ${
+              className={`w-full flex items-center justify-center px-4 md:px-8 lg:px-16 ${
                 images.length > 1 ? 'h-[calc(100vh-120px)]' : 'h-screen'
               }`}
               onClick={(e) => {
@@ -284,15 +284,23 @@ export function ProductGallery({
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              <Image
-                data={{
-                  url: images[selectedIndex]?.url,
-                  altText: images[selectedIndex]?.alt || productTitle,
-                  width: images[selectedIndex]?.width,
-                  height: images[selectedIndex]?.height,
-                }}
-                className="w-full h-full object-contain"
-              />
+              <div className="relative w-full h-full md:w-auto md:h-auto md:max-w-xl md:max-h-[80vh] lg:max-w-2xl lg:max-h-[85vh] flex items-center justify-center">
+                <Image
+                  data={{
+                    url: images[selectedIndex]?.url,
+                    altText: images[selectedIndex]?.alt || productTitle,
+                    width: images[selectedIndex]?.width,
+                    height: images[selectedIndex]?.height,
+                  }}
+                  className="w-full h-full object-contain"
+                  loading="eager"
+                  sizes="(min-width: 1024px) 1200px, 100vw"
+                  loaderOptions={{
+                    scale: 2,
+                    crop: 'center',
+                  }}
+                />
+              </div>
             </div>
 
             {/* Thumbnail carousel at bottom */}

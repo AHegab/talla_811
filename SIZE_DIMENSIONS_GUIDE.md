@@ -1,7 +1,39 @@
 # Size Dimensions Setup Guide
 
 ## Overview
-The size recommendation system now supports product-specific size dimensions with flexible measurement formats.
+The size recommendation system now supports product-specific size dimensions with flexible measurement formats and improved body measurement estimation.
+
+## How Body Measurements Are Estimated
+
+When users don't provide their actual measurements, the system estimates chest/waist/hips from height and weight using:
+
+### Estimation Algorithm
+
+1. **Base Proportions** (from height):
+   - Female: chest = 53% of height, waist = 39% of height, hips = 54% of height
+   - Male: chest = 52% of height, waist = 45% of height, hips = 51% of height
+
+2. **BMI Adjustments**:
+   - Calculates BMI delta from baseline (22 for female, 23 for male)
+   - Adjusts measurements: chest ±1.0cm per BMI point, waist ±1.5cm, hips ±1.0cm
+   - Clamped to prevent extreme values (max ±8 BMI points)
+
+3. **Fit Preference**:
+   - Slim: chest -3cm, waist -4cm, hips -3cm
+   - Regular: no adjustment
+   - Athletic: chest +3cm, waist -2cm (broader chest, slimmer waist)
+   - Relaxed: chest +2cm, waist +3cm, hips +2cm
+
+4. **Sanity Checks**:
+   - Chest: 70-140cm
+   - Waist: 60-140cm
+   - Hips: 70-150cm
+
+5. **Confidence Scoring**:
+   - Medium confidence: BMI 17-32 and height 140-210cm
+   - Low confidence: outside these ranges
+
+This is a heuristic fallback, NOT a medical or precise anthropometric model.
 
 ## Metafield Setup in Shopify
 

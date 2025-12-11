@@ -34,65 +34,54 @@ interface SizeRecommendationResult {
 
 /**
  * Estimate body measurements from height and weight using anthropometric formulas
- * Based on research data and body composition analysis
+ * This is a heuristic fallback, NOT a medical or precise anthropometric model.
+ * Based on proportional body measurements and BMI adjustments.
  */
 function estimateBodyMeasurements(
   height: number, // cm
   weight: number, // kg
   gender: 'male' | 'female',
   bodyFit: 'slim' | 'regular' | 'athletic' | 'relaxed' = 'regular'
-): { chest: number; waist: number; hips: number } {
-  // Calculate BMI for body composition
-  const bmi = weight / Math.pow(height / 100, 2);
+): { chest: number; waist: number; hips: number; confidence: 'low' | 'medium' } {
+  const heightM = height / 100;
+  const bmi = weight / (heightM * heightM);
 
-  // Body fat percentage estimation (Jackson-Pollock formula approximation)
-  const bodyFat = gender === 'male'
-    ? 1.2 * bmi + 0.23 * 25 - 16.2 // Assuming age 25 for general calculation
-    : 1.2 * bmi + 0.23 * 25 - 5.4;
+  // Base BMI anchors for average body composition
+  const baseBmi = gender === 'female' ? 22 : 23;
+  const bmiDelta = bmi - baseBmi;
 
-  let chest: number, waist: number, hips: number;
+  // ---- 1) Base proportional measurements (average build) ----
+  let chest = 0;
+  let waist = 0;
+  let hips = 0;
 
-  if (gender === 'male') {
-    // Male measurement estimation formulas
-    // Based on anthropometric data correlations
-    chest = (height * 0.52) + (weight * 0.3) - 10;
-    waist = (height * 0.38) + (weight * 0.45) - 20;
-    hips = (height * 0.48) + (weight * 0.35) - 15;
-
-    // Adjust for body composition
-    if (bmi < 18.5) { // Underweight
-      chest -= 3;
-      waist -= 5;
-      hips -= 3;
-    } else if (bmi > 25) { // Overweight
-      waist += (bmi - 25) * 1.5;
-      hips += (bmi - 25) * 1.2;
-    }
+  if (gender === 'female') {
+    // Female proportions based on height
+    chest = 0.53 * height;
+    waist = 0.39 * height;
+    hips = 0.54 * height;
   } else {
-    // Female measurement estimation formulas
-    // Accounting for different body composition
-    chest = (height * 0.48) + (weight * 0.35) - 5;
-    waist = (height * 0.34) + (weight * 0.42) - 18;
-    hips = (height * 0.54) + (weight * 0.38) - 8;
-
-    // Adjust for body composition
-    if (bmi < 18.5) { // Underweight
-      chest -= 4;
-      waist -= 6;
-      hips -= 4;
-    } else if (bmi > 25) { // Overweight
-      chest += (bmi - 25) * 0.8;
-      waist += (bmi - 25) * 1.8;
-      hips += (bmi - 25) * 1.5;
-    }
+    // Male proportions based on height
+    chest = 0.52 * height;
+    waist = 0.45 * height;
+    hips = 0.51 * height;
   }
 
-  // Apply body fit adjustments
+  // ---- 2) BMI-based adjustments ----
+  // Clamp bmiDelta so extreme values don't produce impossible measurements
+  const clampedDelta = Math.max(-8, Math.min(8, bmiDelta));
+
+  chest += clampedDelta * 1.0;
+  hips += clampedDelta * 1.0;
+  waist += clampedDelta * 1.5; // Waist responds more to weight changes
+
+  // ---- 3) Body fit / shape adjustments ----
+  // Map fit preference to body shape adjustments
   const fitAdjustments = {
-    slim: { chest: -2, waist: -3, hips: -2 },
-    regular: { chest: 0, waist: 0, hips: 0 },
-    athletic: { chest: 2, waist: -1, hips: 1 },
-    relaxed: { chest: 3, waist: 1, hips: 3 },
+    slim: { chest: -3, waist: -4, hips: -3 },      // Slimmer build
+    regular: { chest: 0, waist: 0, hips: 0 },      // Average build
+    athletic: { chest: 3, waist: -2, hips: 0 },    // More chest, less waist
+    relaxed: { chest: 2, waist: 3, hips: 2 },      // Fuller build
   };
 
   const adjustment = fitAdjustments[bodyFit];
@@ -100,11 +89,68 @@ function estimateBodyMeasurements(
   waist += adjustment.waist;
   hips += adjustment.hips;
 
+  // ---- 4) Sanity clamps to avoid impossible geometries ----
+  const clamp = (value: number, min: number, max: number) =>
+    Math.max(min, Math.min(max, value));
+
+  chest = clamp(chest, 70, 140);
+  waist = clamp(waist, 60, 140);
+  hips = clamp(hips, 70, 150);
+
+  // ---- 5) Confidence heuristic ----
+  let confidence: 'low' | 'medium' = 'low';
+
+  // Higher confidence if BMI is in reasonable range
+  const bmiInReasonableRange = bmi > 17 && bmi < 32;
+  const heightInReasonableRange = height > 140 && height < 210;
+
+  if (bmiInReasonableRange && heightInReasonableRange) {
+    confidence = 'medium';
+  }
+
   return {
-    chest: Math.round(chest * 10) / 10,
-    waist: Math.round(waist * 10) / 10,
-    hips: Math.round(hips * 10) / 10,
+    chest: Math.round(chest),
+    waist: Math.round(waist),
+    hips: Math.round(hips),
+    confidence,
   };
+}
+
+/**
+ * Detect if measurements are flat lay (width) vs body circumference
+ * Flat lay measurements are typically half of body measurements
+ * Heuristic: chest < 50cm is likely flat lay
+ */
+function isFlatLayMeasurement(sizeDimensions: SizeDimensions): boolean {
+  // Check chest measurements across all sizes
+  const chestValues = Object.values(sizeDimensions)
+    .map(dim => dim.chest)
+    .filter((val): val is number | [number, number] => val !== undefined);
+
+  if (chestValues.length === 0) return false;
+
+  // Get average chest value
+  const avgChest = chestValues.reduce((sum, val) => {
+    const numVal = Array.isArray(val) ? (val[0] + val[1]) / 2 : val;
+    return sum + numVal;
+  }, 0) / chestValues.length;
+
+  // If average chest is less than 50cm, it's likely flat lay (width)
+  return avgChest < 50;
+}
+
+/**
+ * Convert flat lay measurement to body circumference
+ * Flat lay width should be doubled for body circumference
+ */
+function convertFlatLayToCircumference(dimension: [number, number] | number | undefined): [number, number] | number | undefined {
+  if (!dimension) return undefined;
+
+  if (Array.isArray(dimension)) {
+    return [dimension[0] * 2, dimension[1] * 2] as [number, number];
+  }
+
+  return (dimension as number) * 2;
 }
 
 /**
@@ -180,11 +226,34 @@ function findBestSize(
   let bestScore = 0;
   const scores: { [size: string]: number } = {};
 
+  // Check if measurements are flat lay and need to be doubled
+  const isFlatLay = isFlatLayMeasurement(sizeDimensions);
+  console.log('🔍 Detected flat lay measurements:', isFlatLay);
+
+  // Convert flat lay to body circumference if needed
+  const convertedSizeDimensions: SizeDimensions = {};
+  if (isFlatLay) {
+    for (const [size, dimensions] of Object.entries(sizeDimensions)) {
+      convertedSizeDimensions[size] = {
+        chest: convertFlatLayToCircumference(dimensions.chest),
+        waist: convertFlatLayToCircumference(dimensions.waist),
+        hips: convertFlatLayToCircumference(dimensions.hips),
+        // Keep length, arm, shoulder as-is (these are not circumference)
+        length: dimensions.length,
+        arm: dimensions.arm,
+        shoulder: dimensions.shoulder,
+      };
+    }
+    console.log('✅ Converted flat lay to body circumference:', convertedSizeDimensions);
+  } else {
+    Object.assign(convertedSizeDimensions, sizeDimensions);
+  }
+
   // Define size order for fallback
   const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'];
 
   // Calculate fit score for each size
-  for (const [size, dimensions] of Object.entries(sizeDimensions)) {
+  for (const [size, dimensions] of Object.entries(convertedSizeDimensions)) {
     // Get scores for available measurements
     const measurements: { [key: string]: number } = {};
     let totalWeight = 0;
@@ -230,7 +299,7 @@ function findBestSize(
   // Fallback: if no size was selected (bestSize is empty), pick the largest size
   if (!bestSize || bestSize === '') {
     const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'];
-    const availableSizes = Object.keys(sizeDimensions);
+    const availableSizes = Object.keys(convertedSizeDimensions);
 
     // Sort by size order and pick the largest
     availableSizes.sort((a, b) => {
@@ -245,7 +314,7 @@ function findBestSize(
 
   // Generate reasoning
   let reasoning = '';
-  const sizeDim = sizeDimensions[bestSize];
+  const sizeDim = convertedSizeDimensions[bestSize];
 
   if (!sizeDim) {
     // Safety check - this shouldn't happen but just in case
@@ -350,6 +419,9 @@ export async function action({request}: Route.ActionArgs) {
 
     // Estimate or use provided measurements
     const estimated = estimateBodyMeasurements(height, weight, gender, bodyFit);
+
+    console.log('📊 Estimated measurements:', estimated);
+    console.log(`📈 Estimation confidence: ${estimated.confidence}`);
 
     const measurements = {
       chest: providedChest || estimated.chest,

@@ -227,9 +227,34 @@ function findBestSize(
     }
   }
 
+  // Fallback: if no size was selected (bestSize is empty), pick the largest size
+  if (!bestSize || bestSize === '') {
+    const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'];
+    const availableSizes = Object.keys(sizeDimensions);
+
+    // Sort by size order and pick the largest
+    availableSizes.sort((a, b) => {
+      const aIndex = sizeOrder.indexOf(a);
+      const bIndex = sizeOrder.indexOf(b);
+      return bIndex - aIndex; // Descending order
+    });
+
+    bestSize = availableSizes[0] || 'L'; // Default to first available or 'L'
+    bestScore = 0.2; // Low score for fallback
+  }
+
   // Generate reasoning
   let reasoning = '';
   const sizeDim = sizeDimensions[bestSize];
+
+  if (!sizeDim) {
+    // Safety check - this shouldn't happen but just in case
+    return {
+      size: bestSize,
+      confidence: bestScore,
+      reasoning: 'Size recommendation based on available options',
+    };
+  }
 
   if (bestScore >= 0.85) {
     reasoning = 'Excellent fit based on your measurements';
@@ -237,8 +262,11 @@ function findBestSize(
     reasoning = 'Good fit - recommended for your measurements';
   } else if (bestScore >= 0.55) {
     reasoning = 'Acceptable fit - may vary by style';
-  } else {
+  } else if (bestScore >= 0.30) {
     reasoning = 'Best available option - check size chart carefully';
+  } else {
+    // Very poor fit - measurements are outside size range
+    reasoning = 'Measurements exceed available sizes - largest size recommended';
   }
 
   // Add specific guidance based on available measurements
@@ -246,7 +274,18 @@ function findBestSize(
   const waistRange = normalizeToRange(sizeDim.waist);
   const hipsRange = normalizeToRange(sizeDim.hips);
 
-  if (chestRange && userMeasurements.chest > chestRange[1]) {
+  const chestExcess = chestRange ? userMeasurements.chest - chestRange[1] : 0;
+  const waistExcess = waistRange ? userMeasurements.waist - waistRange[1] : 0;
+  const hipsExcess = hipsRange ? userMeasurements.hips - hipsRange[1] : 0;
+
+  // Check if measurements significantly exceed size
+  if (chestExcess > 10) {
+    reasoning += `. Chest is ${Math.round(chestExcess)}cm larger than this size.`;
+  } else if (waistExcess > 10) {
+    reasoning += `. Waist is ${Math.round(waistExcess)}cm larger than this size.`;
+  } else if (hipsExcess > 10) {
+    reasoning += `. Hips are ${Math.round(hipsExcess)}cm larger than this size.`;
+  } else if (chestRange && userMeasurements.chest > chestRange[1]) {
     reasoning += '. May be tight in chest.';
   } else if (waistRange && userMeasurements.waist > waistRange[1]) {
     reasoning += '. May be tight in waist.';
@@ -306,6 +345,8 @@ export async function action({request}: Route.ActionArgs) {
     }
 
     console.log('📏 Size dimensions received:', sizeDimensions);
+    console.log('📏 Size dimensions type:', typeof sizeDimensions);
+    console.log('📏 Size dimensions keys:', sizeDimensions ? Object.keys(sizeDimensions) : 'undefined');
 
     // Estimate or use provided measurements
     const estimated = estimateBodyMeasurements(height, weight, gender, bodyFit);

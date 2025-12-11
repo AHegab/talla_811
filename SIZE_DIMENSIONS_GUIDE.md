@@ -5,35 +5,55 @@ The size recommendation system now supports product-specific size dimensions wit
 
 ## How Body Measurements Are Estimated
 
-When users don't provide their actual measurements, the system estimates chest/waist/hips from height and weight using:
+The system estimates chest width (front measurement only, matching flat lay garment measurements) from height and weight:
 
 ### Estimation Algorithm
 
-1. **Base Proportions** (from height):
-   - Female: chest = 53% of height, waist = 39% of height, hips = 54% of height
-   - Male: chest = 52% of height, waist = 45% of height, hips = 51% of height
+1. **Base Chest Width** (from height):
+   - Male: chest width ≈ 26% of height
+   - Female: chest width ≈ 25% of height
+   - Example: 175cm male → ~45.5cm base chest width
 
 2. **BMI Adjustments**:
-   - Calculates BMI delta from baseline (22 for female, 23 for male)
-   - Adjusts measurements: chest ±1.0cm per BMI point, waist ±1.5cm, hips ±1.0cm
-   - Clamped to prevent extreme values (max ±8 BMI points)
+   - Calculates BMI: weight(kg) / height(m)²
+   - Compares to baseline (23 for males, 22 for females)
+   - For each BMI point above/below baseline:
+     - Males: ±0.5cm chest width
+     - Females: ±0.4cm chest width
+   - Example: BMI 29.7 (vs baseline 23) = +6.7 BMI points → +3.4cm chest width
 
-3. **Fit Preference**:
-   - Slim: chest -3cm, waist -4cm, hips -3cm
-   - Regular: no adjustment
-   - Athletic: chest +3cm, waist -2cm (broader chest, slimmer waist)
-   - Relaxed: chest +2cm, waist +3cm, hips +2cm
+3. **Fit Preference Adjustments**:
+   - Slim: -2cm (slimmer build)
+   - Regular: 0cm (average)
+   - Athletic: +1cm (more muscular chest)
+   - Relaxed: +2cm (fuller build)
 
-4. **Sanity Checks**:
-   - Chest: 70-140cm
-   - Waist: 60-140cm
-   - Hips: 70-150cm
+4. **Final Range**:
+   - Clamped between 35cm - 60cm to ensure reasonable values
 
-5. **Confidence Scoring**:
-   - Medium confidence: BMI 17-32 and height 140-210cm
-   - Low confidence: outside these ranges
+5. **Wearing Ease Application**:
+   For stretchy fabrics, the garment should be smaller than the body:
+   - Slim fit: garment 5cm smaller than body
+   - Regular fit: garment 8cm smaller than body
+   - Athletic fit: garment 7cm smaller than body
+   - Relaxed fit: garment 10cm smaller than body
 
-This is a heuristic fallback, NOT a medical or precise anthropometric model.
+**Example 1 - Fitted Garment**: 175cm, 91kg male, relaxed fit:
+- Base: 175 × 0.26 = 45.5cm
+- BMI: 29.7, delta from 23 = +6.7 → add 3.4cm
+- Fit adjustment (relaxed): +2cm
+- Total body width: ~51cm
+- Product with M=38cm flat lay (fitted style, smallest <55cm)
+- Target garment (relaxed fitted): 51 - 10 = 41cm
+- Difference: 3cm → recommends **M** with good confidence ✓
+
+**Example 2 - Oversized Garment**: 175cm, 91kg male, regular fit:
+- Body width: ~51cm (same calculation as above)
+- Product with M=64cm flat lay (oversized style, smallest ≥55cm)
+- Target garment (regular oversized): 51 + 12 = 63cm
+- Difference: 1cm → recommends **M** with excellent confidence ✓
+
+This is a heuristic estimation, NOT a medical or precise anthropometric model.
 
 ## Metafield Setup in Shopify
 
@@ -116,14 +136,24 @@ This is a heuristic fallback, NOT a medical or precise anthropometric model.
 ## Supported Measurements
 
 The system supports the following measurements (all in **centimeters**):
-- `chest` - Chest circumference (primary measurement)
-- `waist` - Waist circumference
-- `hips` - Hip circumference
+- `chest` - Chest measurement (primary measurement for matching)
 - `length` - Garment length
 - `arm` - Arm/sleeve length
 - `shoulder` - Shoulder width
+- `waist` - Waist measurement (for future enhancements)
+- `hips` - Hip measurement (for future enhancements)
 
-**Note**: You only need to include the measurements relevant to your product type. The system will automatically use whatever measurements you provide.
+**Flexible Format Support**: The system automatically detects whether your measurements are:
+- **Flat lay width** (typically <80cm) - measured across the front of garment
+- **Full circumference** (typically ≥80cm) - full body/garment circumference
+
+If circumference measurements are detected (smallest size ≥80cm), they are automatically converted to flat lay width by dividing by 2.
+
+**Garment Style Detection**: The system also detects garment fit style:
+- **Fitted/Stretch** (smallest <55cm flat lay) - applies negative wearing ease (garment smaller than body)
+- **Oversized/Streetwear** (smallest ≥55cm flat lay) - applies positive wearing ease (garment larger than body)
+
+**Note**: Currently, the system primarily uses `chest` measurement for size matching. You only need to include the measurements relevant to your product type.
 
 ## Gender-Specific Products
 
@@ -137,114 +167,159 @@ If you want to restrict size recommendations to specific genders:
 
 ## How the Algorithm Works
 
-### 1. Body Measurement Estimation
+### 1. Body Chest Width Estimation
 - Users enter: height, weight, gender, and fit preference
-- System estimates: chest, waist, hips using anthropometric formulas
-- Adjusts for BMI and body composition
+- System estimates chest width (front measurement only):
+  - Base calculation: ~26% of height for males, ~25% for females
+  - BMI adjustment: adds/subtracts based on how BMI differs from baseline
+  - Fit adjustment: ±1-2cm based on body build preference
+- Result: Estimated body chest width in cm (e.g., 46cm for 175cm/91kg male)
 
-### 2. Size Matching
-- For single values: Creates a tolerance range (±2cm)
-- For ranges: Uses the exact range provided
-- Scores each size based on fit preference:
-  - **Slim fit**: Prefers lower end of range
-  - **Regular fit**: Prefers middle of range
-  - **Athletic fit**: Slightly prefers lower end
-  - **Relaxed fit**: Prefers upper end of range
+### 2. Garment Style Detection
+The system automatically detects garment style:
+- **Fitted/Stretch Style**: Smallest size <55cm flat lay (stretch fabrics, fitted hoodies/tees)
+- **Oversized/Streetwear Style**: Smallest size ≥55cm flat lay (loose/boxy fits)
 
-### 3. Confidence Scoring
-- **High confidence (85%+)**: Excellent fit
-- **Good confidence (70-85%)**: Good fit - recommended
-- **Acceptable (55-70%)**: Acceptable fit - may vary by style
-- **Low (<55%)**: Best available option - check size chart carefully
+### 3. Wearing Ease Application
 
-### 4. Gender-Specific Weighting
-The algorithm uses different measurement priorities:
+**For Fitted/Stretch Garments** (garment smaller than body):
+- **Slim fit**: Body - 5cm = target garment (tight fit)
+- **Regular fit**: Body - 8cm = target garment (normal fit)
+- **Athletic fit**: Body - 7cm = target garment (fitted comfortable)
+- **Relaxed fit**: Body - 10cm = target garment (loose with stretch)
+- Example: 46cm body → 38cm target garment (regular fit)
 
-**For Men**:
-- Chest: 50% importance
-- Waist: 30% importance
-- Hips: 20% importance
+**For Oversized Garments** (garment larger than body):
+- **Slim fit**: Body + 8cm = target garment (minimal oversized)
+- **Regular fit**: Body + 12cm = target garment (standard oversized)
+- **Athletic fit**: Body + 10cm = target garment (fitted oversized)
+- **Relaxed fit**: Body + 15cm = target garment (very oversized)
+- Example: 51cm body → 63cm target garment (regular fit)
 
-**For Women**:
-- Chest: 35% importance
-- Waist: 35% importance
-- Hips: 30% importance
+### 4. Size Matching
+- Compares target garment width to each size's chest measurement
+- Finds the size with smallest difference
+- Simple closest-match algorithm
+
+### 5. Confidence Scoring
+Based on how close the match is:
+- **Difference ≤2cm**: 95% confidence - Excellent fit
+- **Difference ≤4cm**: 80% confidence - Good fit
+- **Difference ≤6cm**: 65% confidence - Acceptable fit
+- **Difference >6cm**: 50% confidence - Best available option
+
+### 6. Reasoning Generation
+Provides specific guidance:
+- "Excellent fit based on your measurements" (confidence ≥85%)
+- "Good fit - recommended for your measurements" (confidence ≥70%)
+- Additional notes if garment may be tight or loose
+- Includes fit preference in reasoning
 
 ## Example Product Setups
 
-### Men's T-Shirt
+The system supports both flat lay and circumference measurements - it auto-detects the format!
+
+### Men's Hoodie - Flat Lay Format
 ```json
 {
   "S": {
-    "chest": 92,
+    "chest": 35,
+    "length": 53,
+    "arm": 61
+  },
+  "M": {
+    "chest": 38,
+    "length": 55,
+    "arm": 63
+  },
+  "L": {
+    "chest": 41,
+    "length": 57,
+    "arm": 65
+  },
+  "XL": {
+    "chest": 43,
+    "length": 59,
+    "arm": 67
+  }
+}
+```
+
+### Men's Oversized Hoodie - Flat Lay Format (Streetwear Style)
+```json
+{
+  "S": {
+    "chest": 61,
+    "length": 69,
+    "arm": 58
+  },
+  "M": {
+    "chest": 64,
+    "length": 71,
+    "arm": 59
+  },
+  "L": {
+    "chest": 67,
+    "length": 73,
+    "arm": 60
+  },
+  "XL": {
+    "chest": 70,
+    "length": 75,
+    "arm": 61
+  }
+}
+```
+*The system will detect these are oversized garments (smallest size ≥55cm) and apply positive wearing ease*
+
+### Men's T-Shirt (flat lay measurements)
+```json
+{
+  "S": {
+    "chest": 46,
     "length": 69,
     "shoulder": 45
   },
   "M": {
-    "chest": 97,
+    "chest": 48,
     "length": 71,
     "shoulder": 47
   },
   "L": {
-    "chest": 102,
+    "chest": 51,
     "length": 73,
     "shoulder": 49
   },
   "XL": {
-    "chest": 107,
+    "chest": 53,
     "length": 75,
     "shoulder": 51
   }
 }
 ```
 
-### Women's Dress
+### Women's T-Shirt (flat lay measurements)
 ```json
 {
   "XS": {
-    "chest": [81, 84],
-    "waist": [64, 67],
-    "hips": [89, 92],
-    "length": 95
+    "chest": 40,
+    "length": 60,
+    "shoulder": 38
   },
   "S": {
-    "chest": [84, 89],
-    "waist": [67, 72],
-    "hips": [92, 97],
-    "length": 97
+    "chest": 42,
+    "length": 62,
+    "shoulder": 40
   },
   "M": {
-    "chest": [89, 94],
-    "waist": [72, 77],
-    "hips": [97, 102],
-    "length": 99
+    "chest": 44,
+    "length": 64,
+    "shoulder": 42
   },
   "L": {
-    "chest": [94, 99],
-    "waist": [77, 82],
-    "hips": [102, 107],
-    "length": 101
-  }
-}
-```
-
-### Men's Jeans (waist-focused)
-```json
-{
-  "30": {
-    "waist": [76, 78],
-    "hips": [94, 97],
-    "length": 102
-  },
-  "32": {
-    "waist": [81, 83],
-    "hips": [99, 102],
-    "length": 104
-  },
-  "34": {
-    "waist": [86, 88],
-    "hips": [104, 107],
-    "length": 106
+    "chest": 47,
+    "length": 66,
+    "shoulder": 44
   }
 }
 ```
@@ -290,39 +365,56 @@ After adding the metafield to a product:
 ### Issue: Recommendations seem inaccurate
 **Causes**:
 - Measurements might be in inches instead of centimeters
-- Size dimensions might be for flat lay instead of body measurements
+- Wearing ease values might not match your garment's stretch/fit
+- User's body measurements may differ from BMI-based estimates
 
 **Solutions**:
 - Ensure all measurements are in **centimeters**
-- For flat lay measurements, add ~4-8cm for body measurements
-- Use ranges instead of single values for more flexibility
+- The system auto-detects flat lay vs circumference format, but verify the detection is correct in console logs
+- Check console logs for "Measurement format detected: Flat lay width" or "Full circumference"
+- Test with known good fits and adjust measurements if needed
+- Consider that the wearing ease assumes stretchy fabrics (hoodies, t-shirts)
 
 ### Issue: Wrong size names
 **Solution**: Size names in metafield must **exactly match** your product variant size options (including case and spaces)
 
 ## Best Practices
 
-1. **Use Ranges for Flexibility**: `[min, max]` ranges provide better recommendations than single values
-2. **Measure Consistently**: Use the same measurement method for all products in a category
-3. **Include Primary Measurements**: Always include chest/bust for tops, waist for bottoms
-4. **Test with Real Users**: Get feedback and adjust ranges accordingly
-5. **Update Seasonally**: Different fabric weights may need different tolerances
+1. **Measure Accurately**: Use flat lay measurements taken from actual garments
+2. **Be Consistent**: Use the same measurement method for all products in a category
+3. **Include Chest Measurement**: Always include chest width for tops (primary matching dimension)
+4. **Trust Auto-Detection**: The system detects fitted vs oversized styles automatically based on measurements
+5. **Test with Real Users**: Get feedback on recommendations and fine-tune if needed
+6. **Use Exact Size Names**: Ensure metafield size names exactly match your variant options
 
 ## Getting Measurements
 
+### From Your Products (Recommended)
+The best approach is to physically measure your garments. You can use either method:
+
+**Flat Lay Method** (recommended):
+1. Lay the garment flat on a table
+2. Measure chest width from armpit to armpit across the front
+3. Measure length from shoulder to hem
+4. Measure sleeve from shoulder seam to cuff
+5. Record in centimeters
+
+**Circumference Method** (also works):
+1. Measure the full chest circumference of the garment
+2. The system will auto-detect and convert (÷2) to flat lay width
+3. Record in centimeters
+
 ### From Existing Size Charts
-Convert your flat size chart measurements to body measurements by adding wearing ease:
-- T-shirts: +4-6cm
-- Fitted shirts: +6-8cm
-- Relaxed fits: +8-12cm
-- Dresses: +2-6cm
-- Jeans/pants: +2-4cm (waist), +4-6cm (hips)
+You can use measurements in either format:
+- **Flat lay measurements** (<80cm) - used directly
+- **Circumference measurements** (≥80cm) - automatically converted by dividing by 2
+
+The system will also detect if your garments are fitted (<55cm smallest size) or oversized (≥55cm smallest size) and adjust wearing ease accordingly.
+
+**DO NOT manually convert or add wearing ease** - the algorithm handles this automatically.
 
 ### From Manufacturer Specs
-Use the "fits body measurements" specifications if available, not garment measurements.
-
-### From Competitors
-Research similar products and their size charts for reference ranges.
+Use whatever format the manufacturer provides - flat lay or circumference. The system auto-detects and normalizes the format.
 
 ## Support
 

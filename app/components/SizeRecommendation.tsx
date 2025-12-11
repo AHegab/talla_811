@@ -22,9 +22,7 @@ interface SizeRecResponse {
   confidence?: number;
   reasoning?: string;
   measurements?: {
-    estimatedChest: number;
-    estimatedWaist: number;
-    estimatedHips: number;
+    estimatedChestWidth: number; // Flat lay / front chest measurement
   };
 }
 
@@ -335,69 +333,22 @@ export function SizeRecommendation({
                 className="mb-3 text-xs font-medium uppercase tracking-wider"
                 style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
               >
-                Your Estimated Measurements
+                Your Estimated Chest Width
               </p>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div>
-                  <p
-                    className="text-xs uppercase tracking-wide mb-1"
-                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
-                  >
-                    Chest
-                  </p>
-                  <p
-                    className="text-lg font-semibold"
-                    style={{color: '#292929', fontFamily: 'var(--font-sans)'}}
-                  >
-                    {result.measurements.estimatedChest.toFixed(1)}
-                  </p>
-                  <p
-                    className="text-[10px]"
-                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
-                  >
-                    cm
-                  </p>
-                </div>
-                <div>
-                  <p
-                    className="text-xs uppercase tracking-wide mb-1"
-                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
-                  >
-                    Waist
-                  </p>
-                  <p
-                    className="text-lg font-semibold"
-                    style={{color: '#292929', fontFamily: 'var(--font-sans)'}}
-                  >
-                    {result.measurements.estimatedWaist.toFixed(1)}
-                  </p>
-                  <p
-                    className="text-[10px]"
-                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
-                  >
-                    cm
-                  </p>
-                </div>
-                <div>
-                  <p
-                    className="text-xs uppercase tracking-wide mb-1"
-                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
-                  >
-                    Hips
-                  </p>
-                  <p
-                    className="text-lg font-semibold"
-                    style={{color: '#292929', fontFamily: 'var(--font-sans)'}}
-                  >
-                    {result.measurements.estimatedHips.toFixed(1)}
-                  </p>
-                  <p
-                    className="text-[10px]"
-                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
-                  >
-                    cm
-                  </p>
-                </div>
+              <div className="text-center">
+                <p
+                  className="text-2xl font-semibold"
+                  style={{color: '#292929', fontFamily: 'var(--font-sans)'}}
+                >
+                  {result.measurements.estimatedChestWidth}
+                  <span className="text-sm ml-1">cm</span>
+                </p>
+                <p
+                  className="text-xs mt-2"
+                  style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+                >
+                  (Front chest measurement)
+                </p>
               </div>
             </div>
           )}

@@ -241,9 +241,38 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
         pdpProduct.sizeChartImage = { url: extracted.url, alt: extracted.alt ?? found?.value ?? 'Size chart' } as any;
       }
     }
+
+    // Extract size dimensions for smart recommendations
+    const sizeDimensionsMetafield = nodes.find((m: any) => {
+      if (!m) return false;
+      const key = (m.key || '').toString().toLowerCase();
+      const ns = (m.namespace || '').toString().toLowerCase();
+      return (
+        key === 'size_dimensions' ||
+        key === 'sizedimensions' ||
+        key === 'size-dimensions' ||
+        (ns === 'custom' && key === 'size_dimensions')
+      );
+    });
+    if (sizeDimensionsMetafield?.value) {
+      try {
+        const parsed = JSON.parse(sizeDimensionsMetafield.value);
+        if (parsed && typeof parsed === 'object') {
+          pdpProduct.sizeDimensions = parsed;
+        }
+      } catch (parseError) {
+        console.warn('Failed to parse size dimensions metafield:', parseError);
+      }
+    }
+
     if (process.env.NODE_ENV !== 'production') {
       // eslint-disable-next-line no-console
-      console.log('PDP mapped size/brand chart', { productId: product.id, sizeChart: pdpProduct.sizeChartImage, brandChart: pdpProduct.brandSizeChartImage });
+      console.log('PDP mapped size/brand chart & dimensions', {
+        productId: product.id,
+        sizeChart: pdpProduct.sizeChartImage,
+        brandChart: pdpProduct.brandSizeChartImage,
+        sizeDimensions: pdpProduct.sizeDimensions
+      });
     }
   } catch (e) {
     // ignore: product might not contain metafields from the query; sizeChart remains undefined

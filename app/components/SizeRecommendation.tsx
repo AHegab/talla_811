@@ -1,22 +1,39 @@
 import {useState, type FormEvent} from 'react';
 
+interface SizeDimensions {
+  [size: string]: {
+    chest?: [number, number];
+    waist?: [number, number];
+    hips?: [number, number];
+  };
+}
+
 interface SizeRecommendationProps {
   onRecommendation: (size: string) => void;
   onClose: () => void;
+  sizeDimensions?: SizeDimensions;
 }
 
 interface SizeRecResponse {
   size: string;
   confidence?: number;
+  reasoning?: string;
+  measurements?: {
+    estimatedChest: number;
+    estimatedWaist: number;
+    estimatedHips: number;
+  };
 }
 
 export function SizeRecommendation({
   onRecommendation,
   onClose,
+  sizeDimensions,
 }: SizeRecommendationProps) {
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
+  const [bodyFit, setBodyFit] = useState<'slim' | 'regular' | 'athletic' | 'relaxed'>('regular');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SizeRecResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +60,8 @@ export function SizeRecommendation({
           height: heightNum,
           weight: weightNum,
           gender,
+          bodyFit,
+          sizeDimensions,
         }),
       });
 
@@ -199,6 +218,36 @@ export function SizeRecommendation({
             </select>
           </div>
 
+          {/* Body Fit Select */}
+          <div>
+            <label
+              htmlFor="bodyFit"
+              className="mb-2 block text-xs font-medium uppercase tracking-wider"
+              style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+            >
+              Preferred Fit
+            </label>
+            <select
+              id="bodyFit"
+              value={bodyFit}
+              onChange={(e) =>
+                setBodyFit(e.target.value as 'slim' | 'regular' | 'athletic' | 'relaxed')
+              }
+              className="w-full px-3 py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #DDDEE2',
+                color: '#292929',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              <option value="slim">Slim Fit</option>
+              <option value="regular">Regular Fit</option>
+              <option value="athletic">Athletic Fit</option>
+              <option value="relaxed">Relaxed Fit</option>
+            </select>
+          </div>
+
           {/* Submit Button */}
           <button
             type="submit"
@@ -256,7 +305,92 @@ export function SizeRecommendation({
                   : 'Low confidence – please verify'}
               </p>
             )}
+            {result.reasoning && (
+              <p
+                className="mt-3 text-xs leading-relaxed"
+                style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+              >
+                {result.reasoning}
+              </p>
+            )}
           </div>
+
+          {/* Estimated Measurements */}
+          {result.measurements && (
+            <div
+              className="p-4"
+              style={{backgroundColor: '#FFFFFF', borderRadius: '4px'}}
+            >
+              <p
+                className="mb-3 text-xs font-medium uppercase tracking-wider"
+                style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+              >
+                Your Estimated Measurements
+              </p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p
+                    className="text-xs uppercase tracking-wide mb-1"
+                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+                  >
+                    Chest
+                  </p>
+                  <p
+                    className="text-lg font-semibold"
+                    style={{color: '#292929', fontFamily: 'var(--font-sans)'}}
+                  >
+                    {result.measurements.estimatedChest.toFixed(1)}
+                  </p>
+                  <p
+                    className="text-[10px]"
+                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+                  >
+                    cm
+                  </p>
+                </div>
+                <div>
+                  <p
+                    className="text-xs uppercase tracking-wide mb-1"
+                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+                  >
+                    Waist
+                  </p>
+                  <p
+                    className="text-lg font-semibold"
+                    style={{color: '#292929', fontFamily: 'var(--font-sans)'}}
+                  >
+                    {result.measurements.estimatedWaist.toFixed(1)}
+                  </p>
+                  <p
+                    className="text-[10px]"
+                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+                  >
+                    cm
+                  </p>
+                </div>
+                <div>
+                  <p
+                    className="text-xs uppercase tracking-wide mb-1"
+                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+                  >
+                    Hips
+                  </p>
+                  <p
+                    className="text-lg font-semibold"
+                    style={{color: '#292929', fontFamily: 'var(--font-sans)'}}
+                  >
+                    {result.measurements.estimatedHips.toFixed(1)}
+                  </p>
+                  <p
+                    className="text-[10px]"
+                    style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+                  >
+                    cm
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-2">

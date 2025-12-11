@@ -21,6 +21,14 @@ export interface PDPVariant {
   sku?: string;
 }
 
+interface SizeDimensions {
+  [size: string]: {
+    chest?: [number, number];
+    waist?: [number, number];
+    hips?: [number, number];
+  };
+}
+
 export interface PDPProduct {
   id: string;
   title: string;
@@ -41,6 +49,8 @@ export interface PDPProduct {
   sizeChartImage?: { url: string; alt?: string } | null;
   // optional brand-level size chart image
   brandSizeChartImage?: { url: string; alt?: string } | null;
+  // optional size dimensions for smart recommendation
+  sizeDimensions?: SizeDimensions | null;
 }
 
 export interface SimilarProduct {
@@ -740,6 +750,7 @@ export function ProductBuyBox({
         <SizeRecommendation
           onRecommendation={handleSizeRecommendation}
           onClose={() => setSizeRecOpen(false)}
+          sizeDimensions={product.sizeDimensions ?? undefined}
         />
       )}
 

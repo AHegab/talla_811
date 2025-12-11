@@ -283,6 +283,8 @@ export async function action({request}: Route.ActionArgs) {
       sizeDimensions?: SizeDimensions;
     };
 
+    console.log('📥 Received recommendation request:', body);
+
     const {
       height,
       weight,
@@ -296,11 +298,14 @@ export async function action({request}: Route.ActionArgs) {
 
     // Validate inputs
     if (!height || !weight || !gender) {
+      console.error('❌ Missing required fields');
       return Response.json(
         { error: 'Missing required fields: height, weight, gender' },
         { status: 400 }
       );
     }
+
+    console.log('📏 Size dimensions received:', sizeDimensions);
 
     // Estimate or use provided measurements
     const estimated = estimateBodyMeasurements(height, weight, gender, bodyFit);
@@ -313,18 +318,28 @@ export async function action({request}: Route.ActionArgs) {
 
     // If product has size dimensions, use smart matching
     if (sizeDimensions && Object.keys(sizeDimensions).length > 0) {
-      const result = findBestSize(measurements, sizeDimensions, bodyFit, gender);
+      console.log('🎯 Using smart matching with product dimensions');
+      console.log('👤 User measurements:', measurements);
 
-      return Response.json({
-        size: result.size,
-        confidence: result.confidence,
-        reasoning: result.reasoning,
-        measurements: {
-          estimatedChest: measurements.chest,
-          estimatedWaist: measurements.waist,
-          estimatedHips: measurements.hips,
-        },
-      } as SizeRecommendationResult);
+      try {
+        const result = findBestSize(measurements, sizeDimensions, bodyFit, gender);
+
+        console.log('✅ Recommendation result:', result);
+
+        return Response.json({
+          size: result.size,
+          confidence: result.confidence,
+          reasoning: result.reasoning,
+          measurements: {
+            estimatedChest: measurements.chest,
+            estimatedWaist: measurements.waist,
+            estimatedHips: measurements.hips,
+          },
+        } as SizeRecommendationResult);
+      } catch (matchError) {
+        console.error('❌ Error in findBestSize:', matchError);
+        // Fall through to generic recommendation
+      }
     }
 
     // Fallback to generic sizing if no product dimensions provided
@@ -364,9 +379,14 @@ export async function action({request}: Route.ActionArgs) {
     } as SizeRecommendationResult);
 
   } catch (error) {
-    console.error('Size recommendation error:', error);
+    console.error('❌ Size recommendation error:', error);
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
     return Response.json(
-      { error: 'Failed to calculate size recommendation' },
+      {
+        error: 'Failed to calculate size recommendation',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }

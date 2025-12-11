@@ -268,13 +268,11 @@ const PRODUCT_FRAGMENT = `#graphql
         height
       }
     }
-    metafields(identifiers: [
-      {namespace: "custom", key: "size_dimensions"}
-      {namespace: "custom", key: "size_chart"}
-      {namespace: "custom", key: "sizeChart"}
-    ]) {
-      namespace
-      key
+    sizeDimensions: metafield(namespace: "custom", key: "size_dimensions") {
+      value
+      type
+    }
+    sizeChart: metafield(namespace: "custom", key: "size_chart") {
       value
       type
       reference {

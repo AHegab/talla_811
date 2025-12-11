@@ -243,10 +243,12 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
     }
 
     // Extract size dimensions for smart recommendations
+    console.log('🔍 All metafields:', nodes);
     const sizeDimensionsMetafield = nodes.find((m: any) => {
       if (!m) return false;
       const key = (m.key || '').toString().toLowerCase();
       const ns = (m.namespace || '').toString().toLowerCase();
+      console.log('Checking metafield:', { namespace: ns, key, value: m.value });
       return (
         key === 'size_dimensions' ||
         key === 'sizedimensions' ||
@@ -254,15 +256,23 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
         (ns === 'custom' && key === 'size_dimensions')
       );
     });
+
+    console.log('📐 Size dimensions metafield found:', sizeDimensionsMetafield);
+
     if (sizeDimensionsMetafield?.value) {
       try {
+        console.log('📝 Raw metafield value:', sizeDimensionsMetafield.value);
         const parsed = JSON.parse(sizeDimensionsMetafield.value);
+        console.log('✅ Parsed size dimensions:', parsed);
         if (parsed && typeof parsed === 'object') {
           pdpProduct.sizeDimensions = parsed;
         }
       } catch (parseError) {
-        console.warn('Failed to parse size dimensions metafield:', parseError);
+        console.error('❌ Failed to parse size dimensions metafield:', parseError);
+        console.log('Raw value that failed:', sizeDimensionsMetafield.value);
       }
+    } else {
+      console.warn('⚠️ No size_dimensions metafield found for this product');
     }
 
     if (process.env.NODE_ENV !== 'production') {

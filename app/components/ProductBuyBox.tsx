@@ -567,36 +567,6 @@ export function ProductBuyBox({
         </div>
       )}
 
-      {/* Prompt to get size recommendation */}
-      {!hasMeasurements &&
-        !recommendedSize &&
-        product.options &&
-        product.options.some((opt) => opt.name.toLowerCase() === 'size') && (
-          <div className="flex items-center justify-between gap-3 rounded-md bg-gray-50 border border-gray-200 py-2 px-3">
-            <div className="flex items-center gap-3">
-              <svg
-                className="h-4 w-4 text-gray-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="text-xs text-gray-700">
-                Not sure about your size?
-              </span>
-            </div>
-            <SizeRecommendationPrompt
-              onComplete={() => setHasMeasurements(true)}
-            />
-          </div>
-        )}
-
       {/* Option Selectors - Simple & Friendly */}
       <div className="space-y-4 pt-3">
         {product.options &&

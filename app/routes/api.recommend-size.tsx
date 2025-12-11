@@ -12,9 +12,12 @@ interface UserMeasurements {
 
 interface SizeDimensions {
   [size: string]: {
-    chest?: [number, number];
-    waist?: [number, number];
-    hips?: [number, number];
+    chest?: [number, number] | number;
+    waist?: [number, number] | number;
+    hips?: [number, number] | number;
+    length?: [number, number] | number;
+    arm?: [number, number] | number;
+    shoulder?: [number, number] | number;
   };
 }
 
@@ -105,14 +108,32 @@ function estimateBodyMeasurements(
 }
 
 /**
+ * Normalize size dimension to a range [min, max]
+ * Handles both single values and ranges
+ */
+function normalizeToRange(dimension: [number, number] | number | undefined): [number, number] | undefined {
+  if (!dimension) return undefined;
+
+  // If it's already a range, return it
+  if (Array.isArray(dimension)) {
+    return dimension as [number, number];
+  }
+
+  // If it's a single value, create a range around it (±2cm tolerance)
+  const value = dimension as number;
+  return [value - 2, value + 2];
+}
+
+/**
  * Calculate how well measurements fit within a size range
  * Returns a score from 0 (poor fit) to 1 (perfect fit)
  */
 function calculateFitScore(
   measurement: number,
-  range: [number, number] | undefined,
+  dimension: [number, number] | number | undefined,
   fitPreference: 'slim' | 'regular' | 'athletic' | 'relaxed'
 ): number {
+  const range = normalizeToRange(dimension);
   if (!range) return 0.5; // Neutral if range not specified
 
   const [min, max] = range;
@@ -164,20 +185,40 @@ function findBestSize(
 
   // Calculate fit score for each size
   for (const [size, dimensions] of Object.entries(sizeDimensions)) {
-    const chestScore = calculateFitScore(userMeasurements.chest, dimensions.chest, fitPreference);
-    const waistScore = calculateFitScore(userMeasurements.waist, dimensions.waist, fitPreference);
-    const hipsScore = calculateFitScore(userMeasurements.hips, dimensions.hips, fitPreference);
+    // Get scores for available measurements
+    const measurements: { [key: string]: number } = {};
+    let totalWeight = 0;
+    let weightedScore = 0;
 
-    // Weighted average - waist is most important, then chest, then hips
-    const weights = gender === 'male'
-      ? { chest: 0.4, waist: 0.4, hips: 0.2 }
-      : { chest: 0.35, waist: 0.35, hips: 0.3 };
+    // Chest measurement (primary)
+    if (dimensions.chest) {
+      const score = calculateFitScore(userMeasurements.chest, dimensions.chest, fitPreference);
+      const weight = 0.5; // Chest is most important for fit
+      measurements.chest = score;
+      weightedScore += score * weight;
+      totalWeight += weight;
+    }
 
-    const totalScore =
-      (chestScore * weights.chest) +
-      (waistScore * weights.waist) +
-      (hipsScore * weights.hips);
+    // Waist measurement
+    if (dimensions.waist) {
+      const score = calculateFitScore(userMeasurements.waist, dimensions.waist, fitPreference);
+      const weight = 0.3;
+      measurements.waist = score;
+      weightedScore += score * weight;
+      totalWeight += weight;
+    }
 
+    // Hips measurement
+    if (dimensions.hips) {
+      const score = calculateFitScore(userMeasurements.hips, dimensions.hips, fitPreference);
+      const weight = 0.2;
+      measurements.hips = score;
+      weightedScore += score * weight;
+      totalWeight += weight;
+    }
+
+    // Calculate final score (normalize by total weight)
+    const totalScore = totalWeight > 0 ? weightedScore / totalWeight : 0.5;
     scores[size] = totalScore;
 
     if (totalScore > bestScore) {
@@ -200,12 +241,16 @@ function findBestSize(
     reasoning = 'Best available option - check size chart carefully';
   }
 
-  // Add specific guidance
-  if (sizeDim.chest && userMeasurements.chest > sizeDim.chest[1]) {
+  // Add specific guidance based on available measurements
+  const chestRange = normalizeToRange(sizeDim.chest);
+  const waistRange = normalizeToRange(sizeDim.waist);
+  const hipsRange = normalizeToRange(sizeDim.hips);
+
+  if (chestRange && userMeasurements.chest > chestRange[1]) {
     reasoning += '. May be tight in chest.';
-  } else if (sizeDim.waist && userMeasurements.waist > sizeDim.waist[1]) {
+  } else if (waistRange && userMeasurements.waist > waistRange[1]) {
     reasoning += '. May be tight in waist.';
-  } else if (sizeDim.hips && userMeasurements.hips > sizeDim.hips[1]) {
+  } else if (hipsRange && userMeasurements.hips > hipsRange[1]) {
     reasoning += '. May be tight in hips.';
   }
 

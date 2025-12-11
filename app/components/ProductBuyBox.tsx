@@ -23,9 +23,12 @@ export interface PDPVariant {
 
 interface SizeDimensions {
   [size: string]: {
-    chest?: [number, number];
-    waist?: [number, number];
-    hips?: [number, number];
+    chest?: [number, number] | number;
+    waist?: [number, number] | number;
+    hips?: [number, number] | number;
+    length?: [number, number] | number;
+    arm?: [number, number] | number;
+    shoulder?: [number, number] | number;
   };
 }
 

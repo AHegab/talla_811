@@ -9,7 +9,6 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import SizeChart from './SizeChart';
-import { SizeRecommendation } from './SizeRecommendation';
 import { SizeRecommendationPrompt } from './SizeRecommendationPrompt';
 
 export interface PDPVariant {
@@ -714,18 +713,21 @@ export function ProductBuyBox({
                   );
                 })}
               </div>
+
+              {/* Size Recommendation - Show inline right under size buttons */}
+              {option.name.toLowerCase() === 'size' && sizeRecOpen && (
+                <div className="mt-4">
+                  <SizeRecommendationPrompt
+                    mode="inline"
+                    onRecommendation={handleSizeRecommendation}
+                    onComplete={() => setSizeRecOpen(false)}
+                    productSizeDimensions={product.sizeDimensions ?? undefined}
+                  />
+                </div>
+              )}
             </div>
           ))}
       </div>
-
-      {/* Size Recommendation (collapsible panel) */}
-      {sizeRecOpen && (
-        <SizeRecommendation
-          onRecommendation={handleSizeRecommendation}
-          onClose={() => setSizeRecOpen(false)}
-          sizeDimensions={product.sizeDimensions ?? undefined}
-        />
-      )}
 
       {/* Size Chart Modal / Viewer */}
       {sizeChartOpen && (

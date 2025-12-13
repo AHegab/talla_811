@@ -1,5 +1,9 @@
 import type { Route } from './+types/api.recommend-size';
 
+type WearingPreference = 'very_fitted' | 'fitted' | 'normal' | 'loose' | 'very_loose';
+type AbdomenShape = 'flat' | 'medium' | 'bulging';
+type HipShape = 'straight' | 'average' | 'wide';
+
 interface SizeDimensions {
   [size: string]: {
     chest?: number;  // Flat lay width in cm
@@ -13,81 +17,133 @@ interface SizeRecommendationResult {
   confidence: number;
   reasoning: string;
   measurements: {
-    estimatedChestWidth: number; // Half-chest measurement
+    estimatedChestWidth: number;
+    estimatedWaistWidth?: number;
+    estimatedHipWidth?: number;
+  };
+  alternativeSize?: string;
+  sizeComparison?: {
+    [size: string]: string;
   };
 }
 
+interface EstimatedBodyMeasurements {
+  chestWidth: number;
+  waistWidth: number;
+  hipWidth: number;
+  confidence: number;
+}
+
 /**
- * Estimate chest width (front measurement, not full circumference) from height and weight.
- * This matches the measurement style in the product image.
+ * Estimate body measurements (chest, waist, hips) from user inputs.
+ * These are FRONT measurements (half of circumference), matching flat lay product measurements.
  */
-function estimateChestWidth(
+function estimateBodyMeasurements(
   heightCm: number,
   weightKg: number,
   gender: 'male' | 'female',
-  bodyFit: 'slim' | 'regular' | 'athletic' | 'relaxed'
-): number {
+  age: number,
+  abdomenShape: AbdomenShape,
+  hipShape: HipShape
+): EstimatedBodyMeasurements {
   // Calculate BMI
   const heightM = heightCm / 100;
   const bmi = weightKg / (heightM * heightM);
 
-  // Base chest width estimation (front measurement only, half of circumference)
-  // This is empirically tuned based on real measurements
+  // 1. CHEST WIDTH (front measurement, half of circumference)
   let chestWidth: number;
 
   if (gender === 'male') {
-    // For males: base width from height, adjusted by BMI
-    chestWidth = heightCm * 0.26; // ~26% of height for average male
-
-    // BMI adjustment (baseline BMI 23 for males)
-    const bmiDelta = bmi - 23;
-    chestWidth += bmiDelta * 0.5; // Reduced from 0.8 for more conservative estimates
+    // Males: base width from height, adjusted by BMI
+    chestWidth = heightCm * 0.26; // ~26% of height
+    const bmiDelta = bmi - 23; // baseline BMI 23 for males
+    chestWidth += bmiDelta * 0.5;
   } else {
-    // For females: slightly different proportions
-    chestWidth = heightCm * 0.25; // ~25% of height for average female
-
-    // BMI adjustment (baseline BMI 22 for females)
-    const bmiDelta = bmi - 22;
-    chestWidth += bmiDelta * 0.4; // Reduced from 0.7 for more conservative estimates
+    // Females: slightly different proportions
+    chestWidth = heightCm * 0.25; // ~25% of height
+    const bmiDelta = bmi - 22; // baseline BMI 22 for females
+    chestWidth += bmiDelta * 0.4;
   }
 
-  // Adjust for body fit preference
-  const fitAdjustments = {
-    slim: -2,      // Slimmer build
-    regular: 0,    // Average
-    athletic: 1,   // More muscular chest
-    relaxed: 2,    // Fuller build
+  // Age adjustment (body composition changes with age)
+  if (age < 25) {
+    chestWidth -= 0.5; // Younger people tend to be slightly slimmer
+  } else if (age > 50) {
+    chestWidth += 1.0; // Older people tend to have broader torsos
+  }
+
+  // Clamp chest to reasonable range
+  chestWidth = Math.max(35, Math.min(60, chestWidth));
+
+  // 2. WAIST WIDTH
+  let waistWidth: number;
+  if (gender === 'male') {
+    waistWidth = chestWidth - 2; // Men typically have narrower waists
+  } else {
+    waistWidth = chestWidth - 4; // Women typically have more defined waists
+  }
+
+  // Adjust for abdomen shape
+  const abdomenAdjustments: Record<AbdomenShape, number> = {
+    flat: -2,
+    medium: 0,
+    bulging: 3,
   };
+  waistWidth += abdomenAdjustments[abdomenShape];
 
-  chestWidth += fitAdjustments[bodyFit];
+  // 3. HIP WIDTH
+  let hipWidth: number;
+  if (gender === 'male') {
+    hipWidth = waistWidth + 1; // Men have slightly wider hips than waist
+  } else {
+    hipWidth = waistWidth + 5; // Women typically have wider hips
+  }
 
-  // Clamp to reasonable range
-  return Math.max(35, Math.min(60, Math.round(chestWidth)));
+  // Adjust for hip shape
+  const hipAdjustments: Record<HipShape, number> = {
+    straight: -2,
+    average: 0,
+    wide: 3,
+  };
+  hipWidth += hipAdjustments[hipShape];
+
+  // Calculate confidence based on how standard the measurements are
+  let confidence = 0.8; // Base confidence
+
+  // Check for extreme BMI
+  if (bmi < 18.5 || bmi > 30) {
+    confidence -= 0.1;
+  }
+
+  // Check for extreme age
+  if (age < 18 || age > 70) {
+    confidence -= 0.05;
+  }
+
+  return {
+    chestWidth: Math.round(chestWidth),
+    waistWidth: Math.round(waistWidth),
+    hipWidth: Math.round(hipWidth),
+    confidence: Math.max(0.5, Math.min(1.0, confidence)),
+  };
 }
 
 /**
  * Detect if measurements are flat lay (width) or full circumference.
- * Flat lay: typically 30-75cm (regular to oversized garments)
- * Circumference: typically 80-140cm (body measurements)
  */
 function areFlayLayMeasurements(sizeDimensions: SizeDimensions): boolean {
   const chestValues = Object.values(sizeDimensions)
     .map(dims => dims.chest)
     .filter((chest): chest is number => chest !== undefined);
 
-  if (chestValues.length === 0) return true; // Assume flat lay by default
+  if (chestValues.length === 0) return true;
 
   const smallestSize = Math.min(...chestValues);
-
-  // Only treat as circumference if smallest size >= 80cm
-  // This allows for oversized flat lay garments (60-75cm)
-  // Only very clearly body circumference measurements (80cm+) get converted
   return smallestSize < 80;
 }
 
 /**
- * Detect if garment is oversized style based on measurements.
- * Oversized: smallest size >= 55cm flat lay (110cm+ circumference)
+ * Detect if garment is oversized style.
  */
 function isOversizedGarment(sizeDimensions: SizeDimensions): boolean {
   const chestValues = Object.values(sizeDimensions)
@@ -97,25 +153,42 @@ function isOversizedGarment(sizeDimensions: SizeDimensions): boolean {
   if (chestValues.length === 0) return false;
 
   const smallestSize = Math.min(...chestValues);
-  return smallestSize >= 55; // 55cm+ flat lay indicates oversized/streetwear style
+  return smallestSize >= 55;
 }
 
 /**
- * Find best size by comparing estimated body width to garment widths.
- * For stretchy garments, the garment should be 5-10cm smaller than body.
- * For oversized garments, the garment should be 8-15cm larger than body.
+ * Determine garment category from size dimensions.
+ */
+function detectGarmentCategory(sizeDimensions: SizeDimensions): 'tops' | 'bottoms' | 'dresses' | 'outerwear' {
+  // Simple heuristic - can be improved with actual product category
+  const firstSize = Object.values(sizeDimensions)[0];
+
+  if (!firstSize) return 'tops';
+
+  // If has length > 70cm, likely a dress or long garment
+  if (firstSize.length && firstSize.length > 70) {
+    return 'dresses';
+  }
+
+  // Default to tops
+  return 'tops';
+}
+
+/**
+ * Find best size based on body measurements and wearing preference.
  */
 function findBestSize(
-  estimatedChestWidth: number,
+  bodyMeasurements: EstimatedBodyMeasurements,
   sizeDimensions: SizeDimensions,
-  fitPreference: 'slim' | 'regular' | 'athletic' | 'relaxed'
-): { size: string; confidence: number; reasoning: string } {
+  wearingPreference: WearingPreference,
+  category: 'tops' | 'bottoms' | 'dresses' | 'outerwear' = 'tops'
+): { size: string; confidence: number; reasoning: string; alternativeSize?: string } {
 
-  // Detect measurement format and convert if needed
+  // Detect measurement format
   const isFlatLay = areFlayLayMeasurements(sizeDimensions);
-  console.log('📐 Measurement format detected:', isFlatLay ? 'Flat lay width' : 'Full circumference');
+  console.log('📐 Measurement format:', isFlatLay ? 'Flat lay width' : 'Full circumference');
 
-  // If measurements are circumference, convert to flat lay width
+  // Normalize to flat lay if needed
   const normalizedDimensions: SizeDimensions = {};
   for (const [size, dims] of Object.entries(sizeDimensions)) {
     normalizedDimensions[size] = {
@@ -128,51 +201,87 @@ function findBestSize(
   const isOversized = isOversizedGarment(normalizedDimensions);
   console.log('👕 Garment style:', isOversized ? 'Oversized/Streetwear' : 'Fitted/Stretch');
 
-  // Wearing ease: difference between garment and body
-  // For FITTED/STRETCH garments: garment smaller than body (negative ease)
-  // For OVERSIZED garments: garment larger than body (positive ease)
+  // Select primary body measurement based on category
+  let primaryBodyMeasurement: number;
+  if (category === 'tops' || category === 'outerwear') {
+    primaryBodyMeasurement = bodyMeasurements.chestWidth;
+  } else if (category === 'bottoms') {
+    primaryBodyMeasurement = Math.max(bodyMeasurements.waistWidth, bodyMeasurements.hipWidth);
+  } else if (category === 'dresses') {
+    primaryBodyMeasurement = Math.max(bodyMeasurements.chestWidth, bodyMeasurements.hipWidth);
+  } else {
+    primaryBodyMeasurement = bodyMeasurements.chestWidth;
+  }
+
+  // Calculate target garment width based on wearing preference
   let targetGarmentWidth: number;
 
   if (isOversized) {
-    // Oversized style - garment should be LARGER than body
-    const oversizedEase = {
-      slim: 8,      // Garment 8cm larger (minimal oversized look)
-      regular: 12,  // Garment 12cm larger (standard oversized)
-      athletic: 10, // Garment 10cm larger (fitted oversized)
-      relaxed: 15,  // Garment 15cm larger (very oversized/loose)
+    // Oversized garments - positive ease (garment larger than body)
+    const oversizedEase: Record<WearingPreference, number> = {
+      very_fitted: 8,   // Minimal oversized look
+      fitted: 10,       // Fitted oversized
+      normal: 12,       // Standard oversized
+      loose: 14,        // Loose oversized
+      very_loose: 16,   // Very oversized
     };
-    targetGarmentWidth = estimatedChestWidth + oversizedEase[fitPreference];
+    targetGarmentWidth = primaryBodyMeasurement + oversizedEase[wearingPreference];
   } else {
-    // Fitted/stretch style - garment should be SMALLER than body
-    const fittedEase = {
-      slim: 5,      // Garment 5cm smaller than body (tight fit)
-      regular: 8,   // Garment 8cm smaller than body (normal fit)
-      athletic: 7,  // Garment 7cm smaller (fitted but comfortable)
-      relaxed: 10,  // Garment 10cm smaller (loose fit with stretch)
-    };
-    targetGarmentWidth = estimatedChestWidth - fittedEase[fitPreference];
+    // Fitted garments - negative ease for tops (stretchy), less negative for bottoms
+    const fittedEase: Record<WearingPreference, number> =
+      category === 'bottoms'
+        ? {
+            very_fitted: 4,   // Very tight fit
+            fitted: 6,        // Snug fit
+            normal: 8,        // Normal fit
+            loose: 10,        // Relaxed fit
+            very_loose: 13,   // Very loose fit
+          }
+        : {
+            very_fitted: 6,   // Very tight fit
+            fitted: 8,        // Fitted
+            normal: 10,       // Normal fit
+            loose: 12,        // Loose fit
+            very_loose: 15,   // Very loose fit
+          };
+
+    targetGarmentWidth = primaryBodyMeasurement - fittedEase[wearingPreference];
   }
 
-  console.log('📏 Estimated body chest width:', estimatedChestWidth, 'cm');
+  // Add extra ease for outerwear (layering)
+  if (category === 'outerwear') {
+    targetGarmentWidth += 3;
+  }
+
+  console.log('📏 Body measurement:', primaryBodyMeasurement, 'cm');
   console.log('🎯 Target garment width:', targetGarmentWidth, 'cm');
 
   // Find closest size
   let bestSize = '';
   let smallestDiff = Infinity;
+  let secondBestSize = '';
+  let secondSmallestDiff = Infinity;
 
   for (const [size, dims] of Object.entries(normalizedDimensions)) {
     if (!dims.chest) continue;
 
     const diff = Math.abs(dims.chest - targetGarmentWidth);
-    console.log(`  ${size}: ${dims.chest}cm (${isFlatLay ? 'flat lay' : 'converted from circumference'}), diff: ${diff}cm`);
+    console.log(`  ${size}: ${dims.chest}cm, diff: ${diff}cm`);
 
     if (diff < smallestDiff) {
-      smallestDiff = diff;
+      // New best size found
+      secondBestSize = bestSize;
+      secondSmallestDiff = smallestDiff;
       bestSize = size;
+      smallestDiff = diff;
+    } else if (diff < secondSmallestDiff) {
+      // New second best
+      secondBestSize = size;
+      secondSmallestDiff = diff;
     }
   }
 
-  // If no size found, pick middle size
+  // Fallback
   if (!bestSize) {
     const sizes = Object.keys(normalizedDimensions);
     bestSize = sizes[Math.floor(sizes.length / 2)] || 'M';
@@ -181,14 +290,22 @@ function findBestSize(
   // Calculate confidence
   let confidence: number;
   if (smallestDiff <= 2) {
-    confidence = 0.95; // Excellent match
+    confidence = 0.95;
   } else if (smallestDiff <= 4) {
-    confidence = 0.80; // Good match
+    confidence = 0.80;
   } else if (smallestDiff <= 6) {
-    confidence = 0.65; // Acceptable match
+    confidence = 0.65;
   } else {
-    confidence = 0.50; // Poor match
+    confidence = 0.50;
   }
+
+  // Boost confidence for stretchy fabrics
+  if (!isOversized && smallestDiff <= 8) {
+    confidence += 0.05;
+  }
+
+  // Factor in body measurement confidence
+  confidence = confidence * bodyMeasurements.confidence;
 
   // Generate reasoning
   let reasoning: string;
@@ -202,7 +319,7 @@ function findBestSize(
     reasoning = 'Best available option - check size chart carefully';
   }
 
-  // Add specific guidance
+  // Add fit guidance
   const selectedSize = normalizedDimensions[bestSize];
   if (selectedSize?.chest && targetGarmentWidth > selectedSize.chest + 5) {
     reasoning += '. May be slightly tight.';
@@ -210,15 +327,29 @@ function findBestSize(
     reasoning += '. May be slightly loose.';
   }
 
-  // Add fit preference note
-  if (fitPreference !== 'regular') {
-    reasoning += ` (${fitPreference} fit)`;
+  // Add preference note
+  const prefLabels: Record<WearingPreference, string> = {
+    very_fitted: 'very fitted',
+    fitted: 'fitted',
+    normal: 'normal',
+    loose: 'loose',
+    very_loose: 'very loose',
+  };
+  if (wearingPreference !== 'normal') {
+    reasoning += ` (${prefLabels[wearingPreference]} fit)`;
+  }
+
+  // Determine alternative size
+  let alternativeSize: string | undefined;
+  if (secondBestSize && secondSmallestDiff <= smallestDiff + 1.5) {
+    alternativeSize = secondBestSize;
   }
 
   return {
     size: bestSize,
     confidence: Math.round(confidence * 100) / 100,
     reasoning,
+    alternativeSize,
   };
 }
 
@@ -228,7 +359,10 @@ export async function action({ request }: Route.ActionArgs) {
       height: number;
       weight: number;
       gender: 'male' | 'female';
-      bodyFit?: 'slim' | 'regular' | 'athletic' | 'relaxed';
+      age: number;
+      abdomenShape: AbdomenShape;
+      hipShape: HipShape;
+      wearingPreference: WearingPreference;
       sizeDimensions?: SizeDimensions;
     };
 
@@ -236,28 +370,54 @@ export async function action({ request }: Route.ActionArgs) {
       height,
       weight,
       gender,
-      bodyFit = 'regular',
+      age,
+      abdomenShape,
+      hipShape,
+      wearingPreference,
       sizeDimensions,
     } = body;
 
-    console.log('📥 Received request:', { height, weight, gender, bodyFit });
+    console.log('📥 Received request:', {
+      height,
+      weight,
+      gender,
+      age,
+      abdomenShape,
+      hipShape,
+      wearingPreference
+    });
 
     // Validate inputs
-    if (!height || !weight || !gender) {
+    if (!height || !weight || !gender || !age || !abdomenShape || !hipShape || !wearingPreference) {
       return Response.json(
-        { error: 'Missing required fields: height, weight, gender' },
+        { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Estimate body chest width (front measurement)
-    const estimatedChestWidth = estimateChestWidth(height, weight, gender, bodyFit);
+    // Estimate body measurements
+    const bodyMeasurements = estimateBodyMeasurements(
+      height,
+      weight,
+      gender,
+      age,
+      abdomenShape,
+      hipShape
+    );
+
+    console.log('📊 Estimated body measurements:', bodyMeasurements);
 
     // If product has size dimensions, use smart matching
     if (sizeDimensions && Object.keys(sizeDimensions).length > 0) {
       console.log('🎯 Using smart matching with product dimensions');
 
-      const result = findBestSize(estimatedChestWidth, sizeDimensions, bodyFit);
+      const category = detectGarmentCategory(sizeDimensions);
+      const result = findBestSize(
+        bodyMeasurements,
+        sizeDimensions,
+        wearingPreference,
+        category
+      );
 
       console.log('✅ Recommendation:', result);
 
@@ -266,16 +426,21 @@ export async function action({ request }: Route.ActionArgs) {
         confidence: result.confidence,
         reasoning: result.reasoning,
         measurements: {
-          estimatedChestWidth,
+          estimatedChestWidth: bodyMeasurements.chestWidth,
+          estimatedWaistWidth: bodyMeasurements.waistWidth,
+          estimatedHipWidth: bodyMeasurements.hipWidth,
         },
+        alternativeSize: result.alternativeSize,
       } as SizeRecommendationResult);
     }
 
-    // Fallback generic recommendation
+    // Fallback generic recommendation based on chest width
     let size = 'M';
-    if (estimatedChestWidth < 42) size = 'S';
-    else if (estimatedChestWidth < 47) size = 'M';
-    else if (estimatedChestWidth < 52) size = 'L';
+    const chestWidth = bodyMeasurements.chestWidth;
+
+    if (chestWidth < 42) size = 'S';
+    else if (chestWidth < 47) size = 'M';
+    else if (chestWidth < 52) size = 'L';
     else size = 'XL';
 
     return Response.json({
@@ -283,7 +448,9 @@ export async function action({ request }: Route.ActionArgs) {
       confidence: 0.6,
       reasoning: 'Generic recommendation - product size data not available',
       measurements: {
-        estimatedChestWidth,
+        estimatedChestWidth: bodyMeasurements.chestWidth,
+        estimatedWaistWidth: bodyMeasurements.waistWidth,
+        estimatedHipWidth: bodyMeasurements.hipWidth,
       },
     } as SizeRecommendationResult);
 

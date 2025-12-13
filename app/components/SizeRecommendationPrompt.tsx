@@ -1,341 +1,332 @@
-import {useState, type FormEvent} from 'react';
+import { useState, type FormEvent } from 'react';
 
-interface UserMeasurements {
+type WearingPreference = 'very_fitted' | 'fitted' | 'normal' | 'loose' | 'very_loose';
+type AbdomenShape = 'flat' | 'medium' | 'bulging';
+type HipShape = 'straight' | 'average' | 'wide';
+
+interface UserMeasurementInput {
   height: number;
   weight: number;
   unit: 'metric';
-  bodyFit: 'slim' | 'regular' | 'athletic' | 'relaxed';
   gender: 'male' | 'female';
+  age: number;
+  abdomenShape: AbdomenShape;
+  hipShape: HipShape;
+  wearingPreference: WearingPreference;
   chest?: number;
   waist?: number;
   hips?: number;
 }
 
-const bodyFitDescriptions = {
-  male: {
-    slim: {
-      title: 'Slim Fit',
-      description: 'Close to body, tailored silhouette',
-      svg: (
-        <svg viewBox="0 0 80 120" className="h-full w-full">
-          <ellipse cx="40" cy="20" rx="12" ry="14" fill="#E0E0E0" />
-          <rect x="30" y="34" width="20" height="35" rx="3" fill="#BDBDBD" />
-          <rect x="28" y="69" width="10" height="35" rx="2" fill="#9E9E9E" />
-          <rect x="42" y="69" width="10" height="35" rx="2" fill="#9E9E9E" />
-          <line
-            x1="22"
-            y1="40"
-            x2="15"
-            y2="60"
-            stroke="#9E9E9E"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <line
-            x1="58"
-            y1="40"
-            x2="65"
-            y2="60"
-            stroke="#9E9E9E"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-    regular: {
-      title: 'Regular Fit',
-      description: 'Comfortable, classic fit with room to move',
-      svg: (
-        <svg viewBox="0 0 80 120" className="h-full w-full">
-          <ellipse cx="40" cy="20" rx="13" ry="15" fill="#E0E0E0" />
-          <rect x="27" y="34" width="26" height="38" rx="4" fill="#BDBDBD" />
-          <rect x="26" y="72" width="12" height="36" rx="2" fill="#9E9E9E" />
-          <rect x="42" y="72" width="12" height="36" rx="2" fill="#9E9E9E" />
-          <line
-            x1="20"
-            y1="42"
-            x2="12"
-            y2="65"
-            stroke="#9E9E9E"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-          <line
-            x1="60"
-            y1="42"
-            x2="68"
-            y2="65"
-            stroke="#9E9E9E"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-    athletic: {
-      title: 'Athletic Fit',
-      description: 'Broader shoulders, tapered waist',
-      svg: (
-        <svg viewBox="0 0 80 120" className="h-full w-full">
-          <ellipse cx="40" cy="20" rx="13" ry="15" fill="#E0E0E0" />
-          <path
-            d="M 25 34 L 22 50 L 25 72 L 55 72 L 58 50 L 55 34 Z"
-            fill="#BDBDBD"
-          />
-          <rect x="27" y="72" width="11" height="36" rx="2" fill="#9E9E9E" />
-          <rect x="42" y="72" width="11" height="36" rx="2" fill="#9E9E9E" />
-          <line
-            x1="18"
-            y1="40"
-            x2="10"
-            y2="62"
-            stroke="#9E9E9E"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-          <line
-            x1="62"
-            y1="40"
-            x2="70"
-            y2="62"
-            stroke="#9E9E9E"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-    relaxed: {
-      title: 'Relaxed Fit',
-      description: 'Loose, comfortable with extra room',
-      svg: (
-        <svg viewBox="0 0 80 120" className="h-full w-full">
-          <ellipse cx="40" cy="20" rx="14" ry="16" fill="#E0E0E0" />
-          <rect x="24" y="34" width="32" height="40" rx="5" fill="#BDBDBD" />
-          <rect x="24" y="74" width="14" height="36" rx="3" fill="#9E9E9E" />
-          <rect x="42" y="74" width="14" height="36" rx="3" fill="#9E9E9E" />
-          <line
-            x1="18"
-            y1="44"
-            x2="10"
-            y2="68"
-            stroke="#9E9E9E"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-          <line
-            x1="62"
-            y1="44"
-            x2="70"
-            y2="68"
-            stroke="#9E9E9E"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-  },
-  female: {
-    slim: {
-      title: 'Slim Fit',
-      description: 'Close to body, figure-hugging silhouette',
-      svg: (
-        <svg viewBox="0 0 80 120" className="h-full w-full">
-          <ellipse cx="40" cy="20" rx="11" ry="13" fill="#E0E0E0" />
-          <path
-            d="M 32 34 L 28 50 L 30 68 L 50 68 L 52 50 L 48 34 Z"
-            fill="#BDBDBD"
-          />
-          <path
-            d="M 30 68 L 32 85 L 28 104 L 38 104 L 38 68 Z"
-            fill="#9E9E9E"
-          />
-          <path
-            d="M 50 68 L 48 85 L 52 104 L 42 104 L 42 68 Z"
-            fill="#9E9E9E"
-          />
-          <line
-            x1="24"
-            y1="38"
-            x2="16"
-            y2="58"
-            stroke="#9E9E9E"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <line
-            x1="56"
-            y1="38"
-            x2="64"
-            y2="58"
-            stroke="#9E9E9E"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-    regular: {
-      title: 'Regular Fit',
-      description: 'Comfortable, flattering everyday fit',
-      svg: (
-        <svg viewBox="0 0 80 120" className="h-full w-full">
-          <ellipse cx="40" cy="20" rx="12" ry="14" fill="#E0E0E0" />
-          <path
-            d="M 30 34 L 26 52 L 28 70 L 52 70 L 54 52 L 50 34 Z"
-            fill="#BDBDBD"
-          />
-          <path
-            d="M 28 70 L 30 88 L 26 106 L 37 106 L 37 70 Z"
-            fill="#9E9E9E"
-          />
-          <path
-            d="M 52 70 L 50 88 L 54 106 L 43 106 L 43 70 Z"
-            fill="#9E9E9E"
-          />
-          <line
-            x1="22"
-            y1="40"
-            x2="14"
-            y2="62"
-            stroke="#9E9E9E"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-          <line
-            x1="58"
-            y1="40"
-            x2="66"
-            y2="62"
-            stroke="#9E9E9E"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-    athletic: {
-      title: 'Athletic Fit',
-      description: 'Defined shoulders, tailored through body',
-      svg: (
-        <svg viewBox="0 0 80 120" className="h-full w-full">
-          <ellipse cx="40" cy="20" rx="12" ry="14" fill="#E0E0E0" />
-          <path
-            d="M 28 34 L 24 50 L 26 70 L 54 70 L 56 50 L 52 34 Z"
-            fill="#BDBDBD"
-          />
-          <path
-            d="M 26 70 L 28 86 L 25 105 L 36 105 L 36 70 Z"
-            fill="#9E9E9E"
-          />
-          <path
-            d="M 54 70 L 52 86 L 55 105 L 44 105 L 44 70 Z"
-            fill="#9E9E9E"
-          />
-          <line
-            x1="20"
-            y1="38"
-            x2="12"
-            y2="60"
-            stroke="#9E9E9E"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-          <line
-            x1="60"
-            y1="38"
-            x2="68"
-            y2="60"
-            stroke="#9E9E9E"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-    relaxed: {
-      title: 'Relaxed Fit',
-      description: 'Loose, comfortable with extra room',
-      svg: (
-        <svg viewBox="0 0 80 120" className="h-full w-full">
-          <ellipse cx="40" cy="20" rx="13" ry="15" fill="#E0E0E0" />
-          <rect x="26" y="34" width="28" height="38" rx="4" fill="#BDBDBD" />
-          <path
-            d="M 26 72 L 28 90 L 24 108 L 36 108 L 36 72 Z"
-            fill="#9E9E9E"
-          />
-          <path
-            d="M 54 72 L 52 90 L 56 108 L 44 108 L 44 72 Z"
-            fill="#9E9E9E"
-          />
-          <line
-            x1="20"
-            y1="42"
-            x2="12"
-            y2="66"
-            stroke="#9E9E9E"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-          <line
-            x1="60"
-            y1="42"
-            x2="68"
-            y2="66"
-            stroke="#9E9E9E"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-  },
-};
+interface SizeRecommendation {
+  size: string;
+  confidence: number;
+  reasoning: string;
+  measurements: {
+    estimatedChestWidth: number;
+    estimatedWaistWidth?: number;
+    estimatedHipWidth?: number;
+  };
+  alternativeSize?: string;
+  sizeComparison?: {
+    [size: string]: string;
+  };
+}
 
 interface SizeRecommendationPromptProps {
   onComplete?: () => void;
+  mode?: 'modal' | 'inline';
+  onRecommendation?: (size: string) => void;
+  productSizeDimensions?: any;
 }
+
+// Abdomen shape descriptions with SVG illustrations
+const abdomenShapeDescriptions = {
+  flat: {
+    title: 'Flat',
+    description: 'Toned, minimal waist definition',
+    svg: (
+      <svg viewBox="0 0 100 140" className="h-full w-full">
+        <defs>
+          <linearGradient id="skinTone1" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#E8D4C0" />
+            <stop offset="100%" stopColor="#D4B5A0" />
+          </linearGradient>
+        </defs>
+        {/* Head */}
+        <ellipse cx="50" cy="25" rx="15" ry="18" fill="url(#skinTone1)" />
+        {/* Torso - straight, minimal waist */}
+        <path
+          d="M 35 43 L 33 75 L 35 105 L 65 105 L 67 75 L 65 43 Z"
+          fill="url(#skinTone1)"
+        />
+        {/* Arms */}
+        <rect x="20" y="50" width="8" height="40" rx="4" fill="url(#skinTone1)" />
+        <rect x="72" y="50" width="8" height="40" rx="4" fill="url(#skinTone1)" />
+      </svg>
+    ),
+  },
+  medium: {
+    title: 'Medium',
+    description: 'Average shape, natural waist',
+    svg: (
+      <svg viewBox="0 0 100 140" className="h-full w-full">
+        <defs>
+          <linearGradient id="skinTone2" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#E8D4C0" />
+            <stop offset="100%" stopColor="#D4B5A0" />
+          </linearGradient>
+        </defs>
+        {/* Head */}
+        <ellipse cx="50" cy="25" rx="15" ry="18" fill="url(#skinTone2)" />
+        {/* Torso - slight curve */}
+        <path
+          d="M 35 43 L 31 70 L 33 105 L 67 105 L 69 70 L 65 43 Z"
+          fill="url(#skinTone2)"
+        />
+        {/* Arms */}
+        <rect x="20" y="50" width="8" height="40" rx="4" fill="url(#skinTone2)" />
+        <rect x="72" y="50" width="8" height="40" rx="4" fill="url(#skinTone2)" />
+      </svg>
+    ),
+  },
+  bulging: {
+    title: 'Bulging',
+    description: 'Fuller midsection, rounder waist',
+    svg: (
+      <svg viewBox="0 0 100 140" className="h-full w-full">
+        <defs>
+          <linearGradient id="skinTone3" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#E8D4C0" />
+            <stop offset="100%" stopColor="#D4B5A0" />
+          </linearGradient>
+        </defs>
+        {/* Head */}
+        <ellipse cx="50" cy="25" rx="15" ry="18" fill="url(#skinTone3)" />
+        {/* Torso - pronounced curve */}
+        <path
+          d="M 35 43 L 28 70 L 30 105 L 70 105 L 72 70 L 65 43 Z"
+          fill="url(#skinTone3)"
+        />
+        {/* Arms */}
+        <rect x="18" y="50" width="8" height="40" rx="4" fill="url(#skinTone3)" />
+        <rect x="74" y="50" width="8" height="40" rx="4" fill="url(#skinTone3)" />
+      </svg>
+    ),
+  },
+};
+
+// Hip shape descriptions with SVG illustrations
+const hipShapeDescriptions = {
+  straight: {
+    title: 'Straight',
+    description: 'Narrow hips, athletic build',
+    svg: (
+      <svg viewBox="0 0 100 160" className="h-full w-full">
+        <defs>
+          <linearGradient id="skinTone4" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#E8D4C0" />
+            <stop offset="100%" stopColor="#D4B5A0" />
+          </linearGradient>
+        </defs>
+        {/* Head */}
+        <ellipse cx="50" cy="20" rx="14" ry="16" fill="url(#skinTone4)" />
+        {/* Body - straight hips */}
+        <rect x="38" y="36" width="24" height="50" rx="3" fill="url(#skinTone4)" />
+        {/* Legs */}
+        <rect x="40" y="86" width="9" height="50" rx="3" fill="url(#skinTone4)" />
+        <rect x="51" y="86" width="9" height="50" rx="3" fill="url(#skinTone4)" />
+      </svg>
+    ),
+  },
+  average: {
+    title: 'Average',
+    description: 'Balanced proportions',
+    svg: (
+      <svg viewBox="0 0 100 160" className="h-full w-full">
+        <defs>
+          <linearGradient id="skinTone5" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#E8D4C0" />
+            <stop offset="100%" stopColor="#D4B5A0" />
+          </linearGradient>
+        </defs>
+        {/* Head */}
+        <ellipse cx="50" cy="20" rx="14" ry="16" fill="url(#skinTone5)" />
+        {/* Body - average hips */}
+        <path
+          d="M 40 36 L 38 60 L 36 86 L 45 86 L 45 36 Z"
+          fill="url(#skinTone5)"
+        />
+        <path
+          d="M 60 36 L 62 60 L 64 86 L 55 86 L 55 36 Z"
+          fill="url(#skinTone5)"
+        />
+        {/* Legs */}
+        <rect x="38" y="86" width="10" height="50" rx="3" fill="url(#skinTone5)" />
+        <rect x="52" y="86" width="10" height="50" rx="3" fill="url(#skinTone5)" />
+      </svg>
+    ),
+  },
+  wide: {
+    title: 'Wide',
+    description: 'Wider hips, curvy figure',
+    svg: (
+      <svg viewBox="0 0 100 160" className="h-full w-full">
+        <defs>
+          <linearGradient id="skinTone6" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#E8D4C0" />
+            <stop offset="100%" stopColor="#D4B5A0" />
+          </linearGradient>
+        </defs>
+        {/* Head */}
+        <ellipse cx="50" cy="20" rx="14" ry="16" fill="url(#skinTone6)" />
+        {/* Body - wide hips */}
+        <path
+          d="M 42 36 L 38 55 L 32 86 L 44 86 L 44 36 Z"
+          fill="url(#skinTone6)"
+        />
+        <path
+          d="M 58 36 L 62 55 L 68 86 L 56 86 L 56 36 Z"
+          fill="url(#skinTone6)"
+        />
+        {/* Legs */}
+        <rect x="36" y="86" width="11" height="50" rx="3" fill="url(#skinTone6)" />
+        <rect x="53" y="86" width="11" height="50" rx="3" fill="url(#skinTone6)" />
+      </svg>
+    ),
+  },
+};
+
+// Wearing preference descriptions
+const wearingPreferenceDescriptions = {
+  very_fitted: {
+    title: 'Very Fitted',
+    description: 'Very close to body, minimal ease',
+  },
+  fitted: {
+    title: 'Fitted',
+    description: 'Close to body, tailored silhouette',
+  },
+  normal: {
+    title: 'Normal',
+    description: 'Comfortable, classic fit with room to move',
+  },
+  loose: {
+    title: 'Loose',
+    description: 'Relaxed, comfortable with extra room',
+  },
+  very_loose: {
+    title: 'Very Loose',
+    description: 'Very relaxed, oversized look',
+  },
+};
 
 export function SizeRecommendationPrompt({
   onComplete,
+  mode = 'modal',
+  onRecommendation,
+  productSizeDimensions,
 }: SizeRecommendationPromptProps) {
-  const [showForm, setShowForm] = useState(false);
-  const [measurements, setMeasurements] = useState<UserMeasurements>({
+  const [showForm, setShowForm] = useState(mode === 'inline'); // Auto-open in inline mode
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<SizeRecommendation | null>(null);
+
+  // Debug: Log result changes
+  console.log('🔍 Current result state:', result);
+
+  const [measurements, setMeasurements] = useState<UserMeasurementInput>({
     height: 0,
     weight: 0,
     unit: 'metric',
-    bodyFit: 'regular',
     gender: 'male',
+    age: 25,
+    abdomenShape: 'medium',
+    hipShape: 'average',
+    wearingPreference: 'normal',
     chest: undefined,
     waist: undefined,
     hips: undefined,
   });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
-    if (measurements.height > 0 && measurements.weight > 0) {
+    try {
+      // Validate required fields
+      if (!measurements.height || !measurements.weight || !measurements.age) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Save to localStorage
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(
           'talla_user_measurements',
-          JSON.stringify(measurements),
+          JSON.stringify(measurements)
         );
       }
-      setShowForm(false);
-      onComplete?.();
-      if (typeof window !== 'undefined') {
-        window.location.reload();
+
+      const requestData = {
+        ...measurements,
+        sizeDimensions: productSizeDimensions,
+      };
+      console.log('📤 Sending recommendation request:', requestData);
+
+      // Call API
+      const response = await fetch('/api/recommend-size', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get size recommendation');
       }
+
+      const data: SizeRecommendation = await response.json();
+      console.log('✅ Size recommendation received:', data);
+      setResult(data);
+
+      // Don't call onRecommendation here - wait for user to click "Select Size" button
+      // This prevents the panel from closing before showing results
+    } catch (err) {
+      console.error('❌ Size recommendation error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleClose = () => {
+    setShowForm(false);
+    setResult(null);
+    setError(null);
+    onComplete?.();
+  };
+
+  const handleRetry = () => {
+    setResult(null);
+    setError(null);
+  };
+
+  const handleSelectSize = () => {
+    if (result && onRecommendation) {
+      onRecommendation(result.size);
+    }
+    handleClose();
+  };
+
+  // Trigger button (for inline mode)
   if (!showForm) {
+    console.log('👉 Showing trigger button (showForm is false)');
     return (
       <button
         onClick={() => setShowForm(true)}
-        className="inline-flex items-center gap-2 text-sm text-blue-600 underline underline-offset-2 hover:text-blue-700"
+        className="inline-flex items-center gap-2 text-sm text-indigo-600 underline underline-offset-2 hover:text-indigo-700 transition-colors"
       >
         <svg
           className="h-4 w-4"
@@ -355,53 +346,202 @@ export function SizeRecommendationPrompt({
     );
   }
 
-  const currentBodyFits =
-    bodyFitDescriptions[measurements.gender as 'male' | 'female'];
+  console.log('📋 Rendering form, mode:', mode, 'result:', result ? 'HAS RESULT' : 'NO RESULT');
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm">
-      <div className="relative my-8 w-full max-w-2xl rounded-lg bg-white shadow-xl">
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-lg border-b border-gray-200 bg-white px-6 py-4">
-          <div>
-            <h3 className="text-2xl font-semibold text-gray-900">
-              Get Your Perfect Size
-            </h3>
-            <p className="mt-1 text-sm text-gray-600">
-              {measurements.gender === 'male' ? "Men's" : "Women's"} size
-              recommendations
-            </p>
-          </div>
+  // Modal/Inline wrapper
+  const containerClass =
+    mode === 'modal'
+      ? 'fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm'
+      : 'relative w-full my-6';
+
+  const cardClass =
+    mode === 'modal'
+      ? 'relative my-8 w-full max-w-3xl rounded-2xl !bg-white shadow-2xl'
+      : 'w-full rounded-xl !bg-white border-2 border-gray-200 shadow-lg';
+
+  // Result display
+  if (result) {
+    console.log('✨ Rendering result display for size:', result.size);
+    return (
+      <div className={containerClass}>
+        <div className={cardClass}>
+          {/* Close button */}
           <button
-            onClick={() => setShowForm(false)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            onClick={handleClose}
+            className={`absolute top-4 right-4 z-10 flex items-center justify-center rounded-full text-white transition-all ${
+              mode === 'modal'
+                ? 'h-12 w-12 !bg-gray-900 hover:!bg-indigo-600 transform hover:scale-110 active:scale-95 shadow-lg'
+                : 'h-8 w-8 !bg-gray-600 hover:!bg-gray-800'
+            }`}
             aria-label="Close"
           >
             <svg
-              className="h-6 w-6"
+              className={mode === 'modal' ? 'h-6 w-6' : 'h-4 w-4'}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              strokeWidth={3}
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
           </button>
+
+          {/* Result Content */}
+          <div className="p-8 space-y-8" style={{ backgroundColor: '#FFFFFF' }}>
+            {/* Hero Section */}
+            <div className="relative rounded-2xl p-12 text-center overflow-hidden" style={{ background: 'linear-gradient(to bottom right, #10b981, #059669)' }}>
+              {/* Decorative circles */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12"></div>
+
+              <div className="relative z-10">
+                <h3 className="text-white text-lg font-semibold mb-2 uppercase tracking-wider">
+                  Your Perfect Size
+                </h3>
+                <div className="text-white text-8xl font-bold mb-4">
+                  {result.size}
+                </div>
+                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-5 py-2 text-white">
+                  <svg
+                    className="h-5 w-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="text-sm font-semibold">
+                    {Math.round(result.confidence * 100)}% Confidence
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Reasoning */}
+            <div className="text-center">
+              <p className="text-gray-700 text-lg">{result.reasoning}</p>
+            </div>
+
+            {/* Measurements Display */}
+            <div className="rounded-xl p-6" style={{ background: 'linear-gradient(to bottom right, #eef2ff, #e0e7ff)' }}>
+              <h4 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#312e81' }}>
+                Estimated Measurements
+              </h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+                  <div className="text-2xl font-bold" style={{ color: '#4f46e5' }}>
+                    {result.measurements.estimatedChestWidth}
+                  </div>
+                  <div className="text-xs mt-1" style={{ color: '#4b5563' }}>Chest Width (cm)</div>
+                </div>
+                {result.measurements.estimatedWaistWidth && (
+                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+                    <div className="text-2xl font-bold" style={{ color: '#4f46e5' }}>
+                      {result.measurements.estimatedWaistWidth}
+                    </div>
+                    <div className="text-xs mt-1" style={{ color: '#4b5563' }}>Waist Width (cm)</div>
+                  </div>
+                )}
+                {result.measurements.estimatedHipWidth && (
+                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+                    <div className="text-2xl font-bold" style={{ color: '#4f46e5' }}>
+                      {result.measurements.estimatedHipWidth}
+                    </div>
+                    <div className="text-xs mt-1" style={{ color: '#4b5563' }}>Hip Width (cm)</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Alternative Size */}
+            {result.alternativeSize && (
+              <div className="border-2 rounded-lg p-4" style={{ backgroundColor: '#fffbeb', borderColor: '#fcd34d' }}>
+                <p className="text-sm" style={{ color: '#78350f' }}>
+                  <span className="font-semibold">Alternative: </span>
+                  Size {result.alternativeSize} might also work depending on your preference
+                </p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={handleSelectSize}
+                className="flex-1 font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg"
+                style={{ backgroundColor: '#1f2937', color: '#ffffff' }}
+              >
+                Select Size {result.size}
+              </button>
+              <button
+                onClick={handleRetry}
+                className="border-2 font-semibold py-4 px-6 rounded-xl transition-all"
+                style={{ backgroundColor: '#ffffff', borderColor: '#d1d5db', color: '#374151' }}
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Form display
+  return (
+    <div className={containerClass}>
+      <div className={cardClass}>
+        {/* Close button */}
+        <button
+          onClick={handleClose}
+          className={`absolute top-4 right-4 z-10 flex items-center justify-center rounded-full text-white transition-all ${
+            mode === 'modal'
+              ? 'h-12 w-12 !bg-gray-900 hover:!bg-indigo-600 transform hover:scale-110 active:scale-95 shadow-lg'
+              : 'h-8 w-8 !bg-gray-600 hover:!bg-gray-800'
+          }`}
+          aria-label="Close"
+        >
+          <svg
+            className={mode === 'modal' ? 'h-6 w-6' : 'h-4 w-4'}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={3}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        {/* Header */}
+        <div className="border-b border-gray-200 px-8 py-6">
+          <h3 className={mode === 'modal' ? 'text-3xl font-bold text-gray-900' : 'text-2xl font-bold text-gray-900'}>
+            Get Your Perfect Size
+          </h3>
+          <p className="mt-2 text-sm text-gray-600">
+            Answer a few questions for personalized size recommendations
+          </p>
         </div>
 
+        {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="max-h-[calc(90vh-120px)] space-y-6 overflow-y-auto p-6"
+          className={`space-y-8 p-8 ${mode === 'modal' ? 'max-h-[calc(90vh-120px)] overflow-y-auto' : ''}`}
         >
-          {/* Info message */}
-          <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4">
+          {/* Info Message */}
+          <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 p-5">
             <div className="flex items-start gap-3">
               <svg
-                className="mt-0.5 h-5 w-5 flex-shrink-0 text-cyan-600"
+                className="mt-0.5 h-6 w-6 flex-shrink-0 text-indigo-600"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -412,156 +552,301 @@ export function SizeRecommendationPrompt({
                 />
               </svg>
               <div className="flex-1">
-                <p className="text-sm font-medium text-cyan-900">
-                  Your measurements are saved locally
+                <p className="text-sm font-semibold text-indigo-900">
+                  Saved locally - Your privacy matters
                 </p>
-                <p className="mt-1 text-xs text-cyan-700">
-                  You&apos;ll see personalized size recommendations on all
-                  product pages.
+                <p className="mt-1 text-xs text-indigo-700">
+                  Your measurements stay on your device and are never shared
                 </p>
               </div>
             </div>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="rounded-xl bg-red-50 border-2 border-red-200 p-4">
+              <p className="text-sm font-semibold text-red-800">{error}</p>
+            </div>
+          )}
+
           {/* Gender Selection */}
           <div>
-            <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-gray-700">
-              Gender
+            <label className="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-900">
+              Gender *
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {(['male', 'female'] as const).map((gender) => (
                 <button
                   key={gender}
                   type="button"
-                  onClick={() =>
-                    setMeasurements({...measurements, gender})
-                  }
-                  className={`rounded px-6 py-3.5 text-sm font-semibold uppercase tracking-wider transition-colors ${
+                  onClick={() => setMeasurements({ ...measurements, gender })}
+                  className={`relative border-2 rounded-xl px-6 py-4 text-sm font-bold uppercase tracking-wider transition-all ${
                     measurements.gender === gender
-                      ? 'border-black bg-black text-white'
-                      : 'border-gray-300 bg-white text-black hover:bg-gray-50'
+                      ? 'bg-white border-indigo-600 ring-2 ring-indigo-600 ring-offset-2'
+                      : 'bg-white border-gray-300 hover:border-gray-400'
                   }`}
-                  style={{borderWidth: 1}}
+                  style={{ backgroundColor: '#FFFFFF' }}
                 >
-                  {gender === 'male' ? 'MALE' : 'FEMALE'}
+                  <span style={{ color: '#1F2937' }}>{gender === 'male' ? 'Male' : 'Female'}</span>
+                  {measurements.gender === gender && (
+                    <svg
+                      className="absolute top-3 right-3 h-5 w-5 text-indigo-600"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Height */}
-          <div>
-            <label
-              htmlFor="height"
-              className="mb-2 block text-sm font-semibold text-gray-900"
-            >
-              HEIGHT (CM)*
-            </label>
-            <input
-              type="number"
-              id="height"
-              value={measurements.height || ''}
-              onChange={(e) =>
-                setMeasurements({
-                  ...measurements,
-                  height: parseFloat(e.target.value) || 0,
-                })
-              }
-              placeholder="e.g., 175"
-              required
-              min={1}
-              step={0.1}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-black"
-            />
+          {/* Height, Weight, Age */}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label
+                htmlFor="height"
+                className="mb-2 block text-sm font-semibold text-gray-900"
+              >
+                Height (cm) *
+              </label>
+              <input
+                type="number"
+                id="height"
+                value={measurements.height || ''}
+                onChange={(e) =>
+                  setMeasurements({
+                    ...measurements,
+                    height: parseFloat(e.target.value) || 0,
+                  })
+                }
+                placeholder="175"
+                required
+                min={100}
+                max={250}
+                className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-sm focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="weight"
+                className="mb-2 block text-sm font-semibold text-gray-900"
+              >
+                Weight (kg) *
+              </label>
+              <input
+                type="number"
+                id="weight"
+                value={measurements.weight || ''}
+                onChange={(e) =>
+                  setMeasurements({
+                    ...measurements,
+                    weight: parseFloat(e.target.value) || 0,
+                  })
+                }
+                placeholder="70"
+                required
+                min={30}
+                max={200}
+                className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-sm focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="age"
+                className="mb-2 block text-sm font-semibold text-gray-900"
+              >
+                Age (years) *
+              </label>
+              <input
+                type="number"
+                id="age"
+                value={measurements.age || ''}
+                onChange={(e) =>
+                  setMeasurements({
+                    ...measurements,
+                    age: parseFloat(e.target.value) || 0,
+                  })
+                }
+                placeholder="25"
+                required
+                min={15}
+                max={80}
+                className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-sm focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+              />
+            </div>
           </div>
 
-          {/* Weight */}
+          {/* Abdomen Shape */}
           <div>
-            <label
-              htmlFor="weight"
-              className="mb-2 block text-sm font-semibold text-gray-900"
-            >
-              WEIGHT (KG)*
+            <label className="mb-4 block text-sm font-bold uppercase tracking-wider text-gray-900">
+              Abdomen Shape *
             </label>
-            <input
-              type="number"
-              id="weight"
-              value={measurements.weight || ''}
-              onChange={(e) =>
-                setMeasurements({
-                  ...measurements,
-                  weight: parseFloat(e.target.value) || 0,
-                })
-              }
-              placeholder="e.g., 70"
-              required
-              min={1}
-              step={0.1}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-black"
-            />
+            <div className="grid grid-cols-3 gap-4">
+              {(Object.keys(abdomenShapeDescriptions) as AbdomenShape[]).map(
+                (shape) => {
+                  const shapeInfo = abdomenShapeDescriptions[shape];
+                  const selected = measurements.abdomenShape === shape;
+
+                  return (
+                    <button
+                      key={shape}
+                      type="button"
+                      onClick={() =>
+                        setMeasurements({ ...measurements, abdomenShape: shape })
+                      }
+                      className={`relative flex flex-col items-center !bg-white border-2 rounded-xl p-5 transition-all ${
+                        selected
+                          ? 'border-indigo-600 ring-2 ring-indigo-600 ring-offset-2'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      {/* SVG Container */}
+                      <div className="h-32 w-24 mb-3 rounded-lg bg-gradient-to-br from-amber-100 to-orange-200 p-2 flex items-center justify-center">
+                        {shapeInfo.svg}
+                      </div>
+
+                      {/* Text */}
+                      <p className="text-sm font-bold text-gray-900 mb-1">
+                        {shapeInfo.title}
+                      </p>
+                      <p className="text-xs text-gray-600 text-center">
+                        {shapeInfo.description}
+                      </p>
+
+                      {/* Checkmark */}
+                      {selected && (
+                        <svg
+                          className="absolute top-3 right-3 h-5 w-5 text-indigo-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                }
+              )}
+            </div>
           </div>
 
-          {/* Body Fit Preference with Diagrams */}
+          {/* Hip Shape */}
           <div>
-            <label className="mb-3 block text-sm font-semibold text-gray-900">
-              BODY SHAPE*
+            <label className="mb-4 block text-sm font-bold uppercase tracking-wider text-gray-900">
+              Hip Shape *
             </label>
-            <div className="space-y-3">
-              {(
-                Object.keys(currentBodyFits) as Array<
-                  keyof typeof currentBodyFits
-                >
-              ).map((fit) => {
-                const fitInfo = currentBodyFits[fit];
-                const selected = measurements.bodyFit === fit;
+            <div className="grid grid-cols-3 gap-4">
+              {(Object.keys(hipShapeDescriptions) as HipShape[]).map((shape) => {
+                const shapeInfo = hipShapeDescriptions[shape];
+                const selected = measurements.hipShape === shape;
 
                 return (
                   <button
-                    key={fit}
+                    key={shape}
                     type="button"
                     onClick={() =>
-                      setMeasurements({...measurements, bodyFit: fit})
+                      setMeasurements({ ...measurements, hipShape: shape })
                     }
-                    className={`relative flex w-full items-center gap-4 rounded-xl border-2 p-5 transition-all ${
+                    className={`relative flex flex-col items-center !bg-white border-2 rounded-xl p-5 transition-all ${
                       selected
-                        ? 'border-black bg-gray-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                        ? 'border-indigo-600 ring-2 ring-indigo-600 ring-offset-2'
+                        : 'border-gray-300 hover:border-gray-400'
                     }`}
                   >
-                    {/* SVG */}
-                    <div className="flex h-24 w-16 flex-shrink-0 items-center justify-center">
-                      {fitInfo.svg}
+                    {/* SVG Container */}
+                    <div className="h-32 w-24 mb-3 rounded-lg bg-gradient-to-br from-amber-100 to-orange-200 p-2 flex items-center justify-center">
+                      {shapeInfo.svg}
                     </div>
 
                     {/* Text */}
-                    <div className="flex-1 text-left">
-                      <p
-                        className={`mb-1 text-sm font-bold ${
-                          selected ? 'text-black' : 'text-gray-700'
-                        }`}
+                    <p className="text-sm font-bold text-gray-900 mb-1">
+                      {shapeInfo.title}
+                    </p>
+                    <p className="text-xs text-gray-600 text-center">
+                      {shapeInfo.description}
+                    </p>
+
+                    {/* Checkmark */}
+                    {selected && (
+                      <svg
+                        className="absolute top-3 right-3 h-5 w-5 text-indigo-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
                       >
-                        {fitInfo.title}
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Wearing Preference */}
+          <div>
+            <label className="mb-4 block text-sm font-bold uppercase tracking-wider text-gray-900">
+              How do you prefer your clothes to fit? *
+            </label>
+            <div className="space-y-3">
+              {(
+                Object.keys(
+                  wearingPreferenceDescriptions
+                ) as WearingPreference[]
+              ).map((pref) => {
+                const prefInfo = wearingPreferenceDescriptions[pref];
+                const selected = measurements.wearingPreference === pref;
+
+                return (
+                  <button
+                    key={pref}
+                    type="button"
+                    onClick={() =>
+                      setMeasurements({ ...measurements, wearingPreference: pref })
+                    }
+                    className={`relative flex w-full items-center justify-between !bg-white border-2 rounded-xl px-6 py-4 transition-all ${
+                      selected
+                        ? 'border-indigo-600 ring-2 ring-indigo-600 ring-offset-2'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-gray-900">
+                        {prefInfo.title}
                       </p>
-                      <p className="text-xs text-gray-600">
-                        {fitInfo.description}
+                      <p className="text-xs text-gray-600 mt-1">
+                        {prefInfo.description}
                       </p>
                     </div>
 
                     {/* Checkmark */}
                     {selected && (
-                      <div className="flex-shrink-0">
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          className="text-black"
-                        >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </div>
+                      <svg
+                        className="h-6 w-6 flex-shrink-0 text-indigo-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
                     )}
                   </button>
                 );
@@ -570,24 +855,34 @@ export function SizeRecommendationPrompt({
           </div>
 
           {/* Optional Measurements */}
-          <div className="border-t border-gray-200 pt-6">
+          <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/50 to-indigo-100/50 p-6">
             <div className="mb-4 flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-900">
-                OPTIONAL (FOR BETTER ACCURACY)
+              <svg
+                className="h-5 w-5 text-indigo-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span className="text-sm font-bold uppercase tracking-wider text-indigo-900">
+                Optional (For Better Accuracy)
               </span>
-              <span className="text-xs text-gray-500">— Recommended</span>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              {/* Chest/Bust */}
+              {/* Chest */}
               <div>
                 <label
                   htmlFor="chest"
-                  className="mb-2 block text-xs font-medium text-gray-700"
+                  className="mb-2 block text-xs font-semibold text-gray-700"
                 >
-                  {measurements.gender === 'male'
-                    ? 'CHEST (CM)'
-                    : 'BUST (CM)'}
+                  Chest (cm)
                 </label>
                 <input
                   type="number"
@@ -596,14 +891,13 @@ export function SizeRecommendationPrompt({
                   onChange={(e) =>
                     setMeasurements({
                       ...measurements,
-                      chest:
-                        parseFloat(e.target.value) || undefined,
+                      chest: parseFloat(e.target.value) || undefined,
                     })
                   }
                   placeholder="90"
                   min={1}
                   step={0.1}
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full rounded-lg border-2 border-indigo-200 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
                 />
               </div>
 
@@ -611,9 +905,9 @@ export function SizeRecommendationPrompt({
               <div>
                 <label
                   htmlFor="waist"
-                  className="mb-2 block text-xs font-medium text-gray-700"
+                  className="mb-2 block text-xs font-semibold text-gray-700"
                 >
-                  WAIST (CM)
+                  Waist (cm)
                 </label>
                 <input
                   type="number"
@@ -622,14 +916,13 @@ export function SizeRecommendationPrompt({
                   onChange={(e) =>
                     setMeasurements({
                       ...measurements,
-                      waist:
-                        parseFloat(e.target.value) || undefined,
+                      waist: parseFloat(e.target.value) || undefined,
                     })
                   }
                   placeholder="75"
                   min={1}
                   step={0.1}
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full rounded-lg border-2 border-indigo-200 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
                 />
               </div>
 
@@ -637,9 +930,9 @@ export function SizeRecommendationPrompt({
               <div>
                 <label
                   htmlFor="hips"
-                  className="mb-2 block text-xs font-medium text-gray-700"
+                  className="mb-2 block text-xs font-semibold text-gray-700"
                 >
-                  HIPS (CM)
+                  Hips (cm)
                 </label>
                 <input
                   type="number"
@@ -648,29 +941,54 @@ export function SizeRecommendationPrompt({
                   onChange={(e) =>
                     setMeasurements({
                       ...measurements,
-                      hips:
-                        parseFloat(e.target.value) || undefined,
+                      hips: parseFloat(e.target.value) || undefined,
                     })
                   }
                   placeholder="95"
                   min={1}
                   step={0.1}
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full rounded-lg border-2 border-indigo-200 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
                 />
               </div>
             </div>
           </div>
 
-          {/* Footer / Submit */}
-          <div className="sticky -mx-6 -mb-6 bottom-0 rounded-b-lg border-t border-gray-200 bg-white px-6 pb-6 pt-4">
+          {/* Submit Button */}
+          <div>
             <button
               type="submit"
-              className="w-full rounded-lg bg-black px-6 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors hover:bg-gray-800"
+              disabled={isLoading}
+              className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-5 text-sm font-bold uppercase tracking-wider text-white transition-all hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              Save & Get Recommendations
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-3">
+                  <svg
+                    className="h-5 w-5 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Getting Recommendation...
+                </span>
+              ) : (
+                'Get My Perfect Size'
+              )}
             </button>
             <p className="mt-3 text-center text-xs text-gray-500">
-              Your measurements are saved locally and never shared
+              🔒 Your data is saved locally and never shared
             </p>
           </div>
         </form>

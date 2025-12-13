@@ -295,10 +295,6 @@ export function ProductGallery({
                   className="w-full h-full object-contain"
                   loading="eager"
                   sizes="(min-width: 1024px) 1200px, 100vw"
-                  loaderOptions={{
-                    scale: 2,
-                    crop: 'center',
-                  }}
                 />
               </div>
             </div>

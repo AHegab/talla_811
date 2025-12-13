@@ -6,7 +6,11 @@
       "Bash(npm run codegen:*)",
       "Bash(npm run dev:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(cd:*)",
+      "Bash(copy /Y approutesapi.recommend-size-clean.tsx approutesapi.recommend-size.tsx:*)",
+      "Bash(del approutesapi.recommend-size-clean.tsx)",
+      "Bash(copy:*)"
     ],
     "deny": [],
     "ask": []

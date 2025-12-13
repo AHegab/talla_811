@@ -268,6 +268,22 @@ const PRODUCT_FRAGMENT = `#graphql
         height
       }
     }
+    sizeDimensions: metafield(namespace: "custom", key: "size_dimensions") {
+      value
+      type
+    }
+    sizeChart: metafield(namespace: "custom", key: "size_chart") {
+      value
+      type
+      reference {
+        ... on MediaImage {
+          image {
+            url
+            altText
+          }
+        }
+      }
+    }
     encodedVariantExistence
     encodedVariantAvailability
     options {

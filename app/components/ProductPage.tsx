@@ -218,35 +218,47 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
   };
 
   try {
-    const nodes = (product as any)?.metafields?.nodes ?? [];
-    const keyNames = ['size_chart', 'size-chart', 'sizeChart', 'sizechart', 'size_chart_image', 'size-chart-image', 'sizechartimage', 'size_map', 'size-map'];
-    const found = nodes.find((m: any) => {
-      if (!m) return false;
-      const key = (m.key || '').toString().toLowerCase();
-      const ns = (m.namespace || '').toString().toLowerCase();
-      const val = (m.value || '').toString().toLowerCase();
-      const refAlt = (m.reference?.image?.altText || m.reference?.alt || '').toString().toLowerCase();
-      // check key/namespace or value or alt text contains 'size' or matches known keys
-      return (
-        keyNames.some((k) => key.includes(k)) ||
-        key.includes('size') ||
-        ns.includes('size') ||
-        val.includes('size') ||
-        refAlt.includes('size')
-      );
-    });
-    if (found) {
-      const extracted = extractMetafieldImage(found);
+    // Extract size chart from the sizeChart metafield
+    const sizeChartMetafield = (product as any)?.sizeChart;
+    if (sizeChartMetafield) {
+      const extracted = extractMetafieldImage(sizeChartMetafield);
       if (extracted?.url) {
-        pdpProduct.sizeChartImage = { url: extracted.url, alt: extracted.alt ?? found?.value ?? 'Size chart' } as any;
+        pdpProduct.sizeChartImage = { url: extracted.url, alt: extracted.alt ?? sizeChartMetafield?.value ?? 'Size chart' } as any;
       }
     }
+
+    // Extract size dimensions for smart recommendations
+    const sizeDimensionsMetafield = (product as any)?.sizeDimensions;
+
+    console.log('📐 Size dimensions metafield:', sizeDimensionsMetafield);
+
+    if (sizeDimensionsMetafield?.value) {
+      try {
+        console.log('📝 Raw metafield value:', sizeDimensionsMetafield.value);
+        const parsed = JSON.parse(sizeDimensionsMetafield.value);
+        console.log('✅ Parsed size dimensions:', parsed);
+        if (parsed && typeof parsed === 'object') {
+          pdpProduct.sizeDimensions = parsed;
+        }
+      } catch (parseError) {
+        console.error('❌ Failed to parse size dimensions metafield:', parseError);
+        console.log('Raw value that failed:', sizeDimensionsMetafield.value);
+      }
+    } else {
+      console.warn('⚠️ No size_dimensions metafield found for this product');
+    }
+
     if (process.env.NODE_ENV !== 'production') {
       // eslint-disable-next-line no-console
-      console.log('PDP mapped size/brand chart', { productId: product.id, sizeChart: pdpProduct.sizeChartImage, brandChart: pdpProduct.brandSizeChartImage });
+      console.log('PDP mapped size/brand chart & dimensions', {
+        productId: product.id,
+        sizeChart: pdpProduct.sizeChartImage,
+        brandChart: pdpProduct.brandSizeChartImage,
+        sizeDimensions: pdpProduct.sizeDimensions
+      });
     }
   } catch (e) {
-    // ignore: product might not contain metafields from the query; sizeChart remains undefined
+    console.error('Error extracting metafields:', e);
   }
 
   // No fallback - show only loader-provided similar products that match tag overlap

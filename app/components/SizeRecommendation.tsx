@@ -1,22 +1,40 @@
 import {useState, type FormEvent} from 'react';
 
+interface SizeDimensions {
+  [size: string]: {
+    chest?: [number, number] | number;
+    waist?: [number, number] | number;
+    hips?: [number, number] | number;
+    length?: [number, number] | number;
+    arm?: [number, number] | number;
+    shoulder?: [number, number] | number;
+  };
+}
+
 interface SizeRecommendationProps {
   onRecommendation: (size: string) => void;
   onClose: () => void;
+  sizeDimensions?: SizeDimensions;
 }
 
 interface SizeRecResponse {
   size: string;
   confidence?: number;
+  reasoning?: string;
+  measurements?: {
+    estimatedChestWidth: number; // Flat lay / front chest measurement
+  };
 }
 
 export function SizeRecommendation({
   onRecommendation,
   onClose,
+  sizeDimensions,
 }: SizeRecommendationProps) {
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
+  const [bodyFit, setBodyFit] = useState<'slim' | 'regular' | 'athletic' | 'relaxed'>('regular');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SizeRecResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,15 +53,22 @@ export function SizeRecommendation({
 
     setLoading(true);
 
+    const requestBody = {
+      height: heightNum,
+      weight: weightNum,
+      gender,
+      bodyFit,
+      sizeDimensions,
+    };
+
+    console.log('🚀 Sending recommendation request:', requestBody);
+    console.log('📦 Size dimensions being sent:', sizeDimensions);
+
     try {
       const response = await fetch('/api/recommend-size', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          height: heightNum,
-          weight: weightNum,
-          gender,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -51,6 +76,8 @@ export function SizeRecommendation({
       }
 
       const data = (await response.json()) as SizeRecResponse;
+
+      console.log('📨 Received recommendation response:', data);
 
       if (!data.size) {
         throw new Error('Invalid response from recommendation service');
@@ -199,6 +226,36 @@ export function SizeRecommendation({
             </select>
           </div>
 
+          {/* Body Fit Select */}
+          <div>
+            <label
+              htmlFor="bodyFit"
+              className="mb-2 block text-xs font-medium uppercase tracking-wider"
+              style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+            >
+              Preferred Fit
+            </label>
+            <select
+              id="bodyFit"
+              value={bodyFit}
+              onChange={(e) =>
+                setBodyFit(e.target.value as 'slim' | 'regular' | 'athletic' | 'relaxed')
+              }
+              className="w-full px-3 py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #DDDEE2',
+                color: '#292929',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              <option value="slim">Slim Fit</option>
+              <option value="regular">Regular Fit</option>
+              <option value="athletic">Athletic Fit</option>
+              <option value="relaxed">Relaxed Fit</option>
+            </select>
+          </div>
+
           {/* Submit Button */}
           <button
             type="submit"
@@ -256,7 +313,45 @@ export function SizeRecommendation({
                   : 'Low confidence – please verify'}
               </p>
             )}
+            {result.reasoning && (
+              <p
+                className="mt-3 text-xs leading-relaxed"
+                style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+              >
+                {result.reasoning}
+              </p>
+            )}
           </div>
+
+          {/* Estimated Measurements */}
+          {result.measurements && (
+            <div
+              className="p-4"
+              style={{backgroundColor: '#FFFFFF', borderRadius: '4px'}}
+            >
+              <p
+                className="mb-3 text-xs font-medium uppercase tracking-wider"
+                style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+              >
+                Your Estimated Chest Width
+              </p>
+              <div className="text-center">
+                <p
+                  className="text-2xl font-semibold"
+                  style={{color: '#292929', fontFamily: 'var(--font-sans)'}}
+                >
+                  {result.measurements.estimatedChestWidth}
+                  <span className="text-sm ml-1">cm</span>
+                </p>
+                <p
+                  className="text-xs mt-2"
+                  style={{color: '#6B6C75', fontFamily: 'var(--font-sans)'}}
+                >
+                  (Front chest measurement)
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-2">

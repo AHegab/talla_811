@@ -248,13 +248,30 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
       console.warn('⚠️ No size_dimensions metafield found for this product');
     }
 
+    // Extract fabric type for smart recommendations
+    const fabricTypeMetafield = (product as any)?.metafields?.find(
+      (mf: any) => mf?.namespace === 'custom' && mf?.key === 'fabric_type'
+    );
+
+    if (fabricTypeMetafield?.value) {
+      const fabricValue = fabricTypeMetafield.value.toLowerCase().trim();
+      // Validate it's one of the expected fabric types
+      if (['cotton', 'cotton_blend', 'jersey_knit', 'highly_elastic'].includes(fabricValue)) {
+        pdpProduct.fabricType = fabricValue as any;
+        console.log('✅ Fabric type:', fabricValue);
+      } else {
+        console.warn('⚠️ Invalid fabric_type value:', fabricValue);
+      }
+    }
+
     if (process.env.NODE_ENV !== 'production') {
       // eslint-disable-next-line no-console
       console.log('PDP mapped size/brand chart & dimensions', {
         productId: product.id,
         sizeChart: pdpProduct.sizeChartImage,
         brandChart: pdpProduct.brandSizeChartImage,
-        sizeDimensions: pdpProduct.sizeDimensions
+        sizeDimensions: pdpProduct.sizeDimensions,
+        fabricType: pdpProduct.fabricType
       });
     }
   } catch (e) {

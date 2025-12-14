@@ -53,6 +53,8 @@ export interface PDPProduct {
   brandSizeChartImage?: { url: string; alt?: string } | null;
   // optional size dimensions for smart recommendation
   sizeDimensions?: SizeDimensions | null;
+  // optional fabric type for smart recommendation
+  fabricType?: 'cotton' | 'cotton_blend' | 'jersey_knit' | 'highly_elastic';
 }
 
 export interface SimilarProduct {
@@ -725,6 +727,7 @@ export function ProductBuyBox({
                     productType={product.productType ?? undefined}
                     tags={product.tags ?? undefined}
                     vendor={product.vendor ?? undefined}
+                    productFabricType={product.fabricType ?? undefined}
                   />
                 </div>
               )}

@@ -52,6 +52,7 @@ interface SizeRecommendationPromptProps {
   productType?: string;
   tags?: string[];
   vendor?: string;
+  productFabricType?: FabricType;
 }
 
 // Abdomen shape descriptions with SVG illustrations
@@ -243,6 +244,7 @@ export function SizeRecommendationPrompt({
   productType,
   tags,
   vendor,
+  productFabricType,
 }: SizeRecommendationPromptProps) {
   const [showForm, setShowForm] = useState(mode === 'inline'); // Auto-open in inline mode
   const [isLoading, setIsLoading] = useState(false);
@@ -261,6 +263,7 @@ export function SizeRecommendationPrompt({
     abdomenShape: 'medium',
     hipShape: 'average',
     wearingPreference: 'normal',
+    fabricType: productFabricType,
     chest: undefined,
     waist: undefined,
     hips: undefined,

@@ -18,7 +18,29 @@ interface FabricMapping {
  * Keys are case-insensitive and trimmed.
  */
 const materialMappings: Record<string, FabricMapping> = {
-  // Pure Cotton - No stretch
+  // Cotton + Lycra blends - High stretch (must come BEFORE pure cotton)
+  '100% pure cotton + lycra': {
+    fabricType: 'highly_elastic',
+    description: 'Cotton-Lycra blend, high stretch and comfort',
+    stretchPercentage: 15,
+  },
+  'pure cotton + lycra': {
+    fabricType: 'highly_elastic',
+    description: 'Cotton-Lycra blend, high stretch and comfort',
+    stretchPercentage: 15,
+  },
+  '100% cotton + lycra': {
+    fabricType: 'highly_elastic',
+    description: 'Cotton-Lycra blend, high stretch and comfort',
+    stretchPercentage: 15,
+  },
+  'cotton + lycra': {
+    fabricType: 'highly_elastic',
+    description: 'Cotton-Lycra blend, high stretch and comfort',
+    stretchPercentage: 15,
+  },
+
+  // Pure Cotton - No stretch (plain cotton only, no lycra)
   'pure 100% cotton': {
     fabricType: 'cotton',
     description: 'Pure cotton, no stretch',
@@ -117,6 +139,12 @@ export function mapMaterialToFabricType(material?: string | null): FabricType | 
   // Direct match
   if (materialMappings[normalized]) {
     return materialMappings[normalized].fabricType;
+  }
+
+  // Check for cotton + lycra combinations FIRST (before other matches)
+  if ((normalized.includes('cotton') || normalized.includes('coton')) &&
+      (normalized.includes('lycra') || normalized.includes('spandex') || normalized.includes('elastane'))) {
+    return 'highly_elastic';
   }
 
   // Fuzzy match - check if normalized contains any key

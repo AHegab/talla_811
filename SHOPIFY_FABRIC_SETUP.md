@@ -27,7 +27,8 @@ The system automatically recognizes these materials and applies the correct stre
 
 | Material Name | Stretch Adjustment | Best For |
 |---------------|-------------------|----------|
-| **Pure 100% Cotton** | 0% (no stretch) | Formal shirts, rigid garments |
+| **Pure 100% Cotton** | 0% (no stretch) | Formal shirts, rigid garments (cotton only, no lycra) |
+| **100% Pure Cotton + Lycra** | 15% (high stretch) | Comfortable fitted garments with stretch |
 | **Milton** | 5% (slight stretch) | Comfortable everyday wear |
 | **Refined Summer Milton** | 5% (slight stretch) | Lightweight summer clothing |
 | **Polyester** | 10% (moderate stretch) | Athletic wear, casual tops |
@@ -40,7 +41,7 @@ The system automatically recognizes these materials and applies the correct stre
 2. Scroll to **Metafields** section
 3. Find "Fabric Type" field
 4. Enter the material name exactly as shown above (case-insensitive)
-   - Examples: `Milton`, `pure 100% cotton`, `Lycra`
+   - Examples: `Milton`, `pure 100% cotton`, `Lycra`, `100% Pure Cotton + Lycra`
 5. Save the product
 
 **Option 2: Bulk Import via CSV**
@@ -50,6 +51,7 @@ Create a CSV file like this:
 ```csv
 Handle,Metafield: custom.fabric_type [single_line_text_field]
 classic-shirt,Pure 100% Cotton
+fitted-tee,100% Pure Cotton + Lycra
 summer-tee,Milton
 polo-shirt,Refined Summer Milton
 track-pants,Polyester
@@ -95,7 +97,8 @@ mutation UpdateProductFabric {
 
 The system automatically maps your material names to fabric types:
 
-- **Pure 100% Cotton** → Pure Cotton (no stretch)
+- **Pure 100% Cotton** (alone) → Pure Cotton (no stretch)
+- **100% Pure Cotton + Lycra** → Highly Elastic (15% stretch)
 - **Milton / Refined Summer Milton** → Cotton Blend (5% stretch)
 - **Polyester** → Knit Fabric (10% stretch)
 - **Lycra** → Highly Elastic (15% stretch)
@@ -117,12 +120,19 @@ The system is smart about matching! It will recognize:
 - Variations: "milton", "Milton", "MILTON"
 - With extra text: "Milton fabric", "Pure 100% cotton"
 - Common typos: "polyesteer" → Polyester
-- Partial matches: "cotton lycra" → Lycra
+- Blends: "cotton lycra", "Cotton + Lycra", "pure cotton + lycra" → Highly Elastic
+- Partial matches: Intelligently detects combinations
+
+**Important for Blends:**
+- Any material containing BOTH "cotton" AND "lycra" → Highly Elastic (15% stretch)
+- This ensures cotton+lycra blends get proper stretch treatment
+- "Pure 100% Cotton" alone (no lycra) → No stretch
 
 If you enter a material that isn't recognized, it will:
-1. Try to match keywords (cotton, lycra, polyester, etc.)
-2. Fall back to no stretch adjustment
-3. Log a warning in the console (visible in browser dev tools)
+1. Try to detect cotton+lycra combinations first
+2. Try to match keywords (cotton, lycra, polyester, etc.)
+3. Fall back to no stretch adjustment
+4. Log a warning in the console (visible in browser dev tools)
 
 ## Testing
 

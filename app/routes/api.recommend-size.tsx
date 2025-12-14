@@ -328,6 +328,61 @@ function generateDetailedReasoning(
 }
 
 /**
+ * Calculate comprehensive confidence score based on multiple factors.
+ */
+function calculateConfidence(
+  measurementDiff: number,
+  bodyMeasurementConfidence: number,
+  fabricType: FabricType | undefined,
+  hasOptionalMeasurements: boolean,
+  isOversized: boolean,
+  wearingPreference: WearingPreference
+): number {
+  let baseConfidence = 0.50; // Minimum confidence
+
+  // 1. Measurement match quality (primary factor)
+  if (measurementDiff <= 1) {
+    baseConfidence += 0.45; // Nearly perfect match
+  } else if (measurementDiff <= 2) {
+    baseConfidence += 0.40; // Excellent match
+  } else if (measurementDiff <= 3) {
+    baseConfidence += 0.35; // Very good match
+  } else if (measurementDiff <= 4) {
+    baseConfidence += 0.30; // Good match
+  } else if (measurementDiff <= 6) {
+    baseConfidence += 0.20; // Acceptable match
+  } else if (measurementDiff <= 8) {
+    baseConfidence += 0.10; // Fair match
+  }
+  // else: stays at base 0.50
+
+  // 2. Fabric type specified bonus (+5%)
+  if (fabricType) {
+    baseConfidence += 0.05;
+  }
+
+  // 3. Optional measurements provided bonus (+5%)
+  if (hasOptionalMeasurements) {
+    baseConfidence += 0.05;
+  }
+
+  // 4. Stretch bonus for fitted garments (+10%)
+  // Stretchy fabrics are more forgiving for fitted styles
+  if (!isOversized && fabricType && fabricType !== 'cotton') {
+    if (wearingPreference === 'very_fitted' || wearingPreference === 'fitted') {
+      baseConfidence += 0.10;
+    }
+  }
+
+  // 5. Multiply by body measurement confidence
+  // This accounts for estimation accuracy based on BMI/age extremes
+  const finalConfidence = baseConfidence * bodyMeasurementConfidence;
+
+  // 6. Clamp to range 50-100%
+  return Math.max(0.50, Math.min(1.0, finalConfidence));
+}
+
+/**
  * Find best size based on body measurements and wearing preference.
  */
 function findBestSize(
@@ -335,7 +390,8 @@ function findBestSize(
   sizeDimensions: SizeDimensions,
   wearingPreference: WearingPreference,
   category: 'tops' | 'bottoms' | 'dresses' | 'outerwear' = 'tops',
-  fabricType?: FabricType
+  fabricType?: FabricType,
+  hasOptionalMeasurements: boolean = false
 ): { size: string; confidence: number; reasoning: string; alternativeSize?: string } {
 
   // Detect measurement format
@@ -479,25 +535,15 @@ function findBestSize(
     bestSize = sizes[Math.floor(sizes.length / 2)] || 'M';
   }
 
-  // Calculate confidence
-  let confidence: number;
-  if (smallestDiff <= 2) {
-    confidence = 0.95;
-  } else if (smallestDiff <= 4) {
-    confidence = 0.80;
-  } else if (smallestDiff <= 6) {
-    confidence = 0.65;
-  } else {
-    confidence = 0.50;
-  }
-
-  // Boost confidence for stretchy fabrics
-  if (!isOversized && smallestDiff <= 8) {
-    confidence += 0.05;
-  }
-
-  // Factor in body measurement confidence
-  confidence = confidence * bodyMeasurements.confidence;
+  // Calculate comprehensive confidence score
+  const confidence = calculateConfidence(
+    smallestDiff,
+    bodyMeasurements.confidence,
+    fabricType,
+    hasOptionalMeasurements,
+    isOversized,
+    wearingPreference
+  );
 
   // Generate detailed reasoning
   const selectedSize = normalizedDimensions[bestSize];
@@ -539,6 +585,7 @@ export async function action({ request }: Route.ActionArgs) {
       productType?: string;
       tags?: string[];
       fabricType?: FabricType;
+      shoulder?: number;
     };
 
     const {
@@ -553,6 +600,7 @@ export async function action({ request }: Route.ActionArgs) {
       productType,
       tags,
       fabricType,
+      shoulder,
     } = body;
 
     console.log('📥 Received request:', {
@@ -591,12 +639,17 @@ export async function action({ request }: Route.ActionArgs) {
 
       const category = detectGarmentCategory(sizeDimensions, productType, tags);
       console.log('📦 Detected category:', category, '(from productType:', productType, 'tags:', tags, ')');
+
+      // Check if optional measurements were provided
+      const hasOptionalMeasurements = !!shoulder;
+
       const result = findBestSize(
         bodyMeasurements,
         sizeDimensions,
         wearingPreference,
         category,
-        fabricType
+        fabricType,
+        hasOptionalMeasurements
       );
 
       console.log('✅ Recommendation:', result);

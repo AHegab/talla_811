@@ -9,9 +9,12 @@ type BodyType = 'athletic' | 'pear' | 'apple' | 'rectangle' | 'hourglass';
 
 interface SizeDimensions {
   [size: string]: {
-    chest?: number;  // Flat lay width in cm
-    length?: number; // Length in cm
-    arm?: number;    // Sleeve length in cm
+    chest?: number;    // Flat lay width in cm
+    length?: number;   // Length in cm
+    arm?: number;      // Sleeve length in cm
+    waist?: number;    // Waist width in cm
+    hips?: number;     // Hip width in cm
+    shoulder?: number; // Shoulder width in cm
   };
 }
 
@@ -626,6 +629,9 @@ function findBestSize(
     normalizedDimensions[size] = {
       ...dims,
       chest: dims.chest ? (isFlatLay ? dims.chest : dims.chest / 2) : undefined,
+      waist: dims.waist ? (isFlatLay ? dims.waist : dims.waist / 2) : undefined,
+      hips: dims.hips ? (isFlatLay ? dims.hips : dims.hips / 2) : undefined,
+      // shoulder is always a span measurement, not circumference, so no conversion needed
     };
   }
 
@@ -659,40 +665,67 @@ function findBestSize(
     };
     targetGarmentWidth = primaryBodyMeasurement + oversizedEase[wearingPreference];
   } else {
-    // Fitted garments - negative ease for tops (stretchy), less negative for bottoms
-    const baseEase: Record<WearingPreference, number> =
-      category === 'bottoms'
-        ? {
-            very_fitted: 4,   // Very tight fit
-            fitted: 6,        // Snug fit
-            normal: 8,        // Normal fit
-            loose: 10,        // Relaxed fit
-            very_loose: 13,   // Very loose fit
-          }
-        : {
-            very_fitted: 6,   // Very tight fit
-            fitted: 8,        // Fitted
-            normal: 10,       // Normal fit
-            loose: 12,        // Loose fit
-            very_loose: 15,   // Very loose fit
-          };
+    // Fitted garments - differentiate between form-fitting and relaxed styles
+    const isFormFitting = wearingPreference === 'very_fitted' || wearingPreference === 'fitted';
 
-    // Apply fabric stretch multiplier
-    const fabricStretchMultiplier: Record<FabricType, number> = {
-      cotton: 1.0,           // No adjustment (rigid fabric)
-      cotton_blend: 0.95,    // Can size down 5% (slight stretch)
-      jersey_knit: 0.90,     // Can size down 10% (moderate stretch)
-      highly_elastic: 0.85,  // Can size down 15% (high stretch)
-    };
+    if (isFormFitting) {
+      // Form-fitting styles - negative ease (garment smaller than body, relies on stretch)
+      const formFittingEase: Record<WearingPreference, number> =
+        category === 'bottoms'
+          ? {
+              very_fitted: 4,   // Very tight fit
+              fitted: 6,        // Snug fit
+              normal: 8,        // Not used
+              loose: 10,        // Not used
+              very_loose: 13,   // Not used
+            }
+          : {
+              very_fitted: 6,   // Very tight fit
+              fitted: 8,        // Fitted
+              normal: 10,       // Not used
+              loose: 12,        // Not used
+              very_loose: 15,   // Not used
+            };
 
-    const stretchMultiplier = fabricType ? fabricStretchMultiplier[fabricType] : 1.0;
-    const adjustedEase = baseEase[wearingPreference] * stretchMultiplier;
+      // Apply fabric stretch multiplier - stretchier fabrics can have more negative ease
+      const fabricStretchMultiplier: Record<FabricType, number> = {
+        cotton: 1.0,           // No adjustment (rigid fabric)
+        cotton_blend: 0.95,    // Can size down 5% (slight stretch)
+        jersey_knit: 0.90,     // Can size down 10% (moderate stretch)
+        highly_elastic: 0.85,  // Can size down 15% (high stretch)
+      };
 
-    if (fabricType) {
-      console.log(`🧵 Fabric: ${fabricType}, stretch multiplier: ${stretchMultiplier}, adjusted ease: ${adjustedEase}cm`);
+      const stretchMultiplier = fabricType ? fabricStretchMultiplier[fabricType] : 1.0;
+      const adjustedEase = formFittingEase[wearingPreference] * stretchMultiplier;
+
+      if (fabricType) {
+        console.log(`🧵 Fabric: ${fabricType}, stretch multiplier: ${stretchMultiplier}, form-fitting ease: ${adjustedEase}cm`);
+      }
+
+      targetGarmentWidth = primaryBodyMeasurement - adjustedEase;
+    } else {
+      // Relaxed styles (normal, loose, very_loose) - positive ease (garment larger than body)
+      const relaxedEase: Record<WearingPreference, number> =
+        category === 'bottoms'
+          ? {
+              very_fitted: 4,   // Not used
+              fitted: 6,        // Not used
+              normal: 4,        // Comfortable fit
+              loose: 8,         // Relaxed fit
+              very_loose: 12,   // Very loose fit
+            }
+          : {
+              very_fitted: 6,   // Not used
+              fitted: 8,        // Not used
+              normal: 4,        // Comfortable fit
+              loose: 8,         // Relaxed fit
+              very_loose: 12,   // Very loose fit
+            };
+
+      targetGarmentWidth = primaryBodyMeasurement + relaxedEase[wearingPreference];
+
+      console.log(`👕 Relaxed style: adding ${relaxedEase[wearingPreference]}cm ease for ${wearingPreference} fit`);
     }
-
-    targetGarmentWidth = primaryBodyMeasurement - adjustedEase;
   }
 
   // Add extra ease for outerwear (layering)

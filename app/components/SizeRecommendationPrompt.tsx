@@ -51,6 +51,7 @@ interface SizeRecommendationPromptProps {
   productSizeDimensions?: any;
   productType?: string;
   tags?: string[];
+  vendor?: string;
 }
 
 // Abdomen shape descriptions with SVG illustrations
@@ -241,6 +242,7 @@ export function SizeRecommendationPrompt({
   productSizeDimensions,
   productType,
   tags,
+  vendor,
 }: SizeRecommendationPromptProps) {
   const [showForm, setShowForm] = useState(mode === 'inline'); // Auto-open in inline mode
   const [isLoading, setIsLoading] = useState(false);
@@ -288,6 +290,7 @@ export function SizeRecommendationPrompt({
         sizeDimensions: productSizeDimensions,
         productType,
         tags,
+        vendor,
       };
       console.log('📤 Sending recommendation request:', requestData);
 

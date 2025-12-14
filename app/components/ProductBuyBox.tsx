@@ -724,6 +724,7 @@ export function ProductBuyBox({
                     productSizeDimensions={product.sizeDimensions ?? undefined}
                     productType={product.productType ?? undefined}
                     tags={product.tags ?? undefined}
+                    vendor={product.vendor ?? undefined}
                   />
                 </div>
               )}

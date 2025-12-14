@@ -1,4 +1,5 @@
 import type { Route } from './+types/api.recommend-size';
+import { applyBrandAdjustment, type BrandFitProfile } from '~/lib/brandFitProfiles';
 
 type WearingPreference = 'very_fitted' | 'fitted' | 'normal' | 'loose' | 'very_loose';
 type AbdomenShape = 'flat' | 'medium' | 'bulging';
@@ -367,7 +368,8 @@ function generateDetailedReasoning(
   targetGarmentWidth: number,
   bodyMeasurements: EstimatedBodyMeasurements,
   wearingPreference: WearingPreference,
-  isOversized: boolean
+  isOversized: boolean,
+  brandProfile?: BrandFitProfile
 ): string {
   let reasoning = '';
 
@@ -445,6 +447,8 @@ function generateDetailedReasoning(
     hourglass: 'hourglass figure',
   };
 
+  const adjustments: string[] = [];
+
   if (bodyMeasurements.bodyType !== 'rectangle' && bodyMeasurements.bodyType !== 'hourglass') {
     // Only mention body type if it resulted in an adjustment
     const hasAdjustment =
@@ -453,8 +457,17 @@ function generateDetailedReasoning(
       (bodyMeasurements.bodyType === 'apple' && (category === 'tops' || category === 'dresses'));
 
     if (hasAdjustment) {
-      reasoning += ` (adjusted for ${bodyTypeLabels[bodyMeasurements.bodyType]})`;
+      adjustments.push(`adjusted for ${bodyTypeLabels[bodyMeasurements.bodyType]}`);
     }
+  }
+
+  // 6. Brand fit profile
+  if (brandProfile) {
+    adjustments.push(brandProfile.note);
+  }
+
+  if (adjustments.length > 0) {
+    reasoning += ` (${adjustments.join(', ')})`;
   }
 
   return reasoning + '.';
@@ -599,7 +612,8 @@ function findBestSize(
   wearingPreference: WearingPreference,
   category: 'tops' | 'bottoms' | 'dresses' | 'outerwear' = 'tops',
   fabricType?: FabricType,
-  hasOptionalMeasurements: boolean = false
+  hasOptionalMeasurements: boolean = false,
+  vendor?: string
 ): { size: string; confidence: number; reasoning: string; alternativeSize?: string; sizeComparison: { [size: string]: string } } {
 
   // Detect measurement format
@@ -687,7 +701,7 @@ function findBestSize(
   }
 
   // Apply body type adjustments
-  const adjustedTargetWidth = applyBodyTypeAdjustment(
+  let adjustedTargetWidth = applyBodyTypeAdjustment(
     targetGarmentWidth,
     bodyMeasurements.bodyType,
     category
@@ -697,7 +711,17 @@ function findBestSize(
     console.log(`👤 Body type: ${bodyMeasurements.bodyType}, adjustment: ${adjustedTargetWidth - targetGarmentWidth}cm`);
   }
 
-  targetGarmentWidth = adjustedTargetWidth;
+  // Apply brand fit adjustments
+  const { adjustedWidth: brandAdjustedWidth, profile: brandProfile } = applyBrandAdjustment(
+    adjustedTargetWidth,
+    vendor
+  );
+
+  if (brandProfile) {
+    console.log(`🏷️  Brand: ${vendor}, adjustment: ${brandProfile.adjustment}cm - ${brandProfile.note}`);
+  }
+
+  targetGarmentWidth = brandAdjustedWidth;
 
   console.log('📏 Body measurement:', primaryBodyMeasurement, 'cm');
   console.log('🎯 Target garment width:', targetGarmentWidth, 'cm');
@@ -775,7 +799,8 @@ function findBestSize(
     targetGarmentWidth,
     bodyMeasurements,
     wearingPreference,
-    isOversized
+    isOversized,
+    brandProfile
   );
 
   // Determine alternative size
@@ -817,6 +842,7 @@ export async function action({ request }: Route.ActionArgs) {
       tags?: string[];
       fabricType?: FabricType;
       shoulder?: number;
+      vendor?: string;
     };
 
     const {
@@ -832,6 +858,7 @@ export async function action({ request }: Route.ActionArgs) {
       tags,
       fabricType,
       shoulder,
+      vendor,
     } = body;
 
     console.log('📥 Received request:', {
@@ -880,7 +907,8 @@ export async function action({ request }: Route.ActionArgs) {
         wearingPreference,
         category,
         fabricType,
-        hasOptionalMeasurements
+        hasOptionalMeasurements,
+        vendor
       );
 
       console.log('✅ Recommendation:', result);

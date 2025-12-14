@@ -9,6 +9,7 @@ import {
 } from './ProductBuyBox';
 import type { PDPImage } from './ProductGallery';
 import { ProductGallery } from './ProductGallery';
+import { mapMaterialToFabricType } from '~/lib/fabricMapping';
 
 interface UserMeasurements {
   gender: 'male' | 'female';
@@ -99,7 +100,7 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
       });
 
       if (matchingImage) {
-        variantImage = matchingImage;
+        variantImage = matchingImage as any;
         console.log('✅ Matched image by color:', colorValue, matchingImage.url);
       }
     }
@@ -238,7 +239,7 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
         const parsed = JSON.parse(sizeDimensionsMetafield.value);
         console.log('✅ Parsed size dimensions:', parsed);
         if (parsed && typeof parsed === 'object') {
-          pdpProduct.sizeDimensions = parsed;
+          pdpProduct.sizeDimensions = parsed as any;
         }
       } catch (parseError) {
         console.error('❌ Failed to parse size dimensions metafield:', parseError);
@@ -248,13 +249,31 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
       console.warn('⚠️ No size_dimensions metafield found for this product');
     }
 
+    // Extract fabric type for smart recommendations
+    const fabricTypeMetafield = (product as any)?.metafields?.find(
+      (mf: any) => mf?.namespace === 'custom' && mf?.key === 'fabric_type'
+    );
+
+    if (fabricTypeMetafield?.value) {
+      // Use the material mapping to convert material names to fabric types
+      const mappedFabricType = mapMaterialToFabricType(fabricTypeMetafield.value);
+
+      if (mappedFabricType) {
+        pdpProduct.fabricType = mappedFabricType;
+        console.log('✅ Material:', fabricTypeMetafield.value, '→ Fabric type:', mappedFabricType);
+      } else {
+        console.warn('⚠️ Unknown material:', fabricTypeMetafield.value, '- no stretch adjustment will be applied');
+      }
+    }
+
     if (process.env.NODE_ENV !== 'production') {
       // eslint-disable-next-line no-console
       console.log('PDP mapped size/brand chart & dimensions', {
         productId: product.id,
         sizeChart: pdpProduct.sizeChartImage,
         brandChart: pdpProduct.brandSizeChartImage,
-        sizeDimensions: pdpProduct.sizeDimensions
+        sizeDimensions: pdpProduct.sizeDimensions,
+        fabricType: pdpProduct.fabricType
       });
     }
   } catch (e) {

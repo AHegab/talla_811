@@ -284,6 +284,17 @@ const PRODUCT_FRAGMENT = `#graphql
         }
       }
     }
+    metafields(identifiers: [
+      {namespace: "custom", key: "size_chart"},
+      {namespace: "custom", key: "size_dimensions"},
+      {namespace: "custom", key: "fabric_type"}
+    ]) {
+      id
+      key
+      namespace
+      value
+      type
+    }
     encodedVariantExistence
     encodedVariantAvailability
     options {

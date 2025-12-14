@@ -9,7 +9,6 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import SizeChart from './SizeChart';
-import { SizeRecommendation } from './SizeRecommendation';
 import { SizeRecommendationPrompt } from './SizeRecommendationPrompt';
 
 export interface PDPVariant {
@@ -54,6 +53,8 @@ export interface PDPProduct {
   brandSizeChartImage?: { url: string; alt?: string } | null;
   // optional size dimensions for smart recommendation
   sizeDimensions?: SizeDimensions | null;
+  // optional fabric type for smart recommendation
+  fabricType?: 'cotton' | 'cotton_blend' | 'jersey_knit' | 'highly_elastic';
 }
 
 export interface SimilarProduct {
@@ -714,18 +715,25 @@ export function ProductBuyBox({
                   );
                 })}
               </div>
+
+              {/* Size Recommendation - Show inline right under size buttons */}
+              {option.name.toLowerCase() === 'size' && sizeRecOpen && (
+                <div className="mt-4">
+                  <SizeRecommendationPrompt
+                    mode="inline"
+                    onRecommendation={handleSizeRecommendation}
+                    onComplete={() => setSizeRecOpen(false)}
+                    productSizeDimensions={product.sizeDimensions ?? undefined}
+                    productType={product.productType ?? undefined}
+                    tags={product.tags ?? undefined}
+                    vendor={product.vendor ?? undefined}
+                    productFabricType={product.fabricType ?? undefined}
+                  />
+                </div>
+              )}
             </div>
           ))}
       </div>
-
-      {/* Size Recommendation (collapsible panel) */}
-      {sizeRecOpen && (
-        <SizeRecommendation
-          onRecommendation={handleSizeRecommendation}
-          onClose={() => setSizeRecOpen(false)}
-          sizeDimensions={product.sizeDimensions ?? undefined}
-        />
-      )}
 
       {/* Size Chart Modal / Viewer */}
       {sizeChartOpen && (

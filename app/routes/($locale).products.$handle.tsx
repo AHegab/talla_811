@@ -279,7 +279,7 @@ export default function Product() {
 
   return (
     <>
-      <ProductPage product={product} selectedVariant={selectedVariant} similarProducts={similarProducts} brandSizeChart={brandSizeChart} />
+      <ProductPage product={product} selectedVariant={selectedVariant} similarProducts={similarProducts} brandSizeChart={brandSizeChart as any} />
 
       <Analytics.ProductView
         data={{
@@ -471,7 +471,8 @@ const PRODUCT_FRAGMENT = `#graphql
       {namespace: "custom", key: "size-chart-image"},
       {namespace: "custom", key: "sizechartimage"},
       {namespace: "size", key: "chart"},
-      {namespace: "size", key: "guide"}
+      {namespace: "size", key: "guide"},
+      {namespace: "custom", key: "fabric_type"}
     ]) {
       id
       key

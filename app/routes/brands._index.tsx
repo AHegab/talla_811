@@ -55,8 +55,10 @@ export async function loader({ context }: Route.LoaderArgs) {
 
   // Debug log the menu items so we can verify what the server returned
   // (This appears in server logs, not the browser console.)
-  // eslint-disable-next-line no-console
-  console.log('Brands menu items:', menu?.items?.map((i: any) => ({ id: i.id, title: i.title, url: i.url, resourceType: i.resource?.__typename })));
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line no-console
+    console.log('Brands menu items:', menu?.items?.map((i: any) => ({ id: i.id, title: i.title, url: i.url, resourceType: i.resource?.__typename })));
+  }
 
   // Transform menu items into brand cards. We include any menu item so folks who added
   // menu links as custom URLs (eg. /collections/brand-handle) can still see the brand.
@@ -98,8 +100,10 @@ export async function loader({ context }: Route.LoaderArgs) {
     for (const result of collectionResults) {
       if (result.collection) fallbackCollectionsByHandle[result.handle] = result.collection;
     }
-    // eslint-disable-next-line no-console
-    console.log('Fetched collections for fallback handles:', Object.keys(fallbackCollectionsByHandle));
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.log('Fetched collections for fallback handles:', Object.keys(fallbackCollectionsByHandle));
+    }
   }
 
   const brands: BrandCard[] = menu.items.map((item: any) => {

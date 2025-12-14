@@ -12,7 +12,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
   }
 
   try {
-    const body = await request.json();
+    const body = await request.json() as any;
     const { email, productTitle, variantTitle, productHandle } = body;
 
     // Validate required fields
@@ -24,7 +24,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     }
 
     // Get store URL from environment or construct from request
-    const storeUrl = context.env?.PUBLIC_STORE_URL ||
+    const storeUrl = (context.env as any)?.PUBLIC_STORE_URL ||
                      `${new URL(request.url).protocol}//${new URL(request.url).host}`;
 
     // Send the email
@@ -48,8 +48,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Restock email sent to:', email);
 
     return Response.json({
       success: true,

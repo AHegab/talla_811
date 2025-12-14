@@ -621,7 +621,6 @@ function findBestSize(
 
   // Detect measurement format
   const isFlatLay = areFlayLayMeasurements(sizeDimensions);
-  console.log('📐 Measurement format:', isFlatLay ? 'Flat lay width' : 'Full circumference');
 
   // Normalize to flat lay if needed
   const normalizedDimensions: SizeDimensions = {};
@@ -637,7 +636,6 @@ function findBestSize(
 
   // Detect garment style
   const isOversized = isOversizedGarment(normalizedDimensions);
-  console.log('👕 Garment style:', isOversized ? 'Oversized/Streetwear' : 'Fitted/Stretch');
 
   // Select primary body measurement based on category
   let primaryBodyMeasurement: number;
@@ -698,10 +696,6 @@ function findBestSize(
       const stretchMultiplier = fabricType ? fabricStretchMultiplier[fabricType] : 1.0;
       const adjustedEase = formFittingEase[wearingPreference] * stretchMultiplier;
 
-      if (fabricType) {
-        console.log(`🧵 Fabric: ${fabricType}, stretch multiplier: ${stretchMultiplier}, form-fitting ease: ${adjustedEase}cm`);
-      }
-
       targetGarmentWidth = primaryBodyMeasurement - adjustedEase;
     } else {
       // Relaxed styles (normal, loose, very_loose) - positive ease (garment larger than body)
@@ -723,8 +717,6 @@ function findBestSize(
             };
 
       targetGarmentWidth = primaryBodyMeasurement + relaxedEase[wearingPreference];
-
-      console.log(`👕 Relaxed style: adding ${relaxedEase[wearingPreference]}cm ease for ${wearingPreference} fit`);
     }
   }
 
@@ -740,24 +732,13 @@ function findBestSize(
     category
   );
 
-  if (adjustedTargetWidth !== targetGarmentWidth) {
-    console.log(`👤 Body type: ${bodyMeasurements.bodyType}, adjustment: ${adjustedTargetWidth - targetGarmentWidth}cm`);
-  }
-
   // Apply brand fit adjustments
   const { adjustedWidth: brandAdjustedWidth, profile: brandProfile } = applyBrandAdjustment(
     adjustedTargetWidth,
     vendor
   );
 
-  if (brandProfile) {
-    console.log(`🏷️  Brand: ${vendor}, adjustment: ${brandProfile.adjustment}cm - ${brandProfile.note}`);
-  }
-
   targetGarmentWidth = brandAdjustedWidth;
-
-  console.log('📏 Body measurement:', primaryBodyMeasurement, 'cm');
-  console.log('🎯 Target garment width:', targetGarmentWidth, 'cm');
 
   // Find closest size
   let bestSize = '';
@@ -770,20 +751,16 @@ function findBestSize(
 
     // Enhanced bottoms handling: check both waist AND hips
     if (category === 'bottoms' && dims.waist !== undefined && dims.hips !== undefined) {
-      console.log(`👖 ${size}: waist=${dims.waist}cm, hips=${dims.hips}cm`);
-
       // For bottoms, BOTH waist and hips must fit
       const waistFits = dims.waist >= bodyMeasurements.waistWidth - 5; // Allow 5cm negative ease
       const hipsFits = dims.hips >= bodyMeasurements.hipWidth - 5;
 
       if (!waistFits || !hipsFits) {
-        console.log(`  ${size}: SKIP - ${!waistFits ? 'waist too tight' : 'hips too tight'}`);
         continue; // Skip sizes that won't fit in waist or hips
       }
 
       // Use the tighter measurement (smaller of waist/hips) for diff calculation
       garmentMeasurement = Math.min(dims.waist, dims.hips);
-      console.log(`  ${size}: Using ${garmentMeasurement}cm (tighter of waist/hips)`);
     } else if (dims.chest !== undefined) {
       // For tops/outerwear/dresses or bottoms without full data
       garmentMeasurement = dims.chest;
@@ -792,7 +769,6 @@ function findBestSize(
     }
 
     const diff = Math.abs(garmentMeasurement - targetGarmentWidth);
-    console.log(`  ${size}: ${garmentMeasurement}cm, diff: ${diff}cm`);
 
     if (diff < smallestDiff) {
       // New best size found
@@ -894,16 +870,6 @@ export async function action({ request }: Route.ActionArgs) {
       vendor,
     } = body;
 
-    console.log('📥 Received request:', {
-      height,
-      weight,
-      gender,
-      age,
-      abdomenShape,
-      hipShape,
-      wearingPreference
-    });
-
     // Validate inputs
     if (!height || !weight || !gender || !age || !abdomenShape || !hipShape || !wearingPreference) {
       return Response.json(
@@ -922,14 +888,9 @@ export async function action({ request }: Route.ActionArgs) {
       hipShape
     );
 
-    console.log('📊 Estimated body measurements:', bodyMeasurements);
-
     // If product has size dimensions, use smart matching
     if (sizeDimensions && Object.keys(sizeDimensions).length > 0) {
-      console.log('🎯 Using smart matching with product dimensions');
-
       const category = detectGarmentCategory(sizeDimensions, productType, tags);
-      console.log('📦 Detected category:', category, '(from productType:', productType, 'tags:', tags, ')');
 
       // Check if optional measurements were provided
       const hasOptionalMeasurements = !!shoulder;
@@ -943,8 +904,6 @@ export async function action({ request }: Route.ActionArgs) {
         hasOptionalMeasurements,
         vendor
       );
-
-      console.log('✅ Recommendation:', result);
 
       // Extract garment measurements for the recommended size
       const recommendedSizeDims = sizeDimensions[result.size];
@@ -994,7 +953,7 @@ export async function action({ request }: Route.ActionArgs) {
     } as SizeRecommendationResult);
 
   } catch (error) {
-    console.error('❌ Size recommendation error:', error);
+    console.error('Size recommendation error:', error);
     return Response.json(
       {
         error: 'Failed to calculate size recommendation',

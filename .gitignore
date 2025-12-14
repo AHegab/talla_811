@@ -7,3 +7,7 @@ node_modules
 .env
 .shopify
 .react-router
+tsconfig.tsbuildinfo
+typecheck-output.txt
+*.swp
+*.swo

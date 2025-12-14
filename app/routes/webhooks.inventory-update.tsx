@@ -31,23 +31,12 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     const payload = await request.json() as InventoryUpdatePayload;
 
-    console.log('📦 Inventory Update Webhook Received:', {
-      variantId: payload.inventory_item_id,
-      available: payload.available,
-      shop: shopDomain,
-    });
-
     // Check if item is now in stock
     if (payload.available && payload.available > 0) {
       const variantId = `gid://shopify/ProductVariant/${payload.inventory_item_id}`;
 
-      // Get notification requests from localStorage equivalent (we'll use a better storage later)
-      // For now, this needs to be stored server-side
-      console.log('🔔 Item back in stock! Variant ID:', variantId);
-      console.log('⚠️  To send emails, check notification requests and send to customers');
-
-      // TODO: Query stored notifications and send emails
-      // This requires server-side storage (database or Shopify metafields)
+      // Feature: Query stored notifications and send restocking emails
+      // Requires: Backend implementation with database or Shopify metafields storage
     }
 
     return new Response('Webhook processed', { status: 200 });

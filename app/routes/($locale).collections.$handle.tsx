@@ -183,9 +183,6 @@ export default function Collection() {
       if (price < min || price > max) return false;
     }
 
-    // TODO: Size/Color filters require product variant data
-    // For now, these will be visual-only until we fetch variant data
-
     return true;
   });
 

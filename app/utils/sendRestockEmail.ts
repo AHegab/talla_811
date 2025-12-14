@@ -53,7 +53,6 @@ export async function sendRestockEmailViaSendGrid(
       return false;
     }
 
-    console.log('✅ Email sent successfully to:', params.customerEmail);
     return true;
   } catch (error) {
     console.error('Failed to send email:', error);
@@ -89,7 +88,6 @@ export async function sendRestockEmailViaResend(
       return false;
     }
 
-    console.log('✅ Email sent successfully to:', params.customerEmail);
     return true;
   } catch (error) {
     console.error('Failed to send email:', error);
@@ -193,6 +191,8 @@ export async function sendRestockNotification(
     return sendRestockEmailViaResend(params, env.RESEND_API_KEY);
   }
 
-  console.warn('⚠️  No email service configured. Set SENDGRID_API_KEY or RESEND_API_KEY in .env');
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('No email service configured. Set SENDGRID_API_KEY or RESEND_API_KEY in .env');
+  }
   return false;
 }

@@ -4,16 +4,20 @@ import type { Route } from './+types/api.search-by-image';
 
 export async function action({request, context}: Route.ActionArgs) {
   try {
-    const body = (await request.json()) as {imageUrl: string; tags?: string[]; currentHandle?: string; vendor?: string; productType?: string};
+    const body = (await request.json()) as {
+      imageUrl: string;
+      tags?: string[];
+      currentHandle?: string;
+      vendor?: string;
+      productType?: string;
+      allowOneTagFallback?: boolean;
+      fallbackEnabled?: boolean;
+      overlap?: number;
+    };
     const {imageUrl, tags = [], currentHandle, vendor, productType} = body;
     const config = getSimilarProductsConfig();
-    // debug: console.log('request body', JSON.stringify(body));
     const configOverlap = config.overlap;
 
-    // TODO: Implement actual visual search using AI/ML
-    // This is a placeholder that returns mock similar products
-    
-    // For now, return empty array or fetch random products from Shopify
     const {storefront} = context;
 
     // Query for some products as candidates

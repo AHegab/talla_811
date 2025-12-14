@@ -54,17 +54,6 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
     useState<UserMeasurements | null>(null);
   const [recommendedSize, setRecommendedSize] = useState<string | null>(null);
 
-  // TODO: Load user measurements from localStorage and update recommendedSize
-  // Example (pseudo):
-  // useEffect(() => {
-  //   const saved = window.localStorage.getItem('talla-user-measurements');
-  //   if (saved) {
-  //     const parsed = JSON.parse(saved) as UserMeasurements;
-  //     setUserMeasurements(parsed);
-  //     const size = calculateRecommendedSize(parsed, product);
-  //     setRecommendedSize(size);
-  //   }
-  // }, [product]);
 
   // Transform Shopify product data to PDP format
   // Prioritize selected variant image first, then show all product images
@@ -101,17 +90,10 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
 
       if (matchingImage) {
         variantImage = matchingImage as any;
-        console.log('✅ Matched image by color:', colorValue, matchingImage.url);
       }
     }
   }
 
-  // Debug logging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Selected Variant:', selectedVariant?.title);
-    console.log('Variant Image:', variantImage?.url);
-    console.log('All Images Count:', allImages.length);
-  }
 
   // Reorder images to show variant image first
   const images: PDPImage[] = variantImage
@@ -231,22 +213,15 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
     // Extract size dimensions for smart recommendations
     const sizeDimensionsMetafield = (product as any)?.sizeDimensions;
 
-    console.log('📐 Size dimensions metafield:', sizeDimensionsMetafield);
-
     if (sizeDimensionsMetafield?.value) {
       try {
-        console.log('📝 Raw metafield value:', sizeDimensionsMetafield.value);
         const parsed = JSON.parse(sizeDimensionsMetafield.value);
-        console.log('✅ Parsed size dimensions:', parsed);
         if (parsed && typeof parsed === 'object') {
           pdpProduct.sizeDimensions = parsed as any;
         }
       } catch (parseError) {
-        console.error('❌ Failed to parse size dimensions metafield:', parseError);
-        console.log('Raw value that failed:', sizeDimensionsMetafield.value);
+        console.error('Failed to parse size dimensions metafield:', parseError);
       }
-    } else {
-      console.warn('⚠️ No size_dimensions metafield found for this product');
     }
 
     // Extract fabric type for smart recommendations
@@ -260,29 +235,14 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
 
       if (mappedFabricType) {
         pdpProduct.fabricType = mappedFabricType;
-        console.log('✅ Material:', fabricTypeMetafield.value, '→ Fabric type:', mappedFabricType);
-      } else {
-        console.warn('⚠️ Unknown material:', fabricTypeMetafield.value, '- no stretch adjustment will be applied');
       }
     }
 
-    if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.log('PDP mapped size/brand chart & dimensions', {
-        productId: product.id,
-        sizeChart: pdpProduct.sizeChartImage,
-        brandChart: pdpProduct.brandSizeChartImage,
-        sizeDimensions: pdpProduct.sizeDimensions,
-        fabricType: pdpProduct.fabricType
-      });
-    }
   } catch (e) {
     console.error('Error extracting metafields:', e);
   }
 
-  // No fallback - show only loader-provided similar products that match tag overlap
-
-  // Simple size recommendation algorithm (kept for future use)
+  // Size recommendation algorithm
   const calculateRecommendedSize = (
     measurements: UserMeasurements,
     _product: ShopifyProduct,
@@ -328,13 +288,6 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
 
     return sizes[finalIndex];
   };
-
-  // You can later call calculateRecommendedSize + setRecommendedSize
-  // whenever userMeasurements changes.
-  void calculateRecommendedSize;
-  void userMeasurements;
-  void setUserMeasurements;
-  void setRecommendedSize;
 
   // Image gallery handled by ProductGallery
 

@@ -64,12 +64,6 @@ export async function action({ request }: ActionFunctionArgs) {
     // Save notification to server-side storage
     addNotification(notification);
 
-    // Log the notification
-    console.log('📧 Restock Notification Request:', {
-      notification,
-      adminEmail: storeAdminEmail,
-    });
-
     // --- OPTION 3: Integrate with Email Service ---
     // Uncomment and configure based on your email service
     /*

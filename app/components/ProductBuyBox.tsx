@@ -372,7 +372,7 @@ export function ProductBuyBox({
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to submit notification request');
@@ -386,7 +386,7 @@ export function ProductBuyBox({
       try {
         const localNotifications = JSON.parse(
           localStorage.getItem('talla_restock_notifications') || '[]'
-        );
+        ) as any[];
         localNotifications.push(data.notification);
         localStorage.setItem('talla_restock_notifications', JSON.stringify(localNotifications));
       } catch (err) {
@@ -637,17 +637,18 @@ export function ProductBuyBox({
                       }
 
                       // For multi-color gradient
-                      if (isMultiColor) {
-                        multiColorGradient = `linear-gradient(to right, ${colorData.colors.map((c, idx) => {
+                      if (isMultiColor && colorData) {
+                        const colors = colorData.colors;
+                        const colorsLength = colors.length;
+                        multiColorGradient = `linear-gradient(to right, ${colors.map((c, idx) => {
                           const hex = toHex(c);
-                          const pct1 = (idx / colorData.colors.length) * 100;
-                          const pct2 = ((idx + 1) / colorData.colors.length) * 100;
+                          const pct1 = (idx / colorsLength) * 100;
+                          const pct2 = ((idx + 1) / colorsLength) * 100;
                           return `${hex} ${pct1}%, ${hex} ${pct2}%`;
                         }).join(', ')})`;
                       }
                     } catch (err) {
                       // Fallback to simple gray if parsing fails
-                      console.warn('Failed to parse color value:', value, err);
                       colorData = { colors: [value], displayName: value };
                       singleColor = '#6b7280';
                       textColorClass = 'text-white';

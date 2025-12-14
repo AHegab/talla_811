@@ -113,6 +113,7 @@ export function MenCollectionPage({collection, products}: MenCollectionPageProps
   const [priceRange, setPriceRange] = useState<[number, number]>([minProductPrice, maxProductPrice]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc'>('featured');
   
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const vendors = Array.from(new Set(gridProducts.map((p) => p.vendor).filter(Boolean))) as string[];
@@ -144,6 +145,23 @@ export function MenCollectionPage({collection, products}: MenCollectionPageProps
     if (selectedBrands.length > 0 && (!p.vendor || !selectedBrands.includes(p.vendor))) return false;
 
     return true;
+  });
+
+  // Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch (sortBy) {
+      case 'price-asc':
+        return Number(a.priceRange.minVariantPrice.amount) - Number(b.priceRange.minVariantPrice.amount);
+      case 'price-desc':
+        return Number(b.priceRange.minVariantPrice.amount) - Number(a.priceRange.minVariantPrice.amount);
+      case 'name-asc':
+        return a.title.localeCompare(b.title);
+      case 'name-desc':
+        return b.title.localeCompare(a.title);
+      case 'featured':
+      default:
+        return 0; // Keep original order
+    }
   });
   
   const isPriceFiltered = priceRange[0] !== minProductPrice || priceRange[1] !== maxProductPrice;
@@ -649,20 +667,42 @@ export function MenCollectionPage({collection, products}: MenCollectionPageProps
 
         {/* GRID HEADER */}
         <div ref={sentinelRef} />
-        <div className="mb-5 mt-16 sm:mt-20 lg:mt-32 xl:mt-40 flex items-center justify-between">
+        <div className="mb-5 mt-16 sm:mt-20 lg:mt-32 xl:mt-40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h2 className="text-xs tracking-[0.22em] uppercase text-gray-700">
-            All menswear ({filteredProducts.length} items)
+            All menswear ({sortedProducts.length} items)
           </h2>
+
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <label htmlFor="sort-select" className="sr-only">Sort by</label>
+            <select
+              id="sort-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="appearance-none bg-white border border-[#E8E9EC] rounded-lg pl-4 pr-10 py-2.5 text-[10px] font-medium tracking-[0.06em] uppercase text-[#292929] hover:border-[#C4C5CB] focus:outline-none focus:ring-2 focus:ring-[#292929] focus:border-transparent transition-all cursor-pointer"
+            >
+              <option value="featured">Featured</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="name-asc">Name: A-Z</option>
+              <option value="name-desc">Name: Z-A</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+              <svg className="w-4 h-4 text-[#6B6C75]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
 
         {/* PRODUCT GRID */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {filteredProducts.map((p) => (
+          {sortedProducts.map((p) => (
             <ProductItem key={p.id} product={p as any} />
           ))}
         </div>
-        
-        {filteredProducts.length === 0 && (
+
+        {sortedProducts.length === 0 && (
           <div className="text-center py-16">
             <p className="text-gray-500 mb-4">No products match your filters</p>
             <button

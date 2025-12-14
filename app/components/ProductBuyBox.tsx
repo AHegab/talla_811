@@ -722,6 +722,8 @@ export function ProductBuyBox({
                     onRecommendation={handleSizeRecommendation}
                     onComplete={() => setSizeRecOpen(false)}
                     productSizeDimensions={product.sizeDimensions ?? undefined}
+                    productType={product.productType ?? undefined}
+                    tags={product.tags ?? undefined}
                   />
                 </div>
               )}

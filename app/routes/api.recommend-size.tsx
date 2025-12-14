@@ -31,6 +31,7 @@ interface EstimatedBodyMeasurements {
   chestWidth: number;
   waistWidth: number;
   hipWidth: number;
+  shoulderWidth: number;
   confidence: number;
 }
 
@@ -107,6 +108,22 @@ function estimateBodyMeasurements(
   };
   hipWidth += hipAdjustments[hipShape];
 
+  // 4. SHOULDER WIDTH (front measurement, half of shoulder span)
+  let shoulderWidth: number;
+  if (gender === 'male') {
+    shoulderWidth = heightCm * 0.24; // ~24% of height for males
+  } else {
+    shoulderWidth = heightCm * 0.22; // ~22% of height for females
+  }
+
+  // Age adjustment for shoulder (shoulders broaden slightly with age)
+  if (age > 40) {
+    shoulderWidth += 0.5;
+  }
+
+  // Clamp shoulder to reasonable range
+  shoulderWidth = Math.max(35, Math.min(55, shoulderWidth));
+
   // Calculate confidence based on how standard the measurements are
   let confidence = 0.8; // Base confidence
 
@@ -124,6 +141,7 @@ function estimateBodyMeasurements(
     chestWidth: Math.round(chestWidth),
     waistWidth: Math.round(waistWidth),
     hipWidth: Math.round(hipWidth),
+    shoulderWidth: Math.round(shoulderWidth),
     confidence: Math.max(0.5, Math.min(1.0, confidence)),
   };
 }
@@ -157,20 +175,52 @@ function isOversizedGarment(sizeDimensions: SizeDimensions): boolean {
 }
 
 /**
- * Determine garment category from size dimensions.
+ * Determine garment category from product type, tags, and size dimensions.
+ * Priority: productType → tags → length heuristic → default to tops
  */
-function detectGarmentCategory(sizeDimensions: SizeDimensions): 'tops' | 'bottoms' | 'dresses' | 'outerwear' {
-  // Simple heuristic - can be improved with actual product category
+function detectGarmentCategory(
+  sizeDimensions: SizeDimensions,
+  productType?: string,
+  tags?: string[]
+): 'tops' | 'bottoms' | 'dresses' | 'outerwear' {
+  const productTypeLower = productType?.toLowerCase() || '';
+  const tagsLower = tags?.map(t => t.toLowerCase()) || [];
+
+  // 1. Check productType first (most reliable)
+  if (productTypeLower.includes('dress') || productTypeLower.includes('gown')) {
+    return 'dresses';
+  }
+  if (productTypeLower.includes('pant') || productTypeLower.includes('jean') ||
+      productTypeLower.includes('short') || productTypeLower.includes('trouser') ||
+      productTypeLower.includes('skirt') || productTypeLower.includes('legging')) {
+    return 'bottoms';
+  }
+  if (productTypeLower.includes('jacket') || productTypeLower.includes('coat') ||
+      productTypeLower.includes('blazer') || productTypeLower.includes('cardigan') ||
+      productTypeLower.includes('hoodie') || productTypeLower.includes('sweater')) {
+    return 'outerwear';
+  }
+
+  // 2. Check tags as secondary indicator
+  if (tagsLower.some(t => t.includes('dress') || t.includes('gown') || t.includes('maxi') || t.includes('midi'))) {
+    return 'dresses';
+  }
+  if (tagsLower.some(t => t.includes('pant') || t.includes('jean') ||
+      t.includes('short') || t.includes('trouser') || t.includes('skirt') || t.includes('legging'))) {
+    return 'bottoms';
+  }
+  if (tagsLower.some(t => t.includes('jacket') || t.includes('coat') ||
+      t.includes('outerwear') || t.includes('blazer') || t.includes('hoodie'))) {
+    return 'outerwear';
+  }
+
+  // 3. Fallback to length heuristic (original logic)
   const firstSize = Object.values(sizeDimensions)[0];
-
-  if (!firstSize) return 'tops';
-
-  // If has length > 70cm, likely a dress or long garment
-  if (firstSize.length && firstSize.length > 70) {
+  if (firstSize?.length && firstSize.length > 70) {
     return 'dresses';
   }
 
-  // Default to tops
+  // 4. Default to tops
   return 'tops';
 }
 
@@ -263,10 +313,33 @@ function findBestSize(
   let secondSmallestDiff = Infinity;
 
   for (const [size, dims] of Object.entries(normalizedDimensions)) {
-    if (!dims.chest) continue;
+    let garmentMeasurement: number;
 
-    const diff = Math.abs(dims.chest - targetGarmentWidth);
-    console.log(`  ${size}: ${dims.chest}cm, diff: ${diff}cm`);
+    // Enhanced bottoms handling: check both waist AND hips
+    if (category === 'bottoms' && dims.waist !== undefined && dims.hips !== undefined) {
+      console.log(`👖 ${size}: waist=${dims.waist}cm, hips=${dims.hips}cm`);
+
+      // For bottoms, BOTH waist and hips must fit
+      const waistFits = dims.waist >= bodyMeasurements.waistWidth - 5; // Allow 5cm negative ease
+      const hipsFits = dims.hips >= bodyMeasurements.hipWidth - 5;
+
+      if (!waistFits || !hipsFits) {
+        console.log(`  ${size}: SKIP - ${!waistFits ? 'waist too tight' : 'hips too tight'}`);
+        continue; // Skip sizes that won't fit in waist or hips
+      }
+
+      // Use the tighter measurement (smaller of waist/hips) for diff calculation
+      garmentMeasurement = Math.min(dims.waist, dims.hips);
+      console.log(`  ${size}: Using ${garmentMeasurement}cm (tighter of waist/hips)`);
+    } else if (dims.chest !== undefined) {
+      // For tops/outerwear/dresses or bottoms without full data
+      garmentMeasurement = dims.chest;
+    } else {
+      continue; // Skip if no measurement available
+    }
+
+    const diff = Math.abs(garmentMeasurement - targetGarmentWidth);
+    console.log(`  ${size}: ${garmentMeasurement}cm, diff: ${diff}cm`);
 
     if (diff < smallestDiff) {
       // New best size found
@@ -321,10 +394,23 @@ function findBestSize(
 
   // Add fit guidance
   const selectedSize = normalizedDimensions[bestSize];
-  if (selectedSize?.chest && targetGarmentWidth > selectedSize.chest + 5) {
-    reasoning += '. May be slightly tight.';
+
+  // Special guidance for bottoms with both waist and hip data
+  if (category === 'bottoms' && selectedSize?.waist && selectedSize?.hips) {
+    const waistFit = selectedSize.waist - bodyMeasurements.waistWidth;
+    const hipFit = selectedSize.hips - bodyMeasurements.hipWidth;
+
+    if (waistFit < 2 || hipFit < 2) {
+      reasoning += '. Snug fit - may be tight';
+    } else if (waistFit > 6 || hipFit > 6) {
+      reasoning += '. Relaxed fit - consider sizing down for closer fit';
+    } else {
+      reasoning += '. Comfortable fit on both waist and hips';
+    }
+  } else if (selectedSize?.chest && targetGarmentWidth > selectedSize.chest + 5) {
+    reasoning += '. May be slightly tight';
   } else if (selectedSize?.chest && targetGarmentWidth < selectedSize.chest - 5) {
-    reasoning += '. May be slightly loose.';
+    reasoning += '. May be slightly loose';
   }
 
   // Add preference note
@@ -364,6 +450,8 @@ export async function action({ request }: Route.ActionArgs) {
       hipShape: HipShape;
       wearingPreference: WearingPreference;
       sizeDimensions?: SizeDimensions;
+      productType?: string;
+      tags?: string[];
     };
 
     const {
@@ -375,6 +463,8 @@ export async function action({ request }: Route.ActionArgs) {
       hipShape,
       wearingPreference,
       sizeDimensions,
+      productType,
+      tags,
     } = body;
 
     console.log('📥 Received request:', {
@@ -411,7 +501,8 @@ export async function action({ request }: Route.ActionArgs) {
     if (sizeDimensions && Object.keys(sizeDimensions).length > 0) {
       console.log('🎯 Using smart matching with product dimensions');
 
-      const category = detectGarmentCategory(sizeDimensions);
+      const category = detectGarmentCategory(sizeDimensions, productType, tags);
+      console.log('📦 Detected category:', category, '(from productType:', productType, 'tags:', tags, ')');
       const result = findBestSize(
         bodyMeasurements,
         sizeDimensions,
@@ -429,6 +520,7 @@ export async function action({ request }: Route.ActionArgs) {
           estimatedChestWidth: bodyMeasurements.chestWidth,
           estimatedWaistWidth: bodyMeasurements.waistWidth,
           estimatedHipWidth: bodyMeasurements.hipWidth,
+          estimatedShoulderWidth: bodyMeasurements.shoulderWidth,
         },
         alternativeSize: result.alternativeSize,
       } as SizeRecommendationResult);
@@ -451,6 +543,7 @@ export async function action({ request }: Route.ActionArgs) {
         estimatedChestWidth: bodyMeasurements.chestWidth,
         estimatedWaistWidth: bodyMeasurements.waistWidth,
         estimatedHipWidth: bodyMeasurements.hipWidth,
+        estimatedShoulderWidth: bodyMeasurements.shoulderWidth,
       },
     } as SizeRecommendationResult);
 

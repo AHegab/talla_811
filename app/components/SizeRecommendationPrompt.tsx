@@ -16,6 +16,7 @@ interface UserMeasurementInput {
   chest?: number;
   waist?: number;
   hips?: number;
+  shoulder?: number;
 }
 
 interface SizeRecommendation {
@@ -26,6 +27,7 @@ interface SizeRecommendation {
     estimatedChestWidth: number;
     estimatedWaistWidth?: number;
     estimatedHipWidth?: number;
+    estimatedShoulderWidth?: number;
   };
   alternativeSize?: string;
   sizeComparison?: {
@@ -38,6 +40,8 @@ interface SizeRecommendationPromptProps {
   mode?: 'modal' | 'inline';
   onRecommendation?: (size: string) => void;
   productSizeDimensions?: any;
+  productType?: string;
+  tags?: string[];
 }
 
 // Abdomen shape descriptions with SVG illustrations
@@ -226,6 +230,8 @@ export function SizeRecommendationPrompt({
   mode = 'modal',
   onRecommendation,
   productSizeDimensions,
+  productType,
+  tags,
 }: SizeRecommendationPromptProps) {
   const [showForm, setShowForm] = useState(mode === 'inline'); // Auto-open in inline mode
   const [isLoading, setIsLoading] = useState(false);
@@ -271,6 +277,8 @@ export function SizeRecommendationPrompt({
       const requestData = {
         ...measurements,
         sizeDimensions: productSizeDimensions,
+        productType,
+        tags,
       };
       console.log('📤 Sending recommendation request:', requestData);
 
@@ -434,7 +442,7 @@ export function SizeRecommendationPrompt({
               <h4 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#312e81' }}>
                 Estimated Measurements
               </h4>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
                   <div className="text-2xl font-bold" style={{ color: '#4f46e5' }}>
                     {result.measurements.estimatedChestWidth}
@@ -455,6 +463,14 @@ export function SizeRecommendationPrompt({
                       {result.measurements.estimatedHipWidth}
                     </div>
                     <div className="text-xs mt-1" style={{ color: '#4b5563' }}>Hip Width (cm)</div>
+                  </div>
+                )}
+                {result.measurements.estimatedShoulderWidth && (
+                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+                    <div className="text-2xl font-bold" style={{ color: '#4f46e5' }}>
+                      {result.measurements.estimatedShoulderWidth}
+                    </div>
+                    <div className="text-xs mt-1" style={{ color: '#4b5563' }}>Shoulder Width (cm)</div>
                   </div>
                 )}
               </div>
@@ -875,7 +891,7 @@ export function SizeRecommendationPrompt({
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {/* Chest */}
               <div>
                 <label
@@ -945,6 +961,34 @@ export function SizeRecommendationPrompt({
                     })
                   }
                   placeholder="95"
+                  min={1}
+                  step={0.1}
+                  className="w-full rounded-lg border-2 border-indigo-200 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                />
+              </div>
+
+              {/* Shoulder */}
+              <div>
+                <label
+                  htmlFor="shoulder"
+                  className="mb-2 block text-xs font-semibold text-gray-700"
+                >
+                  Shoulder (cm)
+                  <span className="ml-1 text-xs text-gray-500" title="Measure from shoulder point to shoulder point across back">
+                    ⓘ
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  id="shoulder"
+                  value={measurements.shoulder || ''}
+                  onChange={(e) =>
+                    setMeasurements({
+                      ...measurements,
+                      shoulder: parseFloat(e.target.value) || undefined,
+                    })
+                  }
+                  placeholder="42"
                   min={1}
                   step={0.1}
                   className="w-full rounded-lg border-2 border-indigo-200 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"

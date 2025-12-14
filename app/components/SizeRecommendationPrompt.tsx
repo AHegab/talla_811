@@ -287,7 +287,7 @@ export function SizeRecommendationPrompt({
         throw new Error('Failed to get size recommendation');
       }
 
-      const data: SizeRecommendation = await response.json();
+      const data = await response.json() as SizeRecommendation;
       console.log('✅ Size recommendation received:', data);
       setResult(data);
 

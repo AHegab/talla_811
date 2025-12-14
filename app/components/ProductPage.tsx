@@ -99,7 +99,7 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
       });
 
       if (matchingImage) {
-        variantImage = matchingImage;
+        variantImage = matchingImage as any;
         console.log('✅ Matched image by color:', colorValue, matchingImage.url);
       }
     }
@@ -238,7 +238,7 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
         const parsed = JSON.parse(sizeDimensionsMetafield.value);
         console.log('✅ Parsed size dimensions:', parsed);
         if (parsed && typeof parsed === 'object') {
-          pdpProduct.sizeDimensions = parsed;
+          pdpProduct.sizeDimensions = parsed as any;
         }
       } catch (parseError) {
         console.error('❌ Failed to parse size dimensions metafield:', parseError);

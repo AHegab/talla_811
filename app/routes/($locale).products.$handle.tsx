@@ -279,7 +279,7 @@ export default function Product() {
 
   return (
     <>
-      <ProductPage product={product} selectedVariant={selectedVariant} similarProducts={similarProducts} brandSizeChart={brandSizeChart} />
+      <ProductPage product={product} selectedVariant={selectedVariant} similarProducts={similarProducts} brandSizeChart={brandSizeChart as any} />
 
       <Analytics.ProductView
         data={{

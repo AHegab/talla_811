@@ -9,6 +9,7 @@ import {
 } from './ProductBuyBox';
 import type { PDPImage } from './ProductGallery';
 import { ProductGallery } from './ProductGallery';
+import { mapMaterialToFabricType } from '~/lib/fabricMapping';
 
 interface UserMeasurements {
   gender: 'male' | 'female';
@@ -255,7 +256,6 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
 
     if (fabricTypeMetafield?.value) {
       // Use the material mapping to convert material names to fabric types
-      const { mapMaterialToFabricType } = await import('~/lib/fabricMapping');
       const mappedFabricType = mapMaterialToFabricType(fabricTypeMetafield.value);
 
       if (mappedFabricType) {

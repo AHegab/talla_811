@@ -526,6 +526,50 @@ export function SizeRecommendationPrompt({
               </div>
             )}
 
+            {/* Size Comparison Table */}
+            {result.sizeComparison && Object.keys(result.sizeComparison).length > 0 && (
+              <div className="rounded-xl p-6" style={{ background: 'linear-gradient(to bottom right, #f0f9ff, #e0f2fe)' }}>
+                <h4 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#0c4a6e' }}>
+                  How Each Size Fits You
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b-2" style={{ borderColor: '#bae6fd' }}>
+                        <th className="text-left py-2 px-3 font-bold" style={{ color: '#0c4a6e' }}>Size</th>
+                        <th className="text-left py-2 px-3 font-bold" style={{ color: '#0c4a6e' }}>Fit Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(result.sizeComparison).map(([size, description]) => {
+                        const isRecommended = size === result.size;
+                        const isAlternative = size === result.alternativeSize;
+
+                        return (
+                          <tr
+                            key={size}
+                            className="border-b transition-colors hover:bg-white/50"
+                            style={{
+                              borderColor: '#e0f2fe',
+                              backgroundColor: isRecommended ? '#dcfce7' : isAlternative ? '#fef3c7' : 'transparent'
+                            }}
+                          >
+                            <td className="py-3 px-3 font-bold" style={{ color: isRecommended ? '#166534' : '#0c4a6e' }}>
+                              {size}
+                              {isRecommended && <span className="ml-2 text-xs font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: '#22c55e', color: 'white' }}>Recommended</span>}
+                            </td>
+                            <td className="py-3 px-3" style={{ color: isRecommended ? '#166534' : '#475569' }}>
+                              {description}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {/* Alternative Size */}
             {result.alternativeSize && (
               <div className="border-2 rounded-lg p-4" style={{ backgroundColor: '#fffbeb', borderColor: '#fcd34d' }}>

@@ -254,13 +254,15 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
     );
 
     if (fabricTypeMetafield?.value) {
-      const fabricValue = fabricTypeMetafield.value.toLowerCase().trim();
-      // Validate it's one of the expected fabric types
-      if (['cotton', 'cotton_blend', 'jersey_knit', 'highly_elastic'].includes(fabricValue)) {
-        pdpProduct.fabricType = fabricValue as any;
-        console.log('✅ Fabric type:', fabricValue);
+      // Use the material mapping to convert material names to fabric types
+      const { mapMaterialToFabricType } = await import('~/lib/fabricMapping');
+      const mappedFabricType = mapMaterialToFabricType(fabricTypeMetafield.value);
+
+      if (mappedFabricType) {
+        pdpProduct.fabricType = mappedFabricType;
+        console.log('✅ Material:', fabricTypeMetafield.value, '→ Fabric type:', mappedFabricType);
       } else {
-        console.warn('⚠️ Invalid fabric_type value:', fabricValue);
+        console.warn('⚠️ Unknown material:', fabricTypeMetafield.value, '- no stretch adjustment will be applied');
       }
     }
 

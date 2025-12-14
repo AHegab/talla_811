@@ -978,10 +978,10 @@ export function SizeRecommendationPrompt({
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {([
-                { value: 'cotton', label: 'Cotton / Rigid', desc: 'No stretch, structured fabric' },
-                { value: 'cotton_blend', label: 'Cotton Blend', desc: 'Slight stretch, comfortable' },
-                { value: 'jersey_knit', label: 'Jersey / Knit', desc: 'Moderate stretch, form-fitting' },
-                { value: 'highly_elastic', label: 'Highly Elastic', desc: 'High stretch (activewear, leggings)' },
+                { value: 'cotton', label: 'Pure Cotton', desc: 'No stretch, structured fabric' },
+                { value: 'cotton_blend', label: 'Milton / Blends', desc: 'Slight stretch, comfortable' },
+                { value: 'jersey_knit', label: 'Polyester / Knit', desc: 'Moderate stretch, form-fitting' },
+                { value: 'highly_elastic', label: 'Lycra / Stretch', desc: 'High stretch, very flexible' },
               ] as const).map((fabric) => {
                 const selected = measurements.fabricType === fabric.value;
                 return (

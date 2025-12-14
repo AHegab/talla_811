@@ -3,6 +3,7 @@ import type { Route } from './+types/api.recommend-size';
 type WearingPreference = 'very_fitted' | 'fitted' | 'normal' | 'loose' | 'very_loose';
 type AbdomenShape = 'flat' | 'medium' | 'bulging';
 type HipShape = 'straight' | 'average' | 'wide';
+type FabricType = 'cotton' | 'cotton_blend' | 'jersey_knit' | 'highly_elastic';
 
 interface SizeDimensions {
   [size: string]: {
@@ -333,7 +334,8 @@ function findBestSize(
   bodyMeasurements: EstimatedBodyMeasurements,
   sizeDimensions: SizeDimensions,
   wearingPreference: WearingPreference,
-  category: 'tops' | 'bottoms' | 'dresses' | 'outerwear' = 'tops'
+  category: 'tops' | 'bottoms' | 'dresses' | 'outerwear' = 'tops',
+  fabricType?: FabricType
 ): { size: string; confidence: number; reasoning: string; alternativeSize?: string } {
 
   // Detect measurement format
@@ -380,7 +382,7 @@ function findBestSize(
     targetGarmentWidth = primaryBodyMeasurement + oversizedEase[wearingPreference];
   } else {
     // Fitted garments - negative ease for tops (stretchy), less negative for bottoms
-    const fittedEase: Record<WearingPreference, number> =
+    const baseEase: Record<WearingPreference, number> =
       category === 'bottoms'
         ? {
             very_fitted: 4,   // Very tight fit
@@ -397,7 +399,22 @@ function findBestSize(
             very_loose: 15,   // Very loose fit
           };
 
-    targetGarmentWidth = primaryBodyMeasurement - fittedEase[wearingPreference];
+    // Apply fabric stretch multiplier
+    const fabricStretchMultiplier: Record<FabricType, number> = {
+      cotton: 1.0,           // No adjustment (rigid fabric)
+      cotton_blend: 0.95,    // Can size down 5% (slight stretch)
+      jersey_knit: 0.90,     // Can size down 10% (moderate stretch)
+      highly_elastic: 0.85,  // Can size down 15% (high stretch)
+    };
+
+    const stretchMultiplier = fabricType ? fabricStretchMultiplier[fabricType] : 1.0;
+    const adjustedEase = baseEase[wearingPreference] * stretchMultiplier;
+
+    if (fabricType) {
+      console.log(`🧵 Fabric: ${fabricType}, stretch multiplier: ${stretchMultiplier}, adjusted ease: ${adjustedEase}cm`);
+    }
+
+    targetGarmentWidth = primaryBodyMeasurement - adjustedEase;
   }
 
   // Add extra ease for outerwear (layering)
@@ -521,6 +538,7 @@ export async function action({ request }: Route.ActionArgs) {
       sizeDimensions?: SizeDimensions;
       productType?: string;
       tags?: string[];
+      fabricType?: FabricType;
     };
 
     const {
@@ -534,6 +552,7 @@ export async function action({ request }: Route.ActionArgs) {
       sizeDimensions,
       productType,
       tags,
+      fabricType,
     } = body;
 
     console.log('📥 Received request:', {
@@ -576,7 +595,8 @@ export async function action({ request }: Route.ActionArgs) {
         bodyMeasurements,
         sizeDimensions,
         wearingPreference,
-        category
+        category,
+        fabricType
       );
 
       console.log('✅ Recommendation:', result);

@@ -383,6 +383,81 @@ function calculateConfidence(
 }
 
 /**
+ * Generate fit description for a given size compared to user's measurements.
+ */
+function generateFitDescription(
+  sizeMeasurement: number,
+  targetGarmentWidth: number,
+  category: 'tops' | 'bottoms' | 'dresses' | 'outerwear',
+  isOversized: boolean
+): string {
+  const diff = sizeMeasurement - targetGarmentWidth;
+
+  if (isOversized) {
+    // For oversized styles, describe relative to expected oversized fit
+    if (diff < -6) return 'Fitted (less oversized)';
+    if (diff < -2) return 'Slightly fitted';
+    if (diff < 3) return 'Standard oversized';
+    if (diff < 7) return 'Relaxed oversized';
+    return 'Very oversized';
+  } else {
+    // For fitted styles, describe stretch and comfort
+    if (diff < -10) return 'Very tight - needs stretch';
+    if (diff < -6) return 'Snug - fitted look';
+    if (diff < -2) return 'Fitted - hugs body';
+    if (diff < 2) return 'Comfortable fit';
+    if (diff < 6) return 'Relaxed fit';
+    if (diff < 10) return 'Loose fit';
+    return 'Very loose';
+  }
+}
+
+/**
+ * Generate size comparison for all available sizes.
+ */
+function generateSizeComparison(
+  normalizedDimensions: SizeDimensions,
+  targetGarmentWidth: number,
+  category: 'tops' | 'bottoms' | 'dresses' | 'outerwear',
+  isOversized: boolean,
+  bodyMeasurements: EstimatedBodyMeasurements
+): { [size: string]: string } {
+  const comparison: { [size: string]: string } = {};
+
+  for (const [size, dims] of Object.entries(normalizedDimensions)) {
+    let garmentMeasurement: number;
+
+    // Use same logic as findBestSize to determine garment measurement
+    if (category === 'bottoms' && dims.waist !== undefined && dims.hips !== undefined) {
+      // Check if both waist and hips fit
+      const waistFits = dims.waist >= bodyMeasurements.waistWidth - 5;
+      const hipsFits = dims.hips >= bodyMeasurements.hipWidth - 5;
+
+      if (!waistFits || !hipsFits) {
+        comparison[size] = 'Too tight (waist or hips)';
+        continue;
+      }
+
+      garmentMeasurement = Math.min(dims.waist, dims.hips);
+    } else if (dims.chest !== undefined) {
+      garmentMeasurement = dims.chest;
+    } else {
+      comparison[size] = 'No data';
+      continue;
+    }
+
+    comparison[size] = generateFitDescription(
+      garmentMeasurement,
+      targetGarmentWidth,
+      category,
+      isOversized
+    );
+  }
+
+  return comparison;
+}
+
+/**
  * Find best size based on body measurements and wearing preference.
  */
 function findBestSize(
@@ -392,7 +467,7 @@ function findBestSize(
   category: 'tops' | 'bottoms' | 'dresses' | 'outerwear' = 'tops',
   fabricType?: FabricType,
   hasOptionalMeasurements: boolean = false
-): { size: string; confidence: number; reasoning: string; alternativeSize?: string } {
+): { size: string; confidence: number; reasoning: string; alternativeSize?: string; sizeComparison: { [size: string]: string } } {
 
   // Detect measurement format
   const isFlatLay = areFlayLayMeasurements(sizeDimensions);
@@ -563,11 +638,21 @@ function findBestSize(
     alternativeSize = secondBestSize;
   }
 
+  // Generate size comparison for all available sizes
+  const sizeComparison = generateSizeComparison(
+    normalizedDimensions,
+    targetGarmentWidth,
+    category,
+    isOversized,
+    bodyMeasurements
+  );
+
   return {
     size: bestSize,
     confidence: Math.round(confidence * 100) / 100,
     reasoning,
     alternativeSize,
+    sizeComparison,
   };
 }
 
@@ -676,6 +761,7 @@ export async function action({ request }: Route.ActionArgs) {
         },
         garmentMeasurements,
         alternativeSize: result.alternativeSize,
+        sizeComparison: result.sizeComparison,
       } as SizeRecommendationResult);
     }
 

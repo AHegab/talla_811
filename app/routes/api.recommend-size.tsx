@@ -4,6 +4,7 @@ type WearingPreference = 'very_fitted' | 'fitted' | 'normal' | 'loose' | 'very_l
 type AbdomenShape = 'flat' | 'medium' | 'bulging';
 type HipShape = 'straight' | 'average' | 'wide';
 type FabricType = 'cotton' | 'cotton_blend' | 'jersey_knit' | 'highly_elastic';
+type BodyType = 'athletic' | 'pear' | 'apple' | 'rectangle' | 'hourglass';
 
 interface SizeDimensions {
   [size: string]: {
@@ -42,6 +43,108 @@ interface EstimatedBodyMeasurements {
   hipWidth: number;
   shoulderWidth: number;
   confidence: number;
+  bodyType: BodyType;
+}
+
+/**
+ * Detect body type based on chest, waist, and hip proportions.
+ */
+function detectBodyType(
+  chestWidth: number,
+  waistWidth: number,
+  hipWidth: number,
+  gender: 'male' | 'female'
+): BodyType {
+  // Calculate ratios
+  const chestToWaist = chestWidth / waistWidth;
+  const hipToWaist = hipWidth / waistWidth;
+  const chestToHip = chestWidth / hipWidth;
+
+  if (gender === 'male') {
+    // Male body types
+    if (chestToWaist >= 1.12) {
+      // Broad shoulders, narrow waist
+      return 'athletic';
+    }
+    if (waistWidth > chestWidth * 0.95) {
+      // Wider waist relative to chest
+      return 'apple';
+    }
+    return 'rectangle'; // Proportional build
+  } else {
+    // Female body types
+    const waistDefinition = Math.min(chestToWaist, hipToWaist);
+
+    if (waistDefinition >= 1.25) {
+      // Well-defined waist
+      if (Math.abs(chestToHip - 1.0) < 0.1) {
+        // Chest and hips similar
+        return 'hourglass';
+      }
+      if (hipToWaist > chestToWaist) {
+        // Hips wider than chest
+        return 'pear';
+      }
+      // Chest wider than hips
+      return 'athletic';
+    }
+
+    if (hipToWaist > 1.15) {
+      // Hips wider than waist but less defined
+      return 'pear';
+    }
+
+    if (waistWidth >= chestWidth * 0.9) {
+      // Waist close to chest width
+      return 'apple';
+    }
+
+    return 'rectangle'; // Balanced proportions
+  }
+}
+
+/**
+ * Apply body type adjustments to target garment width.
+ */
+function applyBodyTypeAdjustment(
+  targetWidth: number,
+  bodyType: BodyType,
+  category: 'tops' | 'bottoms' | 'dresses' | 'outerwear'
+): number {
+  let adjustment = 0;
+
+  switch (bodyType) {
+    case 'athletic':
+      // Broad shoulders - need more room in tops/outerwear
+      if (category === 'tops' || category === 'outerwear') {
+        adjustment = 2;
+      }
+      break;
+
+    case 'pear':
+      // Wider hips - need more room in bottoms, less in tops
+      if (category === 'bottoms') {
+        adjustment = 2;
+      } else if (category === 'tops') {
+        adjustment = -1;
+      }
+      break;
+
+    case 'apple':
+      // Fuller midsection - need room in waist area
+      if (category === 'tops' || category === 'dresses') {
+        adjustment = 1;
+      }
+      break;
+
+    case 'hourglass':
+    case 'rectangle':
+      // Proportional - no adjustment needed
+      adjustment = 0;
+      break;
+  }
+
+  return targetWidth + adjustment;
 }
 
 /**
@@ -158,12 +261,21 @@ function estimateBodyMeasurements(
     confidence -= 0.05;
   }
 
+  // Detect body type based on proportions
+  const bodyType = detectBodyType(
+    Math.round(chestWidth),
+    Math.round(waistWidth),
+    Math.round(hipWidth),
+    gender
+  );
+
   return {
     chestWidth: Math.round(chestWidth),
     waistWidth: Math.round(waistWidth),
     hipWidth: Math.round(hipWidth),
     shoulderWidth: Math.round(shoulderWidth),
     confidence: Math.max(0.5, Math.min(1.0, confidence)),
+    bodyType,
   };
 }
 
@@ -322,6 +434,27 @@ function generateDetailedReasoning(
     reasoning += '. Extra room for layering underneath';
   } else if (category === 'dresses') {
     reasoning += '. Fits your proportions well';
+  }
+
+  // 5. Body type context
+  const bodyTypeLabels: Record<BodyType, string> = {
+    athletic: 'athletic build',
+    pear: 'pear-shaped proportions',
+    apple: 'apple-shaped proportions',
+    rectangle: 'balanced proportions',
+    hourglass: 'hourglass figure',
+  };
+
+  if (bodyMeasurements.bodyType !== 'rectangle' && bodyMeasurements.bodyType !== 'hourglass') {
+    // Only mention body type if it resulted in an adjustment
+    const hasAdjustment =
+      (bodyMeasurements.bodyType === 'athletic' && (category === 'tops' || category === 'outerwear')) ||
+      (bodyMeasurements.bodyType === 'pear' && (category === 'bottoms' || category === 'tops')) ||
+      (bodyMeasurements.bodyType === 'apple' && (category === 'tops' || category === 'dresses'));
+
+    if (hasAdjustment) {
+      reasoning += ` (adjusted for ${bodyTypeLabels[bodyMeasurements.bodyType]})`;
+    }
   }
 
   return reasoning + '.';
@@ -552,6 +685,19 @@ function findBestSize(
   if (category === 'outerwear') {
     targetGarmentWidth += 3;
   }
+
+  // Apply body type adjustments
+  const adjustedTargetWidth = applyBodyTypeAdjustment(
+    targetGarmentWidth,
+    bodyMeasurements.bodyType,
+    category
+  );
+
+  if (adjustedTargetWidth !== targetGarmentWidth) {
+    console.log(`👤 Body type: ${bodyMeasurements.bodyType}, adjustment: ${adjustedTargetWidth - targetGarmentWidth}cm`);
+  }
+
+  targetGarmentWidth = adjustedTargetWidth;
 
   console.log('📏 Body measurement:', primaryBodyMeasurement, 'cm');
   console.log('🎯 Target garment width:', targetGarmentWidth, 'cm');

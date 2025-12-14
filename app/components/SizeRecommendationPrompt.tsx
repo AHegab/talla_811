@@ -29,6 +29,13 @@ interface SizeRecommendation {
     estimatedHipWidth?: number;
     estimatedShoulderWidth?: number;
   };
+  garmentMeasurements?: {
+    chest?: string;
+    waist?: string;
+    hips?: string;
+    shoulder?: string;
+    length?: string;
+  };
   alternativeSize?: string;
   sizeComparison?: {
     [size: string]: string;
@@ -475,6 +482,47 @@ export function SizeRecommendationPrompt({
                 )}
               </div>
             </div>
+
+            {/* Garment Measurements - "This Size Fits" */}
+            {result.garmentMeasurements && Object.values(result.garmentMeasurements).some(v => v !== undefined) && (
+              <div className="rounded-xl p-6" style={{ background: 'linear-gradient(to bottom right, #fef3c7, #fde68a)' }}>
+                <h4 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#78350f' }}>
+                  This Size Fits
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {result.garmentMeasurements.chest && (
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-700">Chest:</span>{' '}
+                      <span className="font-bold text-amber-900">{result.garmentMeasurements.chest} cm</span>
+                    </div>
+                  )}
+                  {result.garmentMeasurements.waist && (
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-700">Waist:</span>{' '}
+                      <span className="font-bold text-amber-900">{result.garmentMeasurements.waist} cm</span>
+                    </div>
+                  )}
+                  {result.garmentMeasurements.hips && (
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-700">Hips:</span>{' '}
+                      <span className="font-bold text-amber-900">{result.garmentMeasurements.hips} cm</span>
+                    </div>
+                  )}
+                  {result.garmentMeasurements.shoulder && (
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-700">Shoulder:</span>{' '}
+                      <span className="font-bold text-amber-900">{result.garmentMeasurements.shoulder} cm</span>
+                    </div>
+                  )}
+                  {result.garmentMeasurements.length && (
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-700">Length:</span>{' '}
+                      <span className="font-bold text-amber-900">{result.garmentMeasurements.length} cm</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Alternative Size */}
             {result.alternativeSize && (

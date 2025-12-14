@@ -20,6 +20,14 @@ interface SizeRecommendationResult {
     estimatedChestWidth: number;
     estimatedWaistWidth?: number;
     estimatedHipWidth?: number;
+    estimatedShoulderWidth?: number;
+  };
+  garmentMeasurements?: {
+    chest?: string;
+    waist?: string;
+    hips?: string;
+    shoulder?: string;
+    length?: string;
   };
   alternativeSize?: string;
   sizeComparison?: {
@@ -33,6 +41,18 @@ interface EstimatedBodyMeasurements {
   hipWidth: number;
   shoulderWidth: number;
   confidence: number;
+}
+
+/**
+ * Format a measurement value for display.
+ * Handles both single values and ranges.
+ */
+function formatMeasurement(value: number | [number, number] | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  if (Array.isArray(value)) {
+    return `${value[0]}-${value[1]}`;
+  }
+  return value.toString();
 }
 
 /**
@@ -225,6 +245,88 @@ function detectGarmentCategory(
 }
 
 /**
+ * Generate detailed, informative reasoning for the size recommendation.
+ */
+function generateDetailedReasoning(
+  confidence: number,
+  category: 'tops' | 'bottoms' | 'dresses' | 'outerwear',
+  selectedSize: any,
+  targetGarmentWidth: number,
+  bodyMeasurements: EstimatedBodyMeasurements,
+  wearingPreference: WearingPreference,
+  isOversized: boolean
+): string {
+  let reasoning = '';
+
+  // 1. Base confidence message
+  if (confidence >= 0.85) {
+    reasoning = 'This size is an excellent match for your measurements';
+  } else if (confidence >= 0.70) {
+    reasoning = 'This size should fit you well';
+  } else if (confidence >= 0.55) {
+    reasoning = 'This size may work, but fit could vary';
+  } else {
+    reasoning = 'This is the closest available size';
+  }
+
+  // 2. Add wearing preference context
+  const prefLabels: Record<WearingPreference, string> = {
+    very_fitted: 'very fitted',
+    fitted: 'fitted',
+    normal: 'comfortable',
+    loose: 'relaxed',
+    very_loose: 'very loose',
+  };
+  reasoning += ` for a ${prefLabels[wearingPreference]} fit`;
+
+  // 3. Add specific fit details based on category and measurements
+  if (selectedSize) {
+    // BOTTOMS: Provide waist and hip specific guidance
+    if (category === 'bottoms' && selectedSize.waist && selectedSize.hips) {
+      const waistEase = selectedSize.waist - bodyMeasurements.waistWidth;
+      const hipEase = selectedSize.hips - bodyMeasurements.hipWidth;
+
+      if (waistEase < 2 || hipEase < 2) {
+        reasoning += '. Snug fit - fabric should have some stretch';
+      } else if (waistEase > 6 || hipEase > 6) {
+        reasoning += '. Relaxed fit with extra room';
+      } else {
+        reasoning += '. Comfortable fit on both waist and hips';
+      }
+    }
+    // TOPS/OUTERWEAR/DRESSES: Provide ease-based guidance
+    else if (selectedSize.chest) {
+      const ease = selectedSize.chest - targetGarmentWidth;
+
+      if (isOversized) {
+        reasoning += `. Oversized style with ${Math.round(Math.abs(ease))}cm of extra room for a relaxed, streetwear look`;
+      } else {
+        if (ease < -8) {
+          reasoning += '. Very fitted - close to body, fabric should have stretch';
+        } else if (ease < -4) {
+          reasoning += '. Fitted style - hugs your body comfortably';
+        } else if (ease < 2) {
+          reasoning += '. Close to body with slight ease for movement';
+        } else if (ease < 6) {
+          reasoning += '. Classic fit with comfortable room';
+        } else {
+          reasoning += '. Relaxed fit with generous ease';
+        }
+      }
+    }
+  }
+
+  // 4. Category-specific notes
+  if (category === 'outerwear') {
+    reasoning += '. Extra room for layering underneath';
+  } else if (category === 'dresses') {
+    reasoning += '. Fits your proportions well';
+  }
+
+  return reasoning + '.';
+}
+
+/**
  * Find best size based on body measurements and wearing preference.
  */
 function findBestSize(
@@ -380,50 +482,17 @@ function findBestSize(
   // Factor in body measurement confidence
   confidence = confidence * bodyMeasurements.confidence;
 
-  // Generate reasoning
-  let reasoning: string;
-  if (confidence >= 0.85) {
-    reasoning = 'Excellent fit based on your measurements';
-  } else if (confidence >= 0.70) {
-    reasoning = 'Good fit - recommended for your measurements';
-  } else if (confidence >= 0.55) {
-    reasoning = 'Acceptable fit - may vary by style';
-  } else {
-    reasoning = 'Best available option - check size chart carefully';
-  }
-
-  // Add fit guidance
+  // Generate detailed reasoning
   const selectedSize = normalizedDimensions[bestSize];
-
-  // Special guidance for bottoms with both waist and hip data
-  if (category === 'bottoms' && selectedSize?.waist && selectedSize?.hips) {
-    const waistFit = selectedSize.waist - bodyMeasurements.waistWidth;
-    const hipFit = selectedSize.hips - bodyMeasurements.hipWidth;
-
-    if (waistFit < 2 || hipFit < 2) {
-      reasoning += '. Snug fit - may be tight';
-    } else if (waistFit > 6 || hipFit > 6) {
-      reasoning += '. Relaxed fit - consider sizing down for closer fit';
-    } else {
-      reasoning += '. Comfortable fit on both waist and hips';
-    }
-  } else if (selectedSize?.chest && targetGarmentWidth > selectedSize.chest + 5) {
-    reasoning += '. May be slightly tight';
-  } else if (selectedSize?.chest && targetGarmentWidth < selectedSize.chest - 5) {
-    reasoning += '. May be slightly loose';
-  }
-
-  // Add preference note
-  const prefLabels: Record<WearingPreference, string> = {
-    very_fitted: 'very fitted',
-    fitted: 'fitted',
-    normal: 'normal',
-    loose: 'loose',
-    very_loose: 'very loose',
-  };
-  if (wearingPreference !== 'normal') {
-    reasoning += ` (${prefLabels[wearingPreference]} fit)`;
-  }
+  const reasoning = generateDetailedReasoning(
+    confidence,
+    category,
+    selectedSize,
+    targetGarmentWidth,
+    bodyMeasurements,
+    wearingPreference,
+    isOversized
+  );
 
   // Determine alternative size
   let alternativeSize: string | undefined;
@@ -512,6 +581,16 @@ export async function action({ request }: Route.ActionArgs) {
 
       console.log('✅ Recommendation:', result);
 
+      // Extract garment measurements for the recommended size
+      const recommendedSizeDims = sizeDimensions[result.size];
+      const garmentMeasurements = recommendedSizeDims ? {
+        chest: formatMeasurement(recommendedSizeDims.chest),
+        waist: formatMeasurement(recommendedSizeDims.waist),
+        hips: formatMeasurement(recommendedSizeDims.hips),
+        shoulder: formatMeasurement(recommendedSizeDims.shoulder),
+        length: formatMeasurement(recommendedSizeDims.length),
+      } : undefined;
+
       return Response.json({
         size: result.size,
         confidence: result.confidence,
@@ -522,6 +601,7 @@ export async function action({ request }: Route.ActionArgs) {
           estimatedHipWidth: bodyMeasurements.hipWidth,
           estimatedShoulderWidth: bodyMeasurements.shoulderWidth,
         },
+        garmentMeasurements,
         alternativeSize: result.alternativeSize,
       } as SizeRecommendationResult);
     }

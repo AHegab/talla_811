@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from '@shopify/remix-oxygen';
-import { getMongoDBClient, isAnalyticsEnabled } from '~/lib/mongodb.server';
+import { getMongoDBConnection, isAnalyticsEnabled } from '~/lib/mongodb.server';
+import { initializeCollections } from '~/lib/mongodb-init.server';
 import { validateEventBatch, sanitizeEventBatch } from '~/lib/analytics/eventValidator.server';
 import { processEvents } from '~/lib/analytics/eventProcessor.server';
 import { logError, createErrorResponse, withTimeout } from '~/utils/errorHandling';
@@ -80,26 +81,45 @@ export async function action({ request, context }: ActionFunctionArgs) {
       return createErrorResponse('Failed to sanitize events', 400, sanitizeError);
     }
 
-    // Get MongoDB Data API client
-    let client;
+    // Get MongoDB connection
+    let db;
     try {
-      client = getMongoDBClient(context.env);
-    } catch (clientError) {
-      logError(clientError, {
+      db = await withTimeout(
+        getMongoDBConnection(context.env),
+        10000,
+        'MongoDB connection timeout'
+      );
+    } catch (connectionError) {
+      logError(connectionError, {
         action: 'api.analytics.events',
-        step: 'mongodb-client',
+        step: 'mongodb-connection',
       });
       return createErrorResponse(
-        'Failed to initialize analytics database client',
+        'Failed to connect to analytics database',
         503,
-        clientError
+        connectionError
       );
+    }
+
+    // Initialize collections if needed (this is idempotent)
+    try {
+      await withTimeout(
+        initializeCollections(db),
+        15000,
+        'Collection initialization timeout'
+      );
+    } catch (initError) {
+      logError(initError, {
+        action: 'api.analytics.events',
+        step: 'initialize-collections',
+      });
+      // Continue anyway - collections might already exist
     }
 
     // Process events
     try {
       await withTimeout(
-        processEvents(client, sanitizedEvents),
+        processEvents(db, sanitizedEvents),
         30000,
         'Event processing timeout'
       );

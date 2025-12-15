@@ -10,6 +10,7 @@ import { useSearchParams } from 'react-router';
 
 import SizeChart from './SizeChart';
 import { SizeRecommendationPrompt } from './SizeRecommendationPrompt';
+import { useOptionalAnalytics } from '~/lib/analytics/AnalyticsProvider';
 
 export interface PDPVariant {
   id: string;
@@ -104,6 +105,24 @@ export function ProductBuyBox({
       return initial;
     },
   );
+
+  // Analytics
+  const analytics = useOptionalAnalytics();
+
+  // Track product view
+  useEffect(() => {
+    if (analytics) {
+      analytics.trackEvent('product_view', {
+        productId: product.id,
+        productTitle: product.title,
+        productHandle: product.handle,
+        variantId: selectedVariant?.id,
+        variantTitle: selectedVariant?.title,
+        price: selectedVariant?.price.amount,
+        availableForSale: selectedVariant?.availableForSale,
+      });
+    }
+  }, [analytics, product.id, product.title, product.handle, selectedVariant?.id, selectedVariant?.title, selectedVariant?.price.amount, selectedVariant?.availableForSale]);
 
   // Comprehensive color name to hex map
   const colorNameToHex: Record<string, string> = {
@@ -342,6 +361,20 @@ export function ProductBuyBox({
   const handleAddToCart = () => {
     setAddedToCart(true);
     setShowConfetti(true);
+
+    // Track add to cart event
+    if (analytics) {
+      analytics.trackEvent('add_to_cart', {
+        productId: product.id,
+        productTitle: product.title,
+        productHandle: product.handle,
+        variantId: selectedVariant.id,
+        variantTitle: selectedVariant.title,
+        price: selectedVariant.price.amount,
+        quantity: 1,
+      });
+    }
+
     window.setTimeout(() => {
       setAddedToCart(false);
       setShowConfetti(false);

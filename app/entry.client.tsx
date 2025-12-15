@@ -2,6 +2,7 @@ import {HydratedRouter} from 'react-router/dom';
 import {startTransition, StrictMode} from 'react';
 import {hydrateRoot} from 'react-dom/client';
 import {NonceProvider} from '@shopify/hydrogen';
+import {initializeAnalytics} from '~/lib/analytics/initialize';
 
 if (!window.location.origin.includes('webcache.googleusercontent.com')) {
   startTransition(() => {
@@ -17,5 +18,8 @@ if (!window.location.origin.includes('webcache.googleusercontent.com')) {
         </NonceProvider>
       </StrictMode>,
     );
+
+    // Initialize analytics after hydration
+    initializeAnalytics();
   });
 }

@@ -18,6 +18,7 @@ import type { Route } from './+types/root';
 import { PageLayout } from './components/PageLayout';
 import tailwindCss from './styles/tailwind.css?url';
 import { ErrorBoundary as ReactErrorBoundary } from './components/ErrorBoundary';
+import { AnalyticsProvider } from './lib/analytics/AnalyticsProvider';
 
 export type RootLoader = typeof loader;
 
@@ -198,9 +199,11 @@ export default function App() {
         shop={data.shop}
         consent={data.consent}
       >
-        <PageLayout {...data}>
-          <Outlet />
-        </PageLayout>
+        <AnalyticsProvider userId={undefined}>
+          <PageLayout {...data}>
+            <Outlet />
+          </PageLayout>
+        </AnalyticsProvider>
       </Analytics.Provider>
     </ReactErrorBoundary>
   );

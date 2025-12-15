@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 /**
  * Session Manager for Analytics
  *
@@ -13,22 +15,6 @@ const SESSION_ID_KEY = 'talla_session_id';
 const ANONYMOUS_ID_KEY = 'talla_anonymous_id';
 const SESSION_LAST_ACTIVITY_KEY = 'talla_session_last_activity';
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-
-/**
- * Generate a UUID v4 using browser's native crypto API
- */
-function generateUUID(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-
-  // Fallback for older browsers
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
 
 /**
  * Get or create session ID
@@ -60,14 +46,14 @@ export function getSessionId(): string {
     }
 
     // Create new session
-    const newSessionId = generateUUID();
+    const newSessionId = uuidv4();
     sessionStorage.setItem(SESSION_ID_KEY, newSessionId);
     sessionStorage.setItem(SESSION_LAST_ACTIVITY_KEY, now.toString());
 
     return newSessionId;
   } catch (error) {
     // Fallback if sessionStorage is not available
-    return generateUUID();
+    return uuidv4();
   }
 }
 
@@ -98,7 +84,7 @@ export function getAnonymousId(): string {
 
     // Create new anonymous ID if none exists
     if (!anonymousId) {
-      anonymousId = generateUUID();
+      anonymousId = uuidv4();
     }
 
     // Store in both cookie and localStorage for redundancy
@@ -108,7 +94,7 @@ export function getAnonymousId(): string {
     return anonymousId;
   } catch (error) {
     // Fallback if cookie/localStorage is not available
-    return generateUUID();
+    return uuidv4();
   }
 }
 

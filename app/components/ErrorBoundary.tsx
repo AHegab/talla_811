@@ -24,84 +24,10 @@ export class ErrorBoundary extends Component<Props, State> {
     // Log error to error reporting service
     console.error('ErrorBoundary caught an error:', error, errorInfo);
 
-    // Track error in analytics
-    if (typeof window !== 'undefined') {
-      try {
-        fetch('/api/analytics/events', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            sessionId: this.getSessionId(),
-            anonymousId: this.getAnonymousId(),
-            events: [{
-              eventType: 'error',
-              eventData: {
-                message: error.message,
-                stack: error.stack,
-                componentStack: errorInfo.componentStack,
-              },
-              timestamp: Date.now(),
-              page: {
-                url: window.location.href,
-                path: window.location.pathname,
-                title: document.title,
-                referrer: document.referrer,
-              },
-            }],
-            context: {
-              userAgent: navigator.userAgent,
-              screenSize: {
-                width: window.screen.width,
-                height: window.screen.height,
-              },
-              deviceType: this.getDeviceType(),
-            },
-          }),
-          keepalive: true,
-        }).catch(() => {
-          // Silently fail - don't disrupt error handling
-        });
-      } catch (err) {
-        // Silently fail
-      }
-    }
-
     // You can integrate with error tracking services here (e.g., Sentry)
     if (typeof window !== 'undefined' && (window as any).Sentry) {
       (window as any).Sentry.captureException(error, { extra: errorInfo });
     }
-  }
-
-  // Helper method to get session ID
-  private getSessionId(): string {
-    try {
-      return sessionStorage.getItem('talla_session_id') || 'unknown';
-    } catch {
-      return 'unknown';
-    }
-  }
-
-  // Helper method to get anonymous ID
-  private getAnonymousId(): string {
-    try {
-      return localStorage.getItem('talla_anonymous_id') || 'unknown';
-    } catch {
-      return 'unknown';
-    }
-  }
-
-  // Helper method to get device type
-  private getDeviceType(): string {
-    const ua = navigator.userAgent;
-    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
-      return 'tablet';
-    }
-    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
-      return 'mobile';
-    }
-    return 'desktop';
   }
 
   render() {

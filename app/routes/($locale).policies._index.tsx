@@ -38,7 +38,7 @@ export default function Policies() {
           <p className="text-lg text-gray-600" style={{ fontFamily: 'Quicking, sans-serif' }}>
             Review our store policies and legal information.
           </p>
-        </div>
+        </div> 
 
         {/* Policies Grid */}
         <div className="grid gap-6">

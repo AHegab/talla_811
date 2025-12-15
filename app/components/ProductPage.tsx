@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { useSearchParams } from 'react-router';
 import type { ProductQuery } from 'storefrontapi.generated';
-import {
-    ProductBuyBox,
-    type PDPProduct,
-    type PDPVariant,
-    type SimilarProduct,
-} from './ProductBuyBox';
-import type { PDPImage } from './ProductGallery';
-import { ProductGallery } from './ProductGallery';
+import { ProductHeader } from './ProductHeader';
+import { ProductImagesVertical, type PDPImage } from './ProductImagesVertical';
+import { ProductDescription } from './ProductDescription';
+import { SimilarProductsSection, type SimilarProduct } from './SimilarProductsSection';
+import type { PDPProduct, PDPVariant } from './ProductBuyBox';
 import { mapMaterialToFabricType } from '~/lib/fabricMapping';
 
 interface UserMeasurements {
@@ -32,6 +29,8 @@ interface ProductPageProps {
 }
 
 export function ProductPage({product, selectedVariant, similarProducts, brandSizeChart}: ProductPageProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // Transform selectedVariant to PDPVariant
   const transformVariant = (
     v: NonNullable<ShopifyProduct['selectedOrFirstAvailableVariant']>,
@@ -53,6 +52,44 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
   const [userMeasurements, setUserMeasurements] =
     useState<UserMeasurements | null>(null);
   const [recommendedSize, setRecommendedSize] = useState<string | null>(null);
+
+  // State for selected options (moved from ProductBuyBox)
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
+    () => {
+      const initial: Record<string, string> = {};
+      if (selectedVariant) {
+        selectedVariant.selectedOptions.forEach((option) => {
+          initial[option.name] = option.value;
+        });
+      }
+      return initial;
+    },
+  );
+
+  // Sync selectedOptions with selectedVariant changes
+  useEffect(() => {
+    if (selectedVariant) {
+      const newSelectedOptions: Record<string, string> = {};
+      selectedVariant.selectedOptions.forEach((option) => {
+        newSelectedOptions[option.name] = option.value;
+      });
+      setSelectedOptions(newSelectedOptions);
+    }
+  }, [selectedVariant?.id]);
+
+  // Handle option changes (moved from ProductBuyBox)
+  const handleOptionChange = (optionName: string, value: string) => {
+    // Update local state for immediate UI feedback
+    setSelectedOptions((prev) => ({ ...prev, [optionName]: value }));
+
+    // Update URL search params to trigger variant selection
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set(optionName, value);
+    setSearchParams(newParams, {
+      replace: true,
+      preventScrollReset: true,
+    });
+  };
 
 
   // Transform Shopify product data to PDP format
@@ -292,144 +329,44 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
   // Image gallery handled by ProductGallery
 
   return (
-    <>
-      {/* MAIN PAGE */}
-      <div className="min-h-screen bg-white overflow-x-hidden">
-        <div className="product-container grid grid-cols-1 items-start gap-12 px-6 py-10 md:grid-cols-[55%_45%] lg:grid-cols-[50%_50%] lg:px-12 lg:py-14 max-w-[1600px] mx-auto">
-          {/* Gallery: product gallery with hero image and static thumbnail carousel */}
-          <div className="product-gallery flex w-full flex-col items-center justify-start md:items-start overflow-x-hidden">
-            <ProductGallery
-              key={selectedVariant?.id}
-              images={images}
-              productTitle={product.title}
-            />
-
-            {/* Similar Products Section - Desktop Only */}
-            {similarProducts && similarProducts.length > 0 && (
-              <div className="hidden md:block w-full mt-8">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Similar Products
-                </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {similarProducts.map((similar) => (
-                    <Link
-                      key={similar.id}
-                      to={`/products/${similar.handle}`}
-                      className="group flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-gray-900 hover:shadow-md"
-                    >
-                      {similar.featuredImage && (
-                        <div className="aspect-square w-full overflow-hidden rounded-md bg-gray-100">
-                          <img
-                            src={similar.featuredImage.url}
-                            alt={similar.featuredImage.altText || similar.title}
-                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                          />
-                        </div>
-                      )}
-                      <div className="flex flex-col gap-1">
-                        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
-                          {similar.title}
-                        </h3>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {similar.priceRange.minVariantPrice.currencyCode}{' '}
-                          {similar.priceRange.minVariantPrice.amount}
-                        </p>
-                        {similar.tags && similar.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {similar.tags.slice(0, 2).map((tag, idx) => (
-                              <span
-                                key={idx}
-                                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Details (right side) */}
-          <div className="product-details flex w-full flex-col justify-start md:items-start overflow-x-hidden">
-            {currentVariant && (
-              <ProductBuyBox
-                product={pdpProduct}
-                selectedVariant={currentVariant}
-                recommendedSize={recommendedSize}
-              />
-            )}
-
-            {/* Info sections */}
-            <div className="mt-8 flex flex-col gap-6">
-              {/* Description Panel */}
-              <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-                <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-                  <span className="tracking-wide">Description</span>
-                </div>
-                <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
-                  {product.description || 'No description available.'}
-                </div>
-              </div>
-
-              {/* Similar Products Section - Mobile Only */}
-              {similarProducts && similarProducts.length > 0 && (
-                <div className="w-full md:hidden">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                    Similar Products
-                  </h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    {similarProducts.map((similar) => (
-                      <Link
-                        key={similar.id}
-                        to={`/products/${similar.handle}`}
-                        className="group flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-gray-900 hover:shadow-md"
-                      >
-                        {similar.featuredImage && (
-                          <div className="aspect-square w-full overflow-hidden rounded-md bg-gray-100">
-                            <img
-                              src={similar.featuredImage.url}
-                              alt={similar.featuredImage.altText || similar.title}
-                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                            />
-                          </div>
-                        )}
-                        <div className="flex flex-col gap-1">
-                          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
-                            {similar.title}
-                          </h3>
-                          <p className="text-sm font-semibold text-gray-900">
-                            {similar.priceRange.minVariantPrice.currencyCode}{' '}
-                            {similar.priceRange.minVariantPrice.amount}
-                          </p>
-                          {similar.tags && similar.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {similar.tags.slice(0, 2).map((tag, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+    <div className="min-h-screen bg-white">
+      {/* Scrollable Content */}
+      <div className="pb-16">
+        {/* Images Section - Full Width */}
+        <div>
+          <ProductImagesVertical
+            key={selectedVariant?.id}
+            images={images}
+            productTitle={product.title}
+          />
         </div>
+
+        {/* Description & Materials */}
+        <div className="px-4 py-6 md:px-8 max-w-2xl mx-auto">
+          <ProductDescription
+            description={product.description}
+            fabricType={pdpProduct.fabricType}
+          />
+        </div>
+
+        {/* Similar Products */}
+        {similarProducts && similarProducts.length > 0 && (
+          <div className="px-4 py-6 md:px-8 max-w-2xl mx-auto">
+            <SimilarProductsSection products={similarProducts} />
+          </div>
+        )}
       </div>
 
-      {/* Product gallery handles its own modal viewer */}
-    </>
+      {/* Sticky Header at Bottom */}
+      {currentVariant && (
+        <ProductHeader
+          product={pdpProduct}
+          selectedVariant={currentVariant}
+          recommendedSize={recommendedSize}
+          onOptionChange={handleOptionChange}
+          selectedOptions={selectedOptions}
+        />
+      )}
+    </div>
   );
 }

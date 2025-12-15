@@ -12,7 +12,9 @@
       "Bash(del approutesapi.recommend-size-clean.tsx)",
       "Bash(copy:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

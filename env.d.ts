@@ -12,5 +12,8 @@ import type { HydrogenEnv } from '@shopify/hydrogen';
 declare global {
     interface Env extends HydrogenEnv {
         // Add your custom environment variables here
+        MONGODB_URI: string;
+        MONGODB_DATABASE: string;
+        ANALYTICS_ENABLED?: string;
     }
 }

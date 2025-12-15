@@ -50,6 +50,7 @@ class EventQueue {
   private isFlushing = false;
   private retryCount = 0;
   private unloadListenerAttached = false;
+  private isDisabled = false; // Disable if analytics is not configured
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -65,7 +66,7 @@ class EventQueue {
    * @param eventData - Event-specific data
    */
   public addEvent(eventType: string, eventData: any): void {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || this.isDisabled) {
       return;
     }
 
@@ -205,6 +206,13 @@ class EventQueue {
         body: JSON.stringify(batch),
         keepalive: true, // Keep connection alive during page transitions
       });
+
+      // If analytics is disabled or not configured (503), disable the queue
+      if (response.status === 503) {
+        this.isDisabled = true;
+        this.queue = [];
+        return false;
+      }
 
       return response.ok;
     } catch (error) {

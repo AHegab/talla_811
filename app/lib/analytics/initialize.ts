@@ -40,7 +40,7 @@ export function initializeAnalytics(): void {
     isInitialized = true;
   } catch (error) {
     // Silently fail - don't disrupt user experience
-    console.error('Failed to initialize analytics:', error);
+    // Analytics not available, but app continues to work
   }
 }
 

@@ -1,10 +1,9 @@
-import type { Db } from 'mongodb';
-import { logError } from '~/utils/errorHandling';
-
 /**
- * MongoDB Schema Initialization
+ * MongoDB Schema Documentation
  *
- * Defines collections and indexes for the analytics system.
+ * Since we're using MongoDB Data API (HTTP-based), indexes must be created
+ * manually in MongoDB Atlas UI. This file documents the required schema.
+ *
  * Collections:
  * 1. events - Main event stream (all user actions)
  * 2. sessions - Aggregated session data
@@ -15,317 +14,84 @@ import { logError } from '~/utils/errorHandling';
  */
 
 /**
- * Initialize all collections and indexes
+ * REQUIRED INDEXES (Create manually in MongoDB Atlas)
  *
- * This function is idempotent - it can be called multiple times safely.
- * It will only create collections and indexes that don't already exist.
+ * Collection: events
+ * - { sessionId: 1, timestamp: -1 } - name: "sessionId_timestamp"
+ * - { userId: 1, timestamp: -1 } - name: "userId_timestamp", sparse: true
+ * - { anonymousId: 1, timestamp: -1 } - name: "anonymousId_timestamp"
+ * - { eventType: 1, timestamp: -1 } - name: "eventType_timestamp"
+ * - { timestamp: 1 } - name: "timestamp_ttl", expireAfterSeconds: 7776000 (90 days)
  *
- * @param db - MongoDB database instance
- */
-export async function initializeCollections(db: Db): Promise<void> {
-  try {
-    // Create events collection with indexes
-    await createEventsCollection(db);
-
-    // Create sessions collection with indexes
-    await createSessionsCollection(db);
-
-    // Create users collection with indexes
-    await createUsersCollection(db);
-
-    // Create page_views collection with indexes
-    await createPageViewsCollection(db);
-
-    // Create product_interactions collection with indexes
-    await createProductInteractionsCollection(db);
-
-    // Create heatmap_data collection with indexes
-    await createHeatmapDataCollection(db);
-  } catch (error) {
-    logError(error, { action: 'initializeCollections' });
-    throw error;
-  }
-}
-
-/**
- * Create events collection with indexes
- */
-async function createEventsCollection(db: Db): Promise<void> {
-  const collectionName = 'events';
-
-  try {
-    // Check if collection exists
-    const collections = await db.listCollections({ name: collectionName }).toArray();
-
-    if (collections.length === 0) {
-      // Create collection
-      await db.createCollection(collectionName);
-    }
-
-    const collection = db.collection(collectionName);
-
-    // Create indexes
-    await collection.createIndex(
-      { sessionId: 1, timestamp: -1 },
-      { name: 'sessionId_timestamp' }
-    );
-
-    await collection.createIndex(
-      { userId: 1, timestamp: -1 },
-      { name: 'userId_timestamp', sparse: true }
-    );
-
-    await collection.createIndex(
-      { anonymousId: 1, timestamp: -1 },
-      { name: 'anonymousId_timestamp' }
-    );
-
-    await collection.createIndex(
-      { eventType: 1, timestamp: -1 },
-      { name: 'eventType_timestamp' }
-    );
-
-    // TTL index - automatically delete events older than 90 days
-    await collection.createIndex(
-      { timestamp: 1 },
-      { name: 'timestamp_ttl', expireAfterSeconds: 90 * 24 * 60 * 60 }
-    );
-  } catch (error) {
-    logError(error, { action: 'createEventsCollection', collection: collectionName });
-    throw error;
-  }
-}
-
-/**
- * Create sessions collection with indexes
- */
-async function createSessionsCollection(db: Db): Promise<void> {
-  const collectionName = 'sessions';
-
-  try {
-    const collections = await db.listCollections({ name: collectionName }).toArray();
-
-    if (collections.length === 0) {
-      await db.createCollection(collectionName);
-    }
-
-    const collection = db.collection(collectionName);
-
-    // Create indexes
-    await collection.createIndex(
-      { userId: 1, startTime: -1 },
-      { name: 'userId_startTime', sparse: true }
-    );
-
-    await collection.createIndex(
-      { anonymousId: 1, startTime: -1 },
-      { name: 'anonymousId_startTime' }
-    );
-
-    await collection.createIndex(
-      { startTime: -1 },
-      { name: 'startTime_desc' }
-    );
-
-    // TTL index - automatically delete sessions older than 90 days
-    await collection.createIndex(
-      { startTime: 1 },
-      { name: 'startTime_ttl', expireAfterSeconds: 90 * 24 * 60 * 60 }
-    );
-  } catch (error) {
-    logError(error, { action: 'createSessionsCollection', collection: collectionName });
-    throw error;
-  }
-}
-
-/**
- * Create users collection with indexes
- */
-async function createUsersCollection(db: Db): Promise<void> {
-  const collectionName = 'users';
-
-  try {
-    const collections = await db.listCollections({ name: collectionName }).toArray();
-
-    if (collections.length === 0) {
-      await db.createCollection(collectionName);
-    }
-
-    const collection = db.collection(collectionName);
-
-    // Create indexes
-    await collection.createIndex(
-      { anonymousIds: 1 },
-      { name: 'anonymousIds' }
-    );
-
-    await collection.createIndex(
-      { lastSeen: -1 },
-      { name: 'lastSeen_desc' }
-    );
-
-    await collection.createIndex(
-      { firstSeen: -1 },
-      { name: 'firstSeen_desc' }
-    );
-  } catch (error) {
-    logError(error, { action: 'createUsersCollection', collection: collectionName });
-    throw error;
-  }
-}
-
-/**
- * Create page_views collection with indexes
- */
-async function createPageViewsCollection(db: Db): Promise<void> {
-  const collectionName = 'page_views';
-
-  try {
-    const collections = await db.listCollections({ name: collectionName }).toArray();
-
-    if (collections.length === 0) {
-      await db.createCollection(collectionName);
-    }
-
-    const collection = db.collection(collectionName);
-
-    // Create indexes
-    await collection.createIndex(
-      { sessionId: 1, timestamp: -1 },
-      { name: 'sessionId_timestamp' }
-    );
-
-    await collection.createIndex(
-      { 'page.path': 1, timestamp: -1 },
-      { name: 'path_timestamp' }
-    );
-
-    await collection.createIndex(
-      { timestamp: -1 },
-      { name: 'timestamp_desc' }
-    );
-
-    // TTL index
-    await collection.createIndex(
-      { timestamp: 1 },
-      { name: 'timestamp_ttl', expireAfterSeconds: 90 * 24 * 60 * 60 }
-    );
-  } catch (error) {
-    logError(error, { action: 'createPageViewsCollection', collection: collectionName });
-    throw error;
-  }
-}
-
-/**
- * Create product_interactions collection with indexes
- */
-async function createProductInteractionsCollection(db: Db): Promise<void> {
-  const collectionName = 'product_interactions';
-
-  try {
-    const collections = await db.listCollections({ name: collectionName }).toArray();
-
-    if (collections.length === 0) {
-      await db.createCollection(collectionName);
-    }
-
-    const collection = db.collection(collectionName);
-
-    // Create indexes
-    await collection.createIndex(
-      { productId: 1, timestamp: -1 },
-      { name: 'productId_timestamp' }
-    );
-
-    await collection.createIndex(
-      { eventType: 1, timestamp: -1 },
-      { name: 'eventType_timestamp' }
-    );
-
-    await collection.createIndex(
-      { sessionId: 1 },
-      { name: 'sessionId' }
-    );
-
-    // TTL index
-    await collection.createIndex(
-      { timestamp: 1 },
-      { name: 'timestamp_ttl', expireAfterSeconds: 90 * 24 * 60 * 60 }
-    );
-  } catch (error) {
-    logError(error, { action: 'createProductInteractionsCollection', collection: collectionName });
-    throw error;
-  }
-}
-
-/**
- * Create heatmap_data collection with indexes
- */
-async function createHeatmapDataCollection(db: Db): Promise<void> {
-  const collectionName = 'heatmap_data';
-
-  try {
-    const collections = await db.listCollections({ name: collectionName }).toArray();
-
-    if (collections.length === 0) {
-      await db.createCollection(collectionName);
-    }
-
-    const collection = db.collection(collectionName);
-
-    // Create indexes
-    await collection.createIndex(
-      { 'page.path': 1, timestamp: -1 },
-      { name: 'path_timestamp' }
-    );
-
-    await collection.createIndex(
-      { sessionId: 1 },
-      { name: 'sessionId' }
-    );
-
-    // TTL index - keep heatmap data for 30 days only (large dataset)
-    await collection.createIndex(
-      { timestamp: 1 },
-      { name: 'timestamp_ttl', expireAfterSeconds: 30 * 24 * 60 * 60 }
-    );
-  } catch (error) {
-    logError(error, { action: 'createHeatmapDataCollection', collection: collectionName });
-    throw error;
-  }
-}
-
-/**
- * Drop all analytics collections (use with caution!)
+ * Collection: sessions
+ * - { userId: 1, startTime: -1 } - name: "userId_startTime", sparse: true
+ * - { anonymousId: 1, startTime: -1 } - name: "anonymousId_startTime"
+ * - { startTime: -1 } - name: "startTime_desc"
+ * - { startTime: 1 } - name: "startTime_ttl", expireAfterSeconds: 7776000 (90 days)
  *
- * This will permanently delete all analytics data.
- * Only use in development or when resetting the analytics system.
+ * Collection: users
+ * - { anonymousIds: 1 } - name: "anonymousIds"
+ * - { lastSeen: -1 } - name: "lastSeen_desc"
+ * - { firstSeen: -1 } - name: "firstSeen_desc"
  *
- * @param db - MongoDB database instance
+ * Collection: page_views
+ * - { sessionId: 1, timestamp: -1 } - name: "sessionId_timestamp"
+ * - { "page.path": 1, timestamp: -1 } - name: "path_timestamp"
+ * - { timestamp: -1 } - name: "timestamp_desc"
+ * - { timestamp: 1 } - name: "timestamp_ttl", expireAfterSeconds: 7776000 (90 days)
+ *
+ * Collection: product_interactions
+ * - { productId: 1, timestamp: -1 } - name: "productId_timestamp"
+ * - { eventType: 1, timestamp: -1 } - name: "eventType_timestamp"
+ * - { sessionId: 1 } - name: "sessionId"
+ * - { timestamp: 1 } - name: "timestamp_ttl", expireAfterSeconds: 7776000 (90 days)
+ *
+ * Collection: heatmap_data
+ * - { "page.path": 1, timestamp: -1 } - name: "path_timestamp"
+ * - { sessionId: 1 } - name: "sessionId"
+ * - { timestamp: 1 } - name: "timestamp_ttl", expireAfterSeconds: 2592000 (30 days)
  */
-export async function dropAllCollections(db: Db): Promise<void> {
-  const collections = [
-    'events',
-    'sessions',
-    'users',
-    'page_views',
-    'product_interactions',
-    'heatmap_data',
-  ];
 
-  try {
-    for (const collectionName of collections) {
-      try {
-        await db.collection(collectionName).drop();
-      } catch (error) {
-        // Ignore error if collection doesn't exist
-        if ((error as any).code !== 26) {
-          throw error;
-        }
-      }
-    }
-  } catch (error) {
-    logError(error, { action: 'dropAllCollections' });
-    throw error;
-  }
-}
+/**
+ * SCHEMA EXAMPLES
+ *
+ * events:
+ * {
+ *   sessionId: "uuid",
+ *   anonymousId: "uuid",
+ *   userId: "shopify_customer_id", // optional
+ *   eventType: "pageview",
+ *   eventData: {},
+ *   page: { url, path, title, referrer },
+ *   timestamp: ISODate(),
+ *   userAgent: "string",
+ *   deviceType: "desktop|mobile|tablet",
+ *   screenSize: { width: 1920, height: 1080 }
+ * }
+ *
+ * sessions:
+ * {
+ *   sessionId: "uuid",
+ *   userId: "shopify_customer_id", // optional
+ *   anonymousId: "uuid",
+ *   startTime: ISODate(),
+ *   endTime: ISODate(),
+ *   duration: 12345, // milliseconds
+ *   pageViews: 5,
+ *   scrollDepthMax: 75,
+ *   addedToCart: false,
+ *   startedCheckout: false
+ * }
+ *
+ * users:
+ * {
+ *   userId: "shopify_customer_id",
+ *   anonymousIds: ["uuid1", "uuid2"],
+ *   firstSeen: ISODate(),
+ *   lastSeen: ISODate(),
+ *   totalSessions: 10,
+ *   totalPageViews: 50
+ * }
+ */
+
+export const MONGODB_SCHEMA_VERSION = '1.0.0';

@@ -1,154 +1,226 @@
-import { MongoClient, type Db } from 'mongodb';
-import { withTimeout, retryWithBackoff, logError } from '~/utils/errorHandling';
+import { withTimeout, logError } from '~/utils/errorHandling';
 
 /**
- * MongoDB Connection Utility
+ * MongoDB Data API Client
  *
- * Provides connection pooling optimized for edge runtime (Cloudflare Workers).
+ * HTTP-based client for MongoDB Atlas Data API.
+ * Works in edge runtime environments (Cloudflare Workers, Shopify Oxygen).
+ *
  * Features:
- * - Connection caching to avoid creating new connections per request
+ * - RESTful API calls instead of native driver
  * - Timeout handling (10 second max)
  * - Automatic retry with exponential backoff
  * - Health check function
  * - Graceful error handling
  */
 
-// Global connection cache for edge runtime
-let cachedClient: MongoClient | null = null;
-let cachedDb: Db | null = null;
-let connectionPromise: Promise<MongoClient> | null = null;
+export interface MongoDBDataAPIClient {
+  database: string;
+  cluster: string;
+  apiUrl: string;
+  apiKey: string;
+}
 
 /**
- * Get MongoDB database connection
+ * Get MongoDB Data API client
  *
- * @param env - Environment variables containing MONGODB_URI and MONGODB_DATABASE
- * @returns MongoDB database instance
- * @throws Error if connection fails or environment variables are missing
+ * @param env - Environment variables
+ * @returns MongoDB Data API client configuration
  */
-export async function getMongoDBConnection(env: Env): Promise<Db> {
+export function getMongoDBClient(env: Env): MongoDBDataAPIClient {
   // Validate environment variables
-  if (!env.MONGODB_URI) {
-    const error = new Error('MONGODB_URI environment variable is not set');
-    logError(error, { action: 'getMongoDBConnection', step: 'validate-env' });
+  if (!env.MONGODB_DATA_API_URL) {
+    const error = new Error('MONGODB_DATA_API_URL environment variable is not set');
+    logError(error, { action: 'getMongoDBClient', step: 'validate-env' });
+    throw error;
+  }
+
+  if (!env.MONGODB_DATA_API_KEY) {
+    const error = new Error('MONGODB_DATA_API_KEY environment variable is not set');
+    logError(error, { action: 'getMongoDBClient', step: 'validate-env' });
     throw error;
   }
 
   if (!env.MONGODB_DATABASE) {
     const error = new Error('MONGODB_DATABASE environment variable is not set');
-    logError(error, { action: 'getMongoDBConnection', step: 'validate-env' });
+    logError(error, { action: 'getMongoDBClient', step: 'validate-env' });
     throw error;
   }
 
-  // Return cached database if available
-  if (cachedDb && cachedClient) {
-    return cachedDb;
+  if (!env.MONGODB_CLUSTER_NAME) {
+    const error = new Error('MONGODB_CLUSTER_NAME environment variable is not set');
+    logError(error, { action: 'getMongoDBClient', step: 'validate-env' });
+    throw error;
   }
 
-  try {
-    // If a connection is already in progress, wait for it
-    if (connectionPromise) {
-      await connectionPromise;
-      if (cachedDb) {
-        return cachedDb;
-      }
-    }
-
-    // Create new connection with retry logic
-    connectionPromise = retryWithBackoff(
-      async () => {
-        const client = new MongoClient(env.MONGODB_URI, {
-          maxPoolSize: 10,
-          minPoolSize: 2,
-          serverSelectionTimeoutMS: 10000,
-          socketTimeoutMS: 10000,
-          connectTimeoutMS: 10000,
-        });
-
-        // Connect with timeout
-        await withTimeout(
-          client.connect(),
-          10000,
-          'MongoDB connection timeout (10 seconds)'
-        );
-
-        return client;
-      },
-      {
-        maxRetries: 3,
-        initialDelay: 1000,
-        maxDelay: 5000,
-        onRetry: (attempt, error) => {
-          logError(error, {
-            action: 'getMongoDBConnection',
-            step: 'retry-connection',
-            attempt,
-          });
-        },
-      }
-    );
-
-    const client = await connectionPromise;
-    cachedClient = client;
-    cachedDb = client.db(env.MONGODB_DATABASE);
-
-    return cachedDb;
-  } catch (error) {
-    logError(error, { action: 'getMongoDBConnection', step: 'connect' });
-
-    // Clear cache on error
-    cachedClient = null;
-    cachedDb = null;
-    connectionPromise = null;
-
-    throw new Error(
-      `Failed to connect to MongoDB: ${error instanceof Error ? error.message : String(error)}`
-    );
-  }
+  return {
+    database: env.MONGODB_DATABASE,
+    cluster: env.MONGODB_CLUSTER_NAME,
+    apiUrl: env.MONGODB_DATA_API_URL,
+    apiKey: env.MONGODB_DATA_API_KEY,
+  };
 }
 
 /**
- * Close MongoDB connection
- *
- * Should be called during application shutdown or when connection needs to be reset.
- * Note: In edge runtime (Cloudflare Workers), connections are typically managed automatically.
+ * Insert multiple documents into a collection
  */
-export async function closeConnection(): Promise<void> {
+export async function insertMany(
+  client: MongoDBDataAPIClient,
+  collection: string,
+  documents: any[]
+): Promise<{ insertedIds: string[] }> {
+  const response = await makeDataAPIRequest(client, 'insertMany', {
+    collection,
+    database: client.database,
+    dataSource: client.cluster,
+    documents,
+  });
+
+  return { insertedIds: response.insertedIds || [] };
+}
+
+/**
+ * Insert one document into a collection
+ */
+export async function insertOne(
+  client: MongoDBDataAPIClient,
+  collection: string,
+  document: any
+): Promise<{ insertedId: string }> {
+  const response = await makeDataAPIRequest(client, 'insertOne', {
+    collection,
+    database: client.database,
+    dataSource: client.cluster,
+    document,
+  });
+
+  return { insertedId: response.insertedId };
+}
+
+/**
+ * Update one document
+ */
+export async function updateOne(
+  client: MongoDBDataAPIClient,
+  collection: string,
+  filter: any,
+  update: any,
+  options?: { upsert?: boolean }
+): Promise<{ matchedCount: number; modifiedCount: number; upsertedId?: string }> {
+  const response = await makeDataAPIRequest(client, 'updateOne', {
+    collection,
+    database: client.database,
+    dataSource: client.cluster,
+    filter,
+    update,
+    ...options,
+  });
+
+  return {
+    matchedCount: response.matchedCount || 0,
+    modifiedCount: response.modifiedCount || 0,
+    upsertedId: response.upsertedId,
+  };
+}
+
+/**
+ * Find one document
+ */
+export async function findOne(
+  client: MongoDBDataAPIClient,
+  collection: string,
+  filter: any
+): Promise<any | null> {
+  const response = await makeDataAPIRequest(client, 'findOne', {
+    collection,
+    database: client.database,
+    dataSource: client.cluster,
+    filter,
+  });
+
+  return response.document || null;
+}
+
+/**
+ * Find multiple documents
+ */
+export async function find(
+  client: MongoDBDataAPIClient,
+  collection: string,
+  filter: any,
+  options?: { limit?: number; sort?: any }
+): Promise<any[]> {
+  const response = await makeDataAPIRequest(client, 'find', {
+    collection,
+    database: client.database,
+    dataSource: client.cluster,
+    filter,
+    ...options,
+  });
+
+  return response.documents || [];
+}
+
+/**
+ * Make a request to MongoDB Data API
+ */
+async function makeDataAPIRequest(
+  client: MongoDBDataAPIClient,
+  action: string,
+  body: any
+): Promise<any> {
   try {
-    if (cachedClient) {
-      await withTimeout(
-        cachedClient.close(),
-        5000,
-        'MongoDB close connection timeout'
-      );
+    const url = `${client.apiUrl}/action/${action}`;
+
+    const response = await withTimeout(
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': client.apiKey,
+        },
+        body: JSON.stringify(body),
+      }),
+      10000,
+      'MongoDB Data API request timeout'
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(`MongoDB Data API error (${response.status}): ${errorText}`);
     }
+
+    return await response.json();
   } catch (error) {
-    logError(error, { action: 'closeConnection' });
-  } finally {
-    cachedClient = null;
-    cachedDb = null;
-    connectionPromise = null;
+    logError(error, {
+      action: 'makeDataAPIRequest',
+      apiAction: action,
+      collection: body.collection,
+    });
+    throw error;
   }
 }
 
 /**
- * Health check for MongoDB connection
+ * Health check for MongoDB Data API
  *
  * @param env - Environment variables
  * @returns true if connection is healthy, false otherwise
  */
 export async function healthCheck(env: Env): Promise<boolean> {
   try {
-    const db = await withTimeout(
-      getMongoDBConnection(env),
+    const client = getMongoDBClient(env);
+
+    // Try to find a document (any collection)
+    await withTimeout(
+      makeDataAPIRequest(client, 'findOne', {
+        collection: 'events',
+        database: client.database,
+        dataSource: client.cluster,
+        filter: {},
+      }),
       5000,
       'MongoDB health check timeout'
-    );
-
-    // Ping the database
-    await withTimeout(
-      db.admin().ping(),
-      3000,
-      'MongoDB ping timeout'
     );
 
     return true;

@@ -1,6 +1,7 @@
-import type { Db } from 'mongodb';
 import { logError } from '~/utils/errorHandling';
 import type { ValidatedEvent } from './eventValidator.server';
+import type { MongoDBDataAPIClient } from '~/lib/mongodb.server';
+import { insertMany, updateOne, findOne } from '~/lib/mongodb.server';
 
 /**
  * Event Processor
@@ -16,26 +17,26 @@ import type { ValidatedEvent } from './eventValidator.server';
 /**
  * Process and store events in MongoDB
  *
- * @param db - MongoDB database instance
+ * @param client - MongoDB Data API client
  * @param events - Array of validated and sanitized events
  * @returns Promise that resolves when processing is complete
  */
-export async function processEvents(db: Db, events: ValidatedEvent[]): Promise<void> {
+export async function processEvents(client: MongoDBDataAPIClient, events: ValidatedEvent[]): Promise<void> {
   if (events.length === 0) {
     return;
   }
 
   try {
     // Insert all events into the events collection
-    await insertEvents(db, events);
+    await insertEvents(client, events);
 
     // Update or create session
-    await updateSession(db, events);
+    await updateSession(client, events);
 
     // Process page views
     const pageViews = events.filter(e => e.eventType === 'pageview');
     if (pageViews.length > 0) {
-      await processPageViews(db, pageViews);
+      await processPageViews(client, pageViews);
     }
 
     // Process product interactions
@@ -45,13 +46,13 @@ export async function processEvents(db: Db, events: ValidatedEvent[]): Promise<v
       e.eventType === 'remove_from_cart'
     );
     if (productEvents.length > 0) {
-      await processProductInteractions(db, productEvents);
+      await processProductInteractions(client, productEvents);
     }
 
     // Process mouse movements for heatmap
     const mouseEvents = events.filter(e => e.eventType === 'mouse_move');
     if (mouseEvents.length > 0) {
-      await processHeatmapData(db, mouseEvents);
+      await processHeatmapData(client, mouseEvents);
     }
   } catch (error) {
     logError(error, {
@@ -65,12 +66,9 @@ export async function processEvents(db: Db, events: ValidatedEvent[]): Promise<v
 /**
  * Insert events into events collection
  */
-async function insertEvents(db: Db, events: ValidatedEvent[]): Promise<void> {
+async function insertEvents(client: MongoDBDataAPIClient, events: ValidatedEvent[]): Promise<void> {
   try {
-    const eventsCollection = db.collection('events');
-
-    // Use bulk insert for better performance
-    await eventsCollection.insertMany(events, { ordered: false });
+    await insertMany(client, 'events', events);
   } catch (error) {
     logError(error, {
       action: 'insertEvents',
@@ -83,10 +81,8 @@ async function insertEvents(db: Db, events: ValidatedEvent[]): Promise<void> {
 /**
  * Update session data
  */
-async function updateSession(db: Db, events: ValidatedEvent[]): Promise<void> {
+async function updateSession(client: MongoDBDataAPIClient, events: ValidatedEvent[]): Promise<void> {
   try {
-    const sessionsCollection = db.collection('sessions');
-
     // Get the first event to extract session info
     const firstEvent = events[0];
     const lastEvent = events[events.length - 1];
@@ -110,7 +106,9 @@ async function updateSession(db: Db, events: ValidatedEvent[]): Promise<void> {
     const startedCheckout = events.some(e => e.eventType === 'begin_checkout');
 
     // Update or create session
-    await sessionsCollection.updateOne(
+    await updateOne(
+      client,
+      'sessions',
       { sessionId },
       {
         $set: {
@@ -135,7 +133,9 @@ async function updateSession(db: Db, events: ValidatedEvent[]): Promise<void> {
 
     // Update cart/checkout flags if needed
     if (addedToCart || startedCheckout) {
-      await sessionsCollection.updateOne(
+      await updateOne(
+        client,
+        'sessions',
         { sessionId },
         {
           $set: {
@@ -147,10 +147,12 @@ async function updateSession(db: Db, events: ValidatedEvent[]): Promise<void> {
     }
 
     // Calculate and update session duration
-    const session = await sessionsCollection.findOne({ sessionId });
+    const session = await findOne(client, 'sessions', { sessionId });
     if (session && session.startTime && session.endTime) {
-      const duration = session.endTime.getTime() - session.startTime.getTime();
-      await sessionsCollection.updateOne(
+      const duration = new Date(session.endTime).getTime() - new Date(session.startTime).getTime();
+      await updateOne(
+        client,
+        'sessions',
         { sessionId },
         { $set: { duration } }
       );
@@ -158,7 +160,7 @@ async function updateSession(db: Db, events: ValidatedEvent[]): Promise<void> {
 
     // Update user profile if userId is present
     if (userId) {
-      await updateUserProfile(db, userId, anonymousId, firstEvent.timestamp);
+      await updateUserProfile(client, userId, anonymousId, firstEvent.timestamp);
     }
   } catch (error) {
     logError(error, {
@@ -173,15 +175,15 @@ async function updateSession(db: Db, events: ValidatedEvent[]): Promise<void> {
  * Update user profile
  */
 async function updateUserProfile(
-  db: Db,
+  client: MongoDBDataAPIClient,
   userId: string,
   anonymousId: string,
   timestamp: Date
 ): Promise<void> {
   try {
-    const usersCollection = db.collection('users');
-
-    await usersCollection.updateOne(
+    await updateOne(
+      client,
+      'users',
       { userId },
       {
         $set: {
@@ -211,10 +213,8 @@ async function updateUserProfile(
 /**
  * Process page views
  */
-async function processPageViews(db: Db, pageViews: ValidatedEvent[]): Promise<void> {
+async function processPageViews(client: MongoDBDataAPIClient, pageViews: ValidatedEvent[]): Promise<void> {
   try {
-    const pageViewsCollection = db.collection('page_views');
-
     // Prepare page view documents
     const documents = pageViews.map(event => ({
       sessionId: event.sessionId,
@@ -228,7 +228,7 @@ async function processPageViews(db: Db, pageViews: ValidatedEvent[]): Promise<vo
       referrer: event.page.referrer,
     }));
 
-    await pageViewsCollection.insertMany(documents, { ordered: false });
+    await insertMany(client, 'page_views', documents);
   } catch (error) {
     logError(error, {
       action: 'processPageViews',
@@ -242,12 +242,10 @@ async function processPageViews(db: Db, pageViews: ValidatedEvent[]): Promise<vo
  * Process product interactions
  */
 async function processProductInteractions(
-  db: Db,
+  client: MongoDBDataAPIClient,
   productEvents: ValidatedEvent[]
 ): Promise<void> {
   try {
-    const productInteractionsCollection = db.collection('product_interactions');
-
     // Prepare product interaction documents
     const documents = productEvents.map(event => ({
       sessionId: event.sessionId,
@@ -263,7 +261,7 @@ async function processProductInteractions(
       page: event.page,
     }));
 
-    await productInteractionsCollection.insertMany(documents, { ordered: false });
+    await insertMany(client, 'product_interactions', documents);
   } catch (error) {
     logError(error, {
       action: 'processProductInteractions',
@@ -276,10 +274,8 @@ async function processProductInteractions(
 /**
  * Process heatmap data (mouse movements)
  */
-async function processHeatmapData(db: Db, mouseEvents: ValidatedEvent[]): Promise<void> {
+async function processHeatmapData(client: MongoDBDataAPIClient, mouseEvents: ValidatedEvent[]): Promise<void> {
   try {
-    const heatmapDataCollection = db.collection('heatmap_data');
-
     // Prepare heatmap documents
     const documents = mouseEvents.map(event => ({
       sessionId: event.sessionId,
@@ -291,7 +287,7 @@ async function processHeatmapData(db: Db, mouseEvents: ValidatedEvent[]): Promis
       screenSize: event.screenSize,
     }));
 
-    await heatmapDataCollection.insertMany(documents, { ordered: false });
+    await insertMany(client, 'heatmap_data', documents);
   } catch (error) {
     logError(error, {
       action: 'processHeatmapData',

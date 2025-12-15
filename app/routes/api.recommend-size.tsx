@@ -1,5 +1,6 @@
 import type { Route } from './+types/api.recommend-size';
 import { applyBrandAdjustment, type BrandFitProfile } from '~/lib/brandFitProfiles';
+import { logError, validateNumber, sanitizeInput, createErrorResponse } from '~/utils/errorHandling';
 
 type WearingPreference = 'very_fitted' | 'fitted' | 'normal' | 'loose' | 'very_loose';
 type AbdomenShape = 'flat' | 'medium' | 'bulging';
@@ -838,27 +839,20 @@ function findBestSize(
 
 export async function action({ request }: Route.ActionArgs) {
   try {
-    const body = await request.json() as {
-      height: number;
-      weight: number;
-      gender: 'male' | 'female';
-      age: number;
-      abdomenShape: AbdomenShape;
-      hipShape: HipShape;
-      wearingPreference: WearingPreference;
-      sizeDimensions?: SizeDimensions;
-      productType?: string;
-      tags?: string[];
-      fabricType?: FabricType;
-      shoulder?: number;
-      vendor?: string;
-    };
+    // Parse request body with timeout
+    let body: any;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      logError(parseError, { action: 'api.recommend-size', step: 'parse-body' });
+      return createErrorResponse('Invalid JSON request body', 400);
+    }
 
     const {
-      height,
-      weight,
-      gender,
-      age,
+      height: rawHeight,
+      weight: rawWeight,
+      gender: rawGender,
+      age: rawAge,
       abdomenShape,
       hipShape,
       wearingPreference,
@@ -870,65 +864,140 @@ export async function action({ request }: Route.ActionArgs) {
       vendor,
     } = body;
 
-    // Validate inputs
-    if (!height || !weight || !gender || !age || !abdomenShape || !hipShape || !wearingPreference) {
-      return Response.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    // Validate and sanitize required inputs
+    if (!rawHeight || !rawWeight || !rawGender || !rawAge || !abdomenShape || !hipShape || !wearingPreference) {
+      logError(new Error('Missing required fields'), {
+        action: 'api.recommend-size',
+        fields: { rawHeight, rawWeight, rawGender, rawAge, abdomenShape, hipShape, wearingPreference }
+      });
+      return createErrorResponse('Missing required fields: height, weight, gender, age, abdomenShape, hipShape, wearingPreference', 400);
     }
 
-    // Estimate body measurements
-    const bodyMeasurements = estimateBodyMeasurements(
-      height,
-      weight,
-      gender,
-      age,
-      abdomenShape,
-      hipShape
-    );
+    // Validate and sanitize numeric inputs
+    const height = validateNumber(rawHeight, { min: 100, max: 250, fallback: 0 });
+    const weight = validateNumber(rawWeight, { min: 30, max: 300, fallback: 0 });
+    const age = validateNumber(rawAge, { min: 1, max: 120, fallback: 0 });
+
+    if (height === 0 || weight === 0 || age === 0) {
+      logError(new Error('Invalid numeric values'), {
+        action: 'api.recommend-size',
+        values: { rawHeight, rawWeight, rawAge }
+      });
+      return createErrorResponse('Invalid values: height (100-250cm), weight (30-300kg), age (1-120)', 400);
+    }
+
+    // Validate gender
+    const gender = String(rawGender).toLowerCase();
+    if (gender !== 'male' && gender !== 'female') {
+      logError(new Error('Invalid gender'), { action: 'api.recommend-size', gender: rawGender });
+      return createErrorResponse('Invalid gender: must be "male" or "female"', 400);
+    }
+
+    // Validate abdomenShape
+    const validAbdomenShapes: AbdomenShape[] = ['flat', 'medium', 'bulging'];
+    if (!validAbdomenShapes.includes(abdomenShape)) {
+      logError(new Error('Invalid abdomenShape'), { action: 'api.recommend-size', abdomenShape });
+      return createErrorResponse('Invalid abdomenShape: must be "flat", "medium", or "bulging"', 400);
+    }
+
+    // Validate hipShape
+    const validHipShapes: HipShape[] = ['straight', 'average', 'wide'];
+    if (!validHipShapes.includes(hipShape)) {
+      logError(new Error('Invalid hipShape'), { action: 'api.recommend-size', hipShape });
+      return createErrorResponse('Invalid hipShape: must be "straight", "average", or "wide"', 400);
+    }
+
+    // Validate wearingPreference
+    const validPreferences: WearingPreference[] = ['very_fitted', 'fitted', 'normal', 'loose', 'very_loose'];
+    if (!validPreferences.includes(wearingPreference)) {
+      logError(new Error('Invalid wearingPreference'), { action: 'api.recommend-size', wearingPreference });
+      return createErrorResponse('Invalid wearingPreference: must be "very_fitted", "fitted", "normal", "loose", or "very_loose"', 400);
+    }
+
+    // Validate fabricType if provided
+    if (fabricType) {
+      const validFabricTypes: FabricType[] = ['cotton', 'cotton_blend', 'jersey_knit', 'highly_elastic'];
+      if (!validFabricTypes.includes(fabricType)) {
+        logError(new Error('Invalid fabricType'), { action: 'api.recommend-size', fabricType });
+        return createErrorResponse('Invalid fabricType: must be "cotton", "cotton_blend", "jersey_knit", or "highly_elastic"', 400);
+      }
+    }
+
+    // Sanitize string inputs
+    const sanitizedProductType = productType ? sanitizeInput(String(productType)) : undefined;
+    const sanitizedVendor = vendor ? sanitizeInput(String(vendor)) : undefined;
+    const sanitizedTags = tags ? (Array.isArray(tags) ? tags.map((t: any) => sanitizeInput(String(t))) : []) : undefined;
+
+    // Estimate body measurements with error handling
+    let bodyMeasurements: EstimatedBodyMeasurements;
+    try {
+      bodyMeasurements = estimateBodyMeasurements(
+        height,
+        weight,
+        gender as 'male' | 'female',
+        age,
+        abdomenShape,
+        hipShape
+      );
+    } catch (estimationError) {
+      logError(estimationError, {
+        action: 'api.recommend-size',
+        step: 'estimate-measurements',
+        inputs: { height, weight, gender, age }
+      });
+      return createErrorResponse('Failed to estimate body measurements', 500, estimationError);
+    }
 
     // If product has size dimensions, use smart matching
-    if (sizeDimensions && Object.keys(sizeDimensions).length > 0) {
-      const category = detectGarmentCategory(sizeDimensions, productType, tags);
+    if (sizeDimensions && typeof sizeDimensions === 'object' && Object.keys(sizeDimensions).length > 0) {
+      try {
+        const category = detectGarmentCategory(sizeDimensions, sanitizedProductType, sanitizedTags);
 
-      // Check if optional measurements were provided
-      const hasOptionalMeasurements = !!shoulder;
+        // Check if optional measurements were provided
+        const hasOptionalMeasurements = !!shoulder;
 
-      const result = findBestSize(
-        bodyMeasurements,
-        sizeDimensions,
-        wearingPreference,
-        category,
-        fabricType,
-        hasOptionalMeasurements,
-        vendor
-      );
+        const result = findBestSize(
+          bodyMeasurements,
+          sizeDimensions,
+          wearingPreference,
+          category,
+          fabricType,
+          hasOptionalMeasurements,
+          sanitizedVendor
+        );
 
-      // Extract garment measurements for the recommended size
-      const recommendedSizeDims = sizeDimensions[result.size];
-      const garmentMeasurements = recommendedSizeDims ? {
-        chest: formatMeasurement(recommendedSizeDims.chest),
-        waist: formatMeasurement(recommendedSizeDims.waist),
-        hips: formatMeasurement(recommendedSizeDims.hips),
-        shoulder: formatMeasurement(recommendedSizeDims.shoulder),
-        length: formatMeasurement(recommendedSizeDims.length),
-      } : undefined;
+        // Extract garment measurements for the recommended size
+        const recommendedSizeDims = sizeDimensions[result.size];
+        const garmentMeasurements = recommendedSizeDims ? {
+          chest: formatMeasurement(recommendedSizeDims.chest),
+          waist: formatMeasurement(recommendedSizeDims.waist),
+          hips: formatMeasurement(recommendedSizeDims.hips),
+          shoulder: formatMeasurement(recommendedSizeDims.shoulder),
+          length: formatMeasurement(recommendedSizeDims.length),
+        } : undefined;
 
-      return Response.json({
-        size: result.size,
-        confidence: result.confidence,
-        reasoning: result.reasoning,
-        measurements: {
-          estimatedChestWidth: bodyMeasurements.chestWidth,
-          estimatedWaistWidth: bodyMeasurements.waistWidth,
-          estimatedHipWidth: bodyMeasurements.hipWidth,
-          estimatedShoulderWidth: bodyMeasurements.shoulderWidth,
-        },
-        garmentMeasurements,
-        alternativeSize: result.alternativeSize,
-        sizeComparison: result.sizeComparison,
-      } as SizeRecommendationResult);
+        return Response.json({
+          size: result.size,
+          confidence: result.confidence,
+          reasoning: result.reasoning,
+          measurements: {
+            estimatedChestWidth: bodyMeasurements.chestWidth,
+            estimatedWaistWidth: bodyMeasurements.waistWidth,
+            estimatedHipWidth: bodyMeasurements.hipWidth,
+            estimatedShoulderWidth: bodyMeasurements.shoulderWidth,
+          },
+          garmentMeasurements,
+          alternativeSize: result.alternativeSize,
+          sizeComparison: result.sizeComparison,
+        } as SizeRecommendationResult);
+      } catch (sizeFindError) {
+        logError(sizeFindError, {
+          action: 'api.recommend-size',
+          step: 'find-best-size',
+          sizeDimensions: Object.keys(sizeDimensions)
+        });
+        // Fall through to generic recommendation
+      }
     }
 
     // Fallback generic recommendation based on chest width
@@ -953,13 +1022,11 @@ export async function action({ request }: Route.ActionArgs) {
     } as SizeRecommendationResult);
 
   } catch (error) {
-    console.error('Size recommendation error:', error);
-    return Response.json(
-      {
-        error: 'Failed to calculate size recommendation',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
+    logError(error, { action: 'api.recommend-size', step: 'unexpected-error' });
+    return createErrorResponse(
+      'An unexpected error occurred while calculating size recommendation',
+      500,
+      error
     );
   }
 }

@@ -1,0 +1,4 @@
+
+> talla@2025.7.0 typecheck
+> react-router typegen && tsc --noEmit
+

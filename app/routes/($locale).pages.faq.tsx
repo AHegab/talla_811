@@ -16,16 +16,28 @@ const faqs = [
     category: 'Orders & Shipping',
     questions: [
       {
+        q: 'Who delivers my order?',
+        a: 'We partner with Bosta, Egypt\'s leading delivery platform, to ensure fast and reliable shipping. Bosta provides real-time tracking and professional delivery service across all of Egypt.'
+      },
+      {
         q: 'How long does shipping take?',
-        a: 'Standard shipping within Egypt takes 3-5 business days. Express shipping is available for next-day delivery in Cairo and Alexandria. International shipping typically takes 7-14 business days depending on location.'
+        a: 'Delivery times with Bosta: Cairo & Giza: 2-3 business days (next-day available). Alexandria & major cities: 3-4 business days. Other governorates: 4-6 business days. Orders are processed within 1-2 business days before shipping.'
       },
       {
         q: 'Do you offer free shipping?',
-        a: 'Yes! We offer free standard shipping on all orders over EGP 1,000 within Egypt. International orders qualify for free shipping over EGP 2,500.'
+        a: 'Yes! We offer free standard shipping on all orders over EGP 1,000 within Egypt. Orders under EGP 1,000 have a flat shipping fee of EGP 50. Express next-day delivery is available for EGP 100.'
       },
       {
         q: 'Can I track my order?',
-        a: 'Absolutely. Once your order ships, you\'ll receive a tracking number via email. You can also track your order status in your account dashboard.'
+        a: 'Absolutely! Once your order ships, you\'ll receive a Bosta tracking number via email and SMS. You can track your shipment in real-time through your account dashboard or directly on Bosta\'s platform. You\'ll also receive SMS updates and a call 30 minutes before delivery.'
+      },
+      {
+        q: 'What if I\'m not home for delivery?',
+        a: 'Bosta will attempt delivery up to 3 times. You\'ll receive a phone call and SMS before each attempt. If you miss all 3 delivery attempts, the package will be returned and you\'ll be refunded (minus shipping costs).'
+      },
+      {
+        q: 'Do you accept cash on delivery?',
+        a: 'Yes! You can pay cash when you receive your order through Bosta\'s cash on delivery service. Please have exact change when possible to make the process smoother.'
       },
     ]
   },

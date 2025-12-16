@@ -3674,3 +3674,21 @@ body, html {
   will-change: auto !important;
   contain: layout !important;
 }
+
+/* Remove borders from product images */
+.product-images-full-width button,
+.product-images-full-width button img {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Force remove ALL borders from product page images */
+button img,
+button picture,
+button picture img {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  display: block !important;
+}

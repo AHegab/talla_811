@@ -3692,3 +3692,16 @@ button picture img {
   box-shadow: none !important;
   display: block !important;
 }
+
+/* Remove ALL gaps between product images */
+.w-full > button,
+.w-full button img,
+.w-full button picture,
+.w-full button picture img {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  line-height: 0 !important;
+  vertical-align: bottom !important;
+  gap: 0 !important;
+}

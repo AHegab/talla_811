@@ -131,14 +131,14 @@ export function ProductImagesVertical({
   }
 
   return (
-    <div className="w-full border-0" style={{ border: 'none', outline: 'none' }}>
+    <div className="w-full border-0" style={{ border: 'none', outline: 'none', margin: 0, padding: 0, display: 'block', lineHeight: 0 }}>
       {/* Vertically stacked images - full width, no frames */}
       {images.map((img, idx) => (
         <button
           key={img.id || idx}
           onClick={() => openModal(idx)}
-          className="w-full block relative bg-white group cursor-pointer m-0 p-0 border-0 outline-none"
-          style={{ aspectRatio: '3/4', margin: 0, padding: 0, border: 'none', outline: 'none' }}
+          className="w-full block relative bg-white group cursor-pointer border-0 outline-none"
+          style={{ aspectRatio: '3/4', margin: 0, padding: 0, border: 'none', outline: 'none', display: 'block', lineHeight: 0 }}
           aria-label={`View image ${idx + 1} in fullscreen`}
         >
           <Image
@@ -149,7 +149,7 @@ export function ProductImagesVertical({
               height: img.height,
             }}
             className="w-full h-full object-cover scale-105 border-0"
-            style={{ border: 'none', outline: 'none' }}
+            style={{ border: 'none', outline: 'none', margin: 0, padding: 0, display: 'block', verticalAlign: 'bottom' }}
             loading={idx < 2 ? 'eager' : 'lazy'}
             sizes="100vw"
           />

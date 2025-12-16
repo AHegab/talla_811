@@ -1,8 +1,8 @@
 import type { FetcherWithComponents } from '@remix-run/react';
 import {
-  CartForm,
-  Money,
-  type OptimisticCartLineInput,
+    CartForm,
+    Money,
+    type OptimisticCartLineInput,
 } from '@shopify/hydrogen';
 import { Flame, Heart, Leaf, Shirt, Sparkles, Sun, Tag, Tags, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -665,53 +665,47 @@ export function ProductBuyBox({
                       }
                       disabled={!isAvailable}
                       className={(() => {
-                        const base = 'px-5 py-3 text-sm font-medium rounded-full border transition-all duration-300 ease-out relative overflow-hidden';
                         if (isColorOption) {
-                          // for color options, rely on inline backgroundColor and vary the border and opacity
-                          const border = isSelected ? 'border-gray-900 shadow-lg' : 'border-gray-200 hover:border-gray-400';
-                          const selectedRing = isSelected ? 'ring-2 ring-gray-900 ring-offset-2' : '';
-                          const disabled = !isAvailable ? 'opacity-30 cursor-not-allowed filter grayscale line-through' : '';
-                          const rec = isRec && !isSelected ? 'ring-2 ring-emerald-400 ring-offset-2' : '';
-                          const classes = [base, border, disabled, selectedRing, rec, isSelected ? 'transform scale-105' : ''].filter(Boolean).join(' ');
-                          return classes;
+                          // Color swatch - small square with border
+                          const base = 'w-8 h-8 rounded-sm border transition-all flex-shrink-0';
+                          const border = isSelected ? 'border-black border-2 shadow-lg' : 'border-gray-300';
+                          const disabled = !isAvailable ? 'opacity-30 cursor-not-allowed filter grayscale' : 'hover:border-black';
+                          const rec = isRec && !isSelected ? 'ring-2 ring-emerald-400' : '';
+                          return `${base} ${border} ${disabled} ${rec}`.trim();
+                        } else {
+                          // Size button - small square with text perfectly centered
+                          const base = 'w-8 h-8 flex items-center justify-center text-[10px] font-bold border transition-all';
+                          const selected = isSelected ? 'bg-black text-white border-black shadow-lg' : 'bg-white text-black border-gray-300';
+                          const disabled = !isAvailable ? 'opacity-30 cursor-not-allowed line-through' : 'hover:border-black';
+                          const rec = isRec && !isSelected ? 'ring-2 ring-emerald-400' : '';
+                          return `${base} ${selected} ${disabled} ${rec}`.trim();
                         }
-                        // Not a color option - soft, friendly styling
-                        const classes = `${base} ${isSelected
-                          ? 'bg-gray-900 text-white border-gray-900 shadow-lg transform scale-105 ring-2 ring-gray-900'
-                          : isAvailable
-                            ? 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
-                            : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed line-through'
-                        } ${isRec && !isSelected ? 'ring-2 ring-emerald-400 ring-offset-2' : ''}`;
-                        return classes;
                       })()}
                       style={
                         isColorOption
                           ? isMultiColor
                             ? ({ backgroundImage: multiColorGradient } as React.CSSProperties)
                             : ({ backgroundColor: singleColor } as React.CSSProperties)
-                          : undefined
+                          : ({
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              textAlign: 'center',
+                              lineHeight: '1'
+                            } as React.CSSProperties)
                       }
                       aria-label={`Select ${option.name.toLowerCase()} ${value}${
                         isRec ? ' (Recommended)' : ''
                       }`}
                       aria-pressed={isSelected}
                       aria-disabled={!isAvailable}
+                      title={isColorOption ? colorData?.displayName : value}
                     >
                       {isColorOption ? (
-                        <span className={`inline-block min-w-[96px] text-center font-semibold relative z-10 ${isMultiColor ? 'text-gray-900 bg-white/90 px-2 py-1 rounded-md' : textColorClass}`}>
-                          {colorData?.displayName}
-                        </span>
+                        <span className="sr-only">{colorData?.displayName}</span>
                       ) : (
                         value
                       )}
-                      {isSelected && (
-                        <span className={`ml-2 inline-flex items-center text-sm ${isMultiColor ? 'text-gray-900' : 'text-white'}`}>
-                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </span>
-                      )}
-                      {isRec && !isSelected && <span className="ml-1 text-green-600">✓</span>}
                     </button>
                   );
                 })}

@@ -1,14 +1,11 @@
-import type { FetcherWithComponents } from '@remix-run/react';
 import {
-  CartForm,
   Money,
-  type OptimisticCartLineInput,
+  type OptimisticCartLineInput
 } from '@shopify/hydrogen';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
-import SizeChart from './SizeChart';
-import { SizeRecommendationPrompt } from './SizeRecommendationPrompt';
 import type { PDPProduct, PDPVariant } from './ProductBuyBox';
+import SizeChart from './SizeChart';
 
 interface ProductHeaderProps {
   product: PDPProduct;
@@ -34,6 +31,9 @@ export function ProductHeader({
   const [showNotifyForm, setShowNotifyForm] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState('');
   const [notifySubmitted, setNotifySubmitted] = useState(false);
+
+  // Make chips tiny squares like the screenshot
+  const CHIP = 'w-[5px] h-[5px]';
 
   // Comprehensive color name to hex map
   const colorNameToHex: Record<string, string> = {
@@ -123,13 +123,14 @@ export function ProductHeader({
 
     // Check if the value contains an explicit separator
     if (separatorRegex.test(val)) {
-      const parts = val.split(separatorRegex)
-        .map(p => p.trim())
+      const parts = val
+        .split(separatorRegex)
+        .map((p) => p.trim())
         .filter(Boolean);
 
       return {
         colors: parts,
-        displayName: val.toUpperCase() // Keep original formatting for display
+        displayName: val.toUpperCase(), // Keep original formatting for display
       };
     }
 
@@ -138,8 +139,8 @@ export function ProductHeader({
       colors: [val],
       displayName: val
         .split(/\s+/)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' '),
     };
   };
 
@@ -204,10 +205,10 @@ export function ProductHeader({
     const darkColors = ['black', 'navy', 'dark', 'brown', 'charcoal', 'maroon', 'burgundy'];
 
     // Check if any light color keyword is present
-    if (lightColors.some(lc => normalized.includes(lc))) return true;
+    if (lightColors.some((lc) => normalized.includes(lc))) return true;
 
     // Check if any dark color keyword is present
-    if (darkColors.some(dc => normalized.includes(dc))) return false;
+    if (darkColors.some((dc) => normalized.includes(dc))) return false;
 
     // fallback: if map contains an entry, compute luminance
     if (colorNameToHex[normalized]) {
@@ -227,9 +228,7 @@ export function ProductHeader({
   };
 
   const handleSizeRecommendation = (size: string) => {
-    const sizeOption = product.options?.find(
-      (opt) => opt.name.toLowerCase() === 'size',
-    );
+    const sizeOption = product.options?.find((opt) => opt.name.toLowerCase() === 'size');
 
     if (sizeOption && sizeOption.values.includes(size)) {
       onOptionChange('Size', size);
@@ -270,7 +269,7 @@ export function ProductHeader({
         }),
       });
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to submit notification request');
@@ -283,7 +282,7 @@ export function ProductHeader({
       // Also save to localStorage as backup
       try {
         const localNotifications = JSON.parse(
-          localStorage.getItem('talla_restock_notifications') || '[]'
+          localStorage.getItem('talla_restock_notifications') || '[]',
         ) as any[];
         localNotifications.push(data.notification);
         localStorage.setItem('talla_restock_notifications', JSON.stringify(localNotifications));
@@ -297,7 +296,6 @@ export function ProductHeader({
         setShowNotifyForm(false);
         setNotifySubmitted(false);
       }, 3000);
-
     } catch (err) {
       console.error('Failed to submit notification request:', err);
       alert('Something went wrong. Please try again.');
@@ -325,7 +323,7 @@ export function ProductHeader({
         zIndex: 999999,
         boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
         transform: 'none',
-        willChange: 'auto'
+        willChange: 'auto',
       }}
     >
       {/* Success Ripple Effect */}
@@ -343,17 +341,14 @@ export function ProductHeader({
             fontSize: '10px',
             fontWeight: '400',
             textTransform: 'uppercase',
-            letterSpacing: '0.5px'
+            letterSpacing: '0.5px',
           }}
         >
           {product.title}
         </h1>
 
         {/* Price */}
-        <div
-          className="text-gray-900 mb-2"
-          style={{ fontSize: '10px', fontWeight: '400' }}
-        >
+        <div className="text-gray-900 mb-2" style={{ fontSize: '10px', fontWeight: '400' }}>
           <Money data={selectedVariant.price as any} />
         </div>
 
@@ -363,15 +358,11 @@ export function ProductHeader({
             product.options.length > 0 &&
             product.options.map((option) => (
               <React.Fragment key={option.name}>
-                {/* Options - inline with no label */}
                 {option.values.map((value) => {
                   const isAvailable = product.variants.some(
                     (v) =>
                       v.availableForSale &&
-                      v.selectedOptions.some(
-                        (opt) =>
-                          opt.name === option.name && opt.value === value,
-                      ),
+                      v.selectedOptions.some((opt) => opt.name === option.name && opt.value === value),
                   );
                   const isSelected = selectedOptions[option.name] === value;
                   const isColorOption = option.name.toLowerCase() === 'color';
@@ -397,12 +388,14 @@ export function ProductHeader({
                       if (isMultiColor && colorData) {
                         const colors = colorData.colors;
                         const colorsLength = colors.length;
-                        multiColorGradient = `linear-gradient(to right, ${colors.map((c, idx) => {
-                          const hex = toHex(c);
-                          const pct1 = (idx / colorsLength) * 100;
-                          const pct2 = ((idx + 1) / colorsLength) * 100;
-                          return `${hex} ${pct1}%, ${hex} ${pct2}%`;
-                        }).join(', ')})`;
+                        multiColorGradient = `linear-gradient(to right, ${colors
+                          .map((c, idx) => {
+                            const hex = toHex(c);
+                            const pct1 = (idx / colorsLength) * 100;
+                            const pct2 = ((idx + 1) / colorsLength) * 100;
+                            return `${hex} ${pct1}%, ${hex} ${pct2}%`;
+                          })
+                          .join(', ')})`;
                       }
                     } catch (err) {
                       colorData = { colors: [value], displayName: value };
@@ -414,23 +407,26 @@ export function ProductHeader({
                     <button
                       key={value}
                       type="button"
-                      onClick={() =>
-                        isAvailable &&
-                        onOptionChange(option.name, value)
-                      }
+                      onClick={() => isAvailable && onOptionChange(option.name, value)}
                       disabled={!isAvailable}
                       className={(() => {
                         if (isColorOption) {
-                          // Color swatch - small square with border
-                          const base = 'w-5 h-5 rounded-sm border transition-all flex-shrink-0';
-                          const border = isSelected ? 'border-black border-2' : 'border-gray-400';
-                          const disabled = !isAvailable ? 'opacity-30 cursor-not-allowed' : 'hover:border-black';
+                          // Color swatch - tiny square
+                          const base = `${CHIP} rounded-none border transition-all flex-shrink-0`;
+                          const border = isSelected ? 'border-black border-2' : 'border-gray-300';
+                          const disabled = !isAvailable
+                            ? 'opacity-30 cursor-not-allowed'
+                            : 'hover:border-black';
                           return `${base} ${border} ${disabled}`.trim();
                         } else {
-                          // Size button - small square with text perfectly centered
-                          const base = 'w-5 h-5 flex items-center justify-center text-[9px] font-bold border transition-all';
-                          const selected = isSelected ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300';
-                          const disabled = !isAvailable ? 'opacity-30 cursor-not-allowed line-through' : 'hover:border-black';
+                          // Size chip - tiny square with readable text
+                          const base = `${CHIP} flex items-center justify-center rounded-none border transition-all flex-shrink-0 text-[10px] leading-none font-medium`;
+                          const selected = isSelected
+                            ? 'bg-black text-white border-black'
+                            : 'bg-white text-black border-gray-300';
+                          const disabled = !isAvailable
+                            ? 'opacity-30 cursor-not-allowed line-through'
+                            : 'hover:border-black';
                           const rec = isRec && !isSelected ? 'ring-1 ring-emerald-400' : '';
                           return `${base} ${selected} ${disabled} ${rec}`.trim();
                         }
@@ -440,17 +436,9 @@ export function ProductHeader({
                           ? isMultiColor
                             ? ({ backgroundImage: multiColorGradient } as React.CSSProperties)
                             : ({ backgroundColor: singleColor } as React.CSSProperties)
-                          : ({
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              textAlign: 'center',
-                              lineHeight: '1'
-                            } as React.CSSProperties)
+                          : undefined
                       }
-                      aria-label={`Select ${option.name.toLowerCase()} ${value}${
-                        isRec ? ' (Recommended)' : ''
-                      }`}
+                      aria-label={`Select ${option.name.toLowerCase()} ${value}${isRec ? ' (Recommended)' : ''}`}
                       aria-pressed={isSelected}
                       aria-disabled={!isAvailable}
                       title={isColorOption ? colorData?.displayName : value}
@@ -469,10 +457,33 @@ export function ProductHeader({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
           <div className="max-w-4xl w-full">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-semibold text-white">{chartSource === 'brand' ? 'Brand Size Chart' : 'Size Chart'}</h4>
-              <button onClick={() => { setSizeChartOpen(false); setChartSource(null); }} className="text-white hover:text-gray-300">Close</button>
+              <h4 className="text-lg font-semibold text-white">
+                {chartSource === 'brand' ? 'Brand Size Chart' : 'Size Chart'}
+              </h4>
+              <button
+                onClick={() => {
+                  setSizeChartOpen(false);
+                  setChartSource(null);
+                }}
+                className="text-white hover:text-gray-300"
+              >
+                Close
+              </button>
             </div>
-            <SizeChart imageUrl={chartSource === 'brand' ? product.brandSizeChartImage?.url : product.sizeChartImage?.url || product.brandSizeChartImage?.url} alt={chartSource === 'brand' ? product.brandSizeChartImage?.alt || 'Brand size chart' : product.sizeChartImage?.alt || product.brandSizeChartImage?.alt || 'Size chart'} />
+            <SizeChart
+              imageUrl={
+                chartSource === 'brand'
+                  ? product.brandSizeChartImage?.url
+                  : product.sizeChartImage?.url || product.brandSizeChartImage?.url
+              }
+              alt={
+                chartSource === 'brand'
+                  ? product.brandSizeChartImage?.alt || 'Brand size chart'
+                  : product.sizeChartImage?.alt ||
+                    product.brandSizeChartImage?.alt ||
+                    'Size chart'
+              }
+            />
           </div>
         </div>
       )}

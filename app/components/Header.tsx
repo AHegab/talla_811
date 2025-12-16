@@ -180,22 +180,24 @@ export function Header({
                   onClick={() => open('mobile')}
                   className="appearance-none bg-transparent text-white border-0 p-0 flex items-center justify-center focus:outline-none"
                 >
-                  <Menu className="h-5 w-5" strokeWidth={2} />
+                  <Menu className="h-4 w-4" strokeWidth={2} />
                 </button>
               </div>
 
               {/* Center: Logo on product pages or Desktop nav */}
               {isProductPage ? (
-                <div className="absolute left-1/2 -translate-x-1/2 pointer-events-auto flex items-center">
-                  <NavLink prefetch="intent" to="/" end aria-label={`${shop.name} home`} className="flex items-center">
+                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 pointer-events-auto">
+                  <NavLink prefetch="intent" to="/" end aria-label={`${shop.name} home`}>
                     <img
                       src="/talla-logo-white.svg"
                       alt={shop.name}
-                      className="h-3 lg:h-4 w-auto object-contain object-center"
+                      className="h-3.5 lg:h-4 w-auto"
                       loading="eager"
                       style={{
-                        maxWidth: '70px',
-                        display: 'block'
+                        maxWidth: '80px',
+                        maxHeight: '60px',
+                        display: 'block',
+                        objectFit: 'contain'
                       }}
                     />
                   </NavLink>
@@ -212,7 +214,7 @@ export function Header({
               ) : null}
 
               {/* Right: search, account, cart */}
-              <div className="flex items-center gap-4 ml-auto">
+              <div className="flex items-center gap-3 ml-auto">
                 {/* Search */}
                 <button
                   type="button"
@@ -220,7 +222,7 @@ export function Header({
                   onClick={() => setSearchOpen((s) => !s)}
                   className="appearance-none bg-transparent text-white border-0 p-0 flex items-center justify-center focus:outline-none"
                 >
-                  <Search className="h-5 w-5" strokeWidth={2} />
+                  <Search className="h-4 w-4" strokeWidth={2} />
                 </button>
 
                 {/* Account */}
@@ -230,7 +232,7 @@ export function Header({
                   aria-label="Account"
                   className="appearance-none bg-transparent text-white border-0 p-0 flex items-center justify-center focus:outline-none"
                 >
-                  <User className="h-5 w-5" strokeWidth={2} />
+                  <User className="h-4 w-4" strokeWidth={2} />
                 </NavLink>
 
                 {/* Cart */}
@@ -240,7 +242,7 @@ export function Header({
                   onClick={() => open('cart')}
                   className="appearance-none bg-transparent text-white border-0 p-0 flex items-center justify-center relative focus:outline-none"
                 >
-                  <ShoppingBag className="h-5 w-5" strokeWidth={2} />
+                  <ShoppingBag className="h-4 w-4" strokeWidth={2} />
                 </button>
               </div>
             </div>
@@ -250,27 +252,28 @@ export function Header({
 
       {/* Mobile logo overlay - hidden on product pages */}
       {!isProductPage && (
-        <div className="lg:hidden fixed top-14 sm:top-16 left-0 right-0 z-40 bg-transparent pointer-events-none">
-          {/* pointer-events-none on the parent prevents interactions; add pointer-events-auto to the link so logo stays decorative but is clickable */}
-          <NavLink prefetch="intent" to="/" end className="block pointer-events-auto" aria-label={`${shop.name} home`}>
-            <div className="flex items-center justify-center h-[120px] w-full overflow-hidden bg-transparent">
-              <div
-                role="img"
-                aria-label={shop.name}
-                className="w-full h-full"
-                style={{
-                  backgroundImage: "url('/talla-logo-black.svg')",
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '60% auto',
-                }}
-              />
-            </div>
-          </NavLink>
-        </div>
+        <>
+          <div className="lg:hidden fixed top-14 sm:top-16 left-0 right-0 z-40 bg-transparent pointer-events-none">
+            {/* pointer-events-none on the parent prevents interactions; add pointer-events-auto to the link so logo stays decorative but is clickable */}
+            <NavLink prefetch="intent" to="/" end className="block pointer-events-auto" aria-label={`${shop.name} home`}>
+              <div className="flex items-center justify-center h-[120px] w-full overflow-hidden bg-transparent">
+                <div
+                  role="img"
+                  aria-label={shop.name}
+                  className="w-full h-full"
+                  style={{
+                    backgroundImage: "url('/talla-logo-black.svg')",
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '60% auto',
+                  }}
+                />
+              </div>
+            </NavLink>
+          </div>
+          <div className="lg:hidden h-14 sm:h-16" aria-hidden />
+        </>
       )}
-
-      <div className="lg:hidden h-14 sm:h-16" aria-hidden />
 
       {/* Inline header search (centered, compact) */}
       {searchOpen && (

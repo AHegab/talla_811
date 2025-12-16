@@ -331,11 +331,10 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
   // Image gallery handled by ProductGallery
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Scrollable Content */}
-      <div className="pb-16">
-        {/* Images Section - Full Width */}
-        <div>
+    <>
+      <div className="min-h-screen bg-white w-full overflow-x-hidden">
+        {/* Images Section - Full Width, Absolutely Positioned from Top */}
+        <div className="w-full pt-14 sm:pt-16 lg:pt-[52px]">
           <ProductImagesVertical
             key={selectedVariant?.id}
             images={images}
@@ -345,23 +344,29 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
           />
         </div>
 
-        {/* Description & Materials */}
-        <div className="px-4 py-6 md:px-8 max-w-2xl mx-auto">
-          <ProductDescription
-            description={product.description}
-            fabricType={pdpProduct.fabricType}
-          />
-        </div>
-
-        {/* Similar Products */}
-        {similarProducts && similarProducts.length > 0 && (
+        {/* Content Container */}
+        <div className="w-full">
+          {/* Description & Materials */}
           <div className="px-4 py-6 md:px-8 max-w-2xl mx-auto">
-            <SimilarProductsSection products={similarProducts} />
+            <ProductDescription
+              description={product.description}
+              fabricType={pdpProduct.fabricType}
+            />
           </div>
-        )}
+
+          {/* Similar Products */}
+          {similarProducts && similarProducts.length > 0 && (
+            <div className="px-4 py-6 md:px-8 max-w-2xl mx-auto">
+              <SimilarProductsSection products={similarProducts} />
+            </div>
+          )}
+
+          {/* Bottom Padding for Product Header */}
+          <div className="pb-32"></div>
+        </div>
       </div>
 
-      {/* Sticky Header at Bottom */}
+      {/* Fixed Header at Bottom - OUTSIDE main container to avoid transform issues */}
       {currentVariant && (
         <ProductHeader
           product={pdpProduct}
@@ -374,7 +379,7 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
 
       {/* Size Chart Modal */}
       {sizeChartOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setSizeChartOpen(false)}>
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/60" style={{ zIndex: 10000 }} onClick={() => setSizeChartOpen(false)}>
           <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-lg font-semibold text-white">Size Chart</h4>
@@ -387,6 +392,6 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

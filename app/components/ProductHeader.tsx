@@ -313,7 +313,21 @@ export function ProductHeader({
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white">
+    <div
+      className="product-header-fixed bg-white border-t border-gray-200"
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: '100vw',
+        maxWidth: '100vw',
+        zIndex: 999999,
+        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+        transform: 'none',
+        willChange: 'auto'
+      }}
+    >
       {/* Success Ripple Effect */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
@@ -321,7 +335,7 @@ export function ProductHeader({
         </div>
       )}
 
-      <div className="px-3 py-2">
+      <div className="px-3 py-2 pb-safe">
         {/* Title */}
         <h1
           className="text-gray-900 leading-tight mb-1"

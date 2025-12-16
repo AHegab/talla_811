@@ -161,7 +161,7 @@ export function Layout({children}: {children?: React.ReactNode}) {
   }
 
   return (
-    <html lang="en" className="overflow-x-hidden">
+    <html lang="en" style={{ overflowX: 'hidden', maxWidth: '100vw' }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -171,7 +171,7 @@ export function Layout({children}: {children?: React.ReactNode}) {
         <Meta />
         <Links />
       </head>
-      <body className="overflow-x-hidden max-w-full">
+      <body style={{ overflowX: 'hidden', maxWidth: '100vw', width: '100%' }}>
         {children}
         <ScrollRestoration nonce={nonce} />
         <Scripts nonce={nonce} />
@@ -246,7 +246,7 @@ export function ErrorBoundary() {
   }
 
   return (
-    <html lang="en">
+    <html lang="en" style={{ overflowX: 'hidden', maxWidth: '100vw' }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -257,7 +257,7 @@ export function ErrorBoundary() {
         <Meta />
         <Links />
       </head>
-      <body className="overflow-x-hidden max-w-full">
+      <body style={{ overflowX: 'hidden', maxWidth: '100vw', width: '100%' }}>
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
           <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
             <div className="mb-4">

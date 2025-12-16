@@ -7,6 +7,7 @@ import { ProductDescription } from './ProductDescription';
 import { SimilarProductsSection, type SimilarProduct } from './SimilarProductsSection';
 import type { PDPProduct, PDPVariant } from './ProductBuyBox';
 import { mapMaterialToFabricType } from '~/lib/fabricMapping';
+import SizeChart from './SizeChart';
 
 interface UserMeasurements {
   gender: 'male' | 'female';
@@ -30,6 +31,7 @@ interface ProductPageProps {
 
 export function ProductPage({product, selectedVariant, similarProducts, brandSizeChart}: ProductPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [sizeChartOpen, setSizeChartOpen] = useState(false);
 
   // Transform selectedVariant to PDPVariant
   const transformVariant = (
@@ -338,6 +340,8 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
             key={selectedVariant?.id}
             images={images}
             productTitle={product.title}
+            sizeChartUrl={pdpProduct.sizeChartImage?.url || pdpProduct.brandSizeChartImage?.url}
+            onSizeGuideClick={() => setSizeChartOpen(true)}
           />
         </div>
 
@@ -366,6 +370,22 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
           onOptionChange={handleOptionChange}
           selectedOptions={selectedOptions}
         />
+      )}
+
+      {/* Size Chart Modal */}
+      {sizeChartOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setSizeChartOpen(false)}>
+          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-white">Size Chart</h4>
+              <button onClick={() => setSizeChartOpen(false)} className="text-white hover:text-gray-300 text-2xl font-bold">&times;</button>
+            </div>
+            <SizeChart
+              imageUrl={pdpProduct.sizeChartImage?.url || pdpProduct.brandSizeChartImage?.url}
+              alt={pdpProduct.sizeChartImage?.alt || pdpProduct.brandSizeChartImage?.alt || 'Size chart'}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

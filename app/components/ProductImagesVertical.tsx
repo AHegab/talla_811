@@ -12,11 +12,15 @@ export interface PDPImage {
 interface ProductImagesVerticalProps {
   images: PDPImage[];
   productTitle?: string;
+  sizeChartUrl?: string;
+  onSizeGuideClick?: () => void;
 }
 
 export function ProductImagesVertical({
   images,
   productTitle = 'Product',
+  sizeChartUrl,
+  onSizeGuideClick,
 }: ProductImagesVerticalProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -147,12 +151,7 @@ export function ProductImagesVertical({
             loading={idx < 2 ? 'eager' : 'lazy'}
             sizes="100vw"
           />
-          {/* SIZE GUIDE badge - only on first image */}
-          {idx === 0 && (
-            <div className="absolute bottom-4 right-4 bg-black/80 text-white text-xs font-medium px-3 py-1.5 uppercase tracking-wider pointer-events-none">
-              SIZE GUIDE
-            </div>
-          )}
+
           {/* Zoom indicator on hover */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 flex items-center justify-center pointer-events-none">
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 rounded-full p-3 shadow-lg">

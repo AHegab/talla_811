@@ -1,5 +1,6 @@
 import { Link, useLoaderData } from '@remix-run/react';
-import { useEffect, useRef, useState } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
 import type { Route } from './+types/_index';
 
 import { HeroCarousel } from '~/components/HeroCarousel';
@@ -48,45 +49,6 @@ export async function loader({context}: Route.LoaderArgs) {
 
 export default function Homepage() {
   const { collections } = useLoaderData<typeof loader>();
-  const [scrollScale, setScrollScale] = useState<Record<string, number>>({});
-  const categoryRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const viewportHeight = window.innerHeight;
-      const headerHeight = 72; // approximate header height
-      const triggerOffset = 350; // Start transition 350px earlier
-      
-      const newScales: Record<string, number> = {};
-      
-      collections.forEach((collection) => {
-        const element = categoryRefs.current[collection.id];
-        if (!element) return;
-        
-        const rect = element.getBoundingClientRect();
-        const elementTop = rect.top;
-        const elementHeight = rect.height;
-        
-        // Calculate if element is going out of view at the top (with earlier trigger)
-        if (elementTop < (headerHeight + triggerOffset) && elementTop > -elementHeight) {
-          // Element is transitioning out at the top
-          const progress = Math.abs(elementTop - (headerHeight + triggerOffset)) / (elementHeight + triggerOffset);
-          // Scale from 1 to 1.15 as it goes up
-          const scale = 1 + (progress * 0.15);
-          newScales[collection.id] = Math.min(scale, 1.15);
-        } else {
-          newScales[collection.id] = 1;
-        }
-      });
-      
-      setScrollScale(newScales);
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial calculation
-    
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [collections]);
 
   return (
     <main className="min-h-screen bg-talla-bg">
@@ -98,41 +60,65 @@ export default function Homepage() {
       {/* Categories Section */}
       <section className="w-full pt-6 pb-12 sm:pt-8 sm:pb-16 lg:pt-10 lg:pb-20">
         <Container>
-          
-          
           <div className="space-y-6">
-            {collections.map((collection, index) => {
-              const scale = scrollScale[collection.id] || 1;
-              // Calculate additional margin based on scale to prevent overlap
-              const additionalMargin = (scale - 1) * 100; // Adds margin proportional to scale increase
-              
-              return (
-                <Link
-                  key={collection.id}
-                  ref={(el) => { categoryRefs.current[collection.id] = el; }}
-                  to={`/collections/${collection.handle}`}
-                  className="group relative block w-full aspect-[3/4] overflow-hidden transition-all duration-300 origin-center"
-                  style={{
-                    transform: `scale(${scale})`,
-                    transition: 'transform 0.3s ease-out, margin 0.3s ease-out',
-                    marginBottom: index < collections.length - 1 ? `${24 + additionalMargin}px` : undefined,
-                  }}
-                >
-                {/* Category Image */}
-                {collection.image && (
-                  <img
-                    src={collection.image.url}
-                    alt={collection.image.altText || collection.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                )}
-              </Link>
-            );
-            })}
+            {collections.map((collection, index) => (
+              <CategoryCard 
+                key={collection.id} 
+                collection={collection}
+                isLast={index === collections.length - 1}
+              />
+            ))}
           </div>
         </Container>
       </section>
     </main>
+  );
+}
+
+function CategoryCard({ 
+  collection, 
+  isLast 
+}: { 
+  collection: CollectionsQuery['collections']['nodes'][0];
+  isLast: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
+
+  // Scale: grows from 1 to 1.15 as it approaches the top
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.15, 1.15]);
+  
+  // Margin: increases as scale increases to prevent overlap
+  const marginBottom = useTransform(scrollYProgress, [0, 0.5, 1], [24, 48, 48]);
+
+  return (
+    <motion.div
+      ref={ref}
+      style={{ 
+        scale,
+        marginBottom: isLast ? 0 : marginBottom,
+      }}
+      className="origin-center"
+    >
+      <Link
+        to={`/collections/${collection.handle}`}
+        className="group relative block w-full aspect-[3/4] overflow-hidden"
+      >
+        {/* Category Image */}
+        {collection.image && (
+          <motion.img
+            src={collection.image.url}
+            alt={collection.image.altText || collection.title}
+            className="w-full h-full object-cover"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          />
+        )}
+      </Link>
+    </motion.div>
   );
 }
 

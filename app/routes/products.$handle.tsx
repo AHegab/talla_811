@@ -25,13 +25,10 @@ export const meta: Route.MetaFunction = ({data}) => {
 };
 
 export async function loader(args: Route.LoaderArgs) {
-  // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
-
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
-  return {...deferredData, ...criticalData};
+  return criticalData;
 }
 
 /**
@@ -50,87 +47,96 @@ async function loadCriticalData({
     throw new Error('Expected product handle to be defined');
   }
 
-  const [{product}] = await Promise.all([
-    storefront.query(PRODUCT_QUERY, {
-      variables: {handle, selectedOptions: getSelectedProductOptions(request)},
-    }),
-    // Add other queries here, so that they are loaded in parallel
-  ]);
-
-  if (!product?.id) {
-    throw new Response(null, {status: 404});
-  }
-
-  // The API handle might be localized, so redirect to the localized handle
-  redirectIfHandleIsLocalized(request, {handle, data: product});
-
-  // Attempt to fetch visually or tag-based similar products using product tags as query
-  let similarProducts: any[] = [];
-
-  const config = getSimilarProductsConfig();
   try {
-    const tagQuery = (product.tags || []).slice(0, 3).join(' OR ');
-    if (tagQuery) {
-      const recs = await storefront.query(
-        PRODUCT_RECOMMENDATIONS_QUERY,
-        {
-          variables: {query: tagQuery, first: 20},
-        },
-      );
+    const [{product}] = await Promise.all([
+      storefront.query(PRODUCT_QUERY, {
+        variables: {handle, selectedOptions: getSelectedProductOptions(request)},
+      }),
+      // Add other queries here, so that they are loaded in parallel
+    ]);
 
-      // Apply overlap requirement based on config
-      const productTags = product.tags || [];
-      const requiredOverlap = productTags.length >= config.overlap ? config.overlap : productTags.length;
+    if (!product?.id) {
+      throw new Response(null, {status: 404});
+    }
 
-      similarProducts = filterByTagOverlap(recs?.products?.nodes ?? [], productTags, requiredOverlap)
-        .filter((node: any) => node.handle !== product.handle)
-        .slice(0, 5);
+    // The API handle might be localized, so redirect to the localized handle
+    redirectIfHandleIsLocalized(request, {handle, data: product});
 
-      if (similarProducts.length === 0 && config.allowOneTagFallback && requiredOverlap > 1) {
-        similarProducts = filterByTagOverlap(recs?.products?.nodes ?? [], productTags, 1)
+    // Attempt to fetch visually or tag-based similar products using product tags as query
+    let similarProducts: any[] = [];
+
+    const config = getSimilarProductsConfig();
+    try {
+      const tagQuery = (product.tags || []).slice(0, 3).join(' OR ');
+      if (tagQuery) {
+        const recs = await storefront.query(
+          PRODUCT_RECOMMENDATIONS_QUERY,
+          {
+            variables: {query: tagQuery, first: 20},
+          },
+        );
+
+        // Apply overlap requirement based on config
+        const productTags = product.tags || [];
+        const requiredOverlap = productTags.length >= config.overlap ? config.overlap : productTags.length;
+
+        similarProducts = filterByTagOverlap(recs?.products?.nodes ?? [], productTags, requiredOverlap)
           .filter((node: any) => node.handle !== product.handle)
           .slice(0, 5);
+
+        if (similarProducts.length === 0 && config.allowOneTagFallback && requiredOverlap > 1) {
+          similarProducts = filterByTagOverlap(recs?.products?.nodes ?? [], productTags, 1)
+            .filter((node: any) => node.handle !== product.handle)
+            .slice(0, 5);
+        }
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations query failed', err);
+      // Don't throw, just continue without recommendations
+    }
+
+    // If none and fallback is enabled, attempt vendor/productType fallback
+    if ((similarProducts.length === 0) && config.fallbackEnabled) {
+      // Vendor fallback
+      if (product.vendor) {
+        try {
+          const vendorRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
+            variables: { query: product.vendor, first: 20 },
+          });
+          similarProducts = vendorFallback(vendorRecs?.products?.nodes ?? [], product.vendor)
+            .filter((n: any) => n.handle !== product.handle)
+            .slice(0, 5);
+        } catch (err) {
+          if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations vendor fallback failed', err);
+          // Don't throw, just continue
+        }
+      }
+
+      // productType fallback
+      if ((similarProducts.length === 0) && product.productType) {
+        try {
+          const typeRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
+            variables: { query: product.productType, first: 20 },
+          });
+          similarProducts = productTypeFallback(typeRecs?.products?.nodes ?? [], product.productType)
+            .filter((n: any) => n.handle !== product.handle)
+            .slice(0, 5);
+        } catch (err) {
+          if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations productType fallback failed', err);
+          // Don't throw, just continue
+        }
       }
     }
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations query failed', err);
+
+    return {
+      product,
+      similarProducts,
+    };
+  } catch (error) {
+    // Make sure we're handling errors properly
+    console.error('Error loading product data:', error);
+    throw error;
   }
-
-  // If none and fallback is enabled, attempt vendor/productType fallback
-  if ((similarProducts.length === 0) && config.fallbackEnabled) {
-    // Vendor fallback
-    if (product.vendor) {
-      try {
-        const vendorRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
-          variables: { query: product.vendor, first: 20 },
-        });
-        similarProducts = vendorFallback(vendorRecs?.products?.nodes ?? [], product.vendor)
-          .filter((n: any) => n.handle !== product.handle)
-          .slice(0, 5);
-      } catch (err) {
-        if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations vendor fallback failed', err);
-      }
-    }
-
-    // productType fallback
-    if ((similarProducts.length === 0) && product.productType) {
-      try {
-        const typeRecs = await storefront.query(PRODUCT_RECOMMENDATIONS_QUERY, {
-          variables: { query: product.productType, first: 20 },
-        });
-        similarProducts = productTypeFallback(typeRecs?.products?.nodes ?? [], product.productType)
-          .filter((n: any) => n.handle !== product.handle)
-          .slice(0, 5);
-      } catch (err) {
-        if (process.env.NODE_ENV !== 'production') console.warn('Product recommendations productType fallback failed', err);
-      }
-    }
-  }
-
-  return {
-    product,
-    similarProducts,
-  };
 }
   const PRODUCT_RECOMMENDATIONS_QUERY = `#graphql
     query ProductRecsNonLocale(

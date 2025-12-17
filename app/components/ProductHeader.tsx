@@ -486,14 +486,16 @@ export function ProductHeader({
             {product.title}
           </h1>
           
-          {/* SIZE GUIDE Button */}
-          <button
-            onClick={() => setSizeRecOpen(true)}
-            className="bg-black text-white font-semibold text-[6px] px-1 py-0.5 square-sm hover:bg-gray-800 transition-all uppercase tracking-wide ml-2 flex-shrink-0"
-            style={{ padding: '2px 6px' }}
-          >
-            SIZE GUIDE
-          </button>
+          {/* SIZE GUIDE Button - only show if product has size options */}
+          {product.options?.some(option => option.name.toLowerCase() === 'size') && (
+            <button
+              onClick={() => setSizeRecOpen(true)}
+              className="bg-black text-white font-semibold text-[6px] px-1 py-0.5 square-sm hover:bg-gray-800 transition-all uppercase tracking-wide ml-2 flex-shrink-0"
+              style={{ padding: '2px 6px' }}
+            >
+              SIZE GUIDE
+            </button>
+          )}
         </div>
 
         {/* Price */}

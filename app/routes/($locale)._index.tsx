@@ -71,7 +71,7 @@ export default function Homepage() {
       <section className="w-full pt-6 pb-12 sm:pt-8 sm:pb-16 lg:pt-10 lg:pb-20">
         <Container>
           <div className="space-y-6">
-            {collections.map((collection, index) => (
+            {collections.map((collection: CollectionsQuery['collections']['nodes'][0], index: number) => (
               <CategoryCard 
                 key={collection.id} 
                 collection={collection}

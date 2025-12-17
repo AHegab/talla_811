@@ -470,14 +470,14 @@ export function ProductHeader({
         </div>
       )}
 
-      <div className="px-3 py-2 pb-safe">
+      <div className="px-3 py-0.5 pb-safe">
         {/* Header Top Row with Title and Size Guide Button */}
         <div className="flex items-start justify-between mb-1">
           {/* Title */}
           <h1
             className="text-gray-900 leading-tight flex-1"
             style={{
-              fontSize: '10px',
+              fontSize: '13px',
               fontWeight: '400',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
@@ -489,14 +489,15 @@ export function ProductHeader({
           {/* SIZE GUIDE Button */}
           <button
             onClick={() => setSizeRecOpen(true)}
-            className="bg-black text-white font-semibold text-[3px] px-1.5 py-0.5 rounded-sm hover:bg-gray-800 transition-all uppercase tracking-wide ml-2 flex-shrink-0"
+            className="bg-black text-white font-semibold text-[6px] px-1 py-0.5 square-sm hover:bg-gray-800 transition-all uppercase tracking-wide ml-2 flex-shrink-0"
+            style={{ padding: '2px 6px' }}
           >
             SIZE GUIDE
           </button>
         </div>
 
         {/* Price */}
-        <div className="text-gray-900 mb-2" style={{ fontSize: '10px', fontWeight: '400' }}>
+        <div className="text-gray-900 mb-2" style={{ fontSize: '16px', fontWeight: '400' }}>
           <Money data={selectedVariant.price as any} />
         </div>
 
@@ -526,7 +527,7 @@ export function ProductHeader({
                         disabled={!isAvailable}
                         className={(() => {
                           // Size button - small square with centered text
-                          const base = 'w-6 h-6 flex items-center justify-center rounded-sm border transition-all flex-shrink-0 text-[9px] leading-none font-bold';
+                          const base = 'w-3.5 h-3.5 flex items-center justify-center border transition-all flex-shrink-0 text-[6px] leading-none font-bold';
                           const selected = isSelected
                             ? 'bg-black text-white border-black'
                             : 'bg-white text-black border-gray-300';
@@ -607,7 +608,7 @@ export function ProductHeader({
                         onClick={() => onOptionChange(option.name, value)}
                         className={(() => {
                           // Color swatch - small square, always clickable
-                          const base = 'w-4 h-4 rounded-sm border transition-all flex-shrink-0 relative';
+                          const base = 'w-2.5 h-2.5 border transition-all flex-shrink-0 relative';
                           const border = isSelected ? 'border-black border-2' : 'border-gray-300';
                           const hover = 'hover:border-black';
                           return `${base} ${border} ${hover}`.trim();
@@ -633,7 +634,7 @@ export function ProductHeader({
               onClick={handleAddToCart}
               disabled={!selectedVariant.availableForSale}
             >
-              <span className="text-sm font-medium">
+              <span className="text-xs font-medium">
                 {selectedVariant.availableForSale ? 'Add to Cart' : 'Sold Out'}
               </span>
             </AddToCartButton>

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { ProductQuery } from 'storefrontapi.generated';
+import { mapMaterialToFabricType } from '~/lib/fabricMapping';
+import type { PDPProduct, PDPVariant } from './ProductBuyBox';
+import { ProductDescription } from './ProductDescription';
 import { ProductHeader } from './ProductHeader';
 import { ProductImagesVertical, type PDPImage } from './ProductImagesVertical';
-import { ProductDescription } from './ProductDescription';
 import { SimilarProductsSection, type SimilarProduct } from './SimilarProductsSection';
-import type { PDPProduct, PDPVariant } from './ProductBuyBox';
-import { mapMaterialToFabricType } from '~/lib/fabricMapping';
 import SizeChart from './SizeChart';
 
 interface UserMeasurements {
@@ -277,6 +277,12 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
       }
     }
 
+    // Extract model size
+    const modelSizeMetafield = (product as any)?.modelSize;
+    if (modelSizeMetafield?.value) {
+      pdpProduct.modelSize = modelSizeMetafield.value;
+    }
+
   } catch (e) {
     console.error('Error extracting metafields:', e);
   }
@@ -351,6 +357,8 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
             <ProductDescription
               description={product.description}
               fabricType={pdpProduct.fabricType}
+              modelSize={pdpProduct.modelSize}
+              vendor={product.vendor}
             />
           </div>
 

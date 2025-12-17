@@ -1,11 +1,15 @@
 interface ProductDescriptionProps {
   description?: string;
   fabricType?: 'cotton' | 'cotton_blend' | 'jersey_knit' | 'highly_elastic';
+  modelSize?: string;
+  vendor?: string;
 }
 
 export function ProductDescription({
   description,
   fabricType,
+  modelSize,
+  vendor,
 }: ProductDescriptionProps) {
   // Map fabric type to human-readable names
   const fabricTypeLabels: Record<string, string> = {
@@ -16,26 +20,38 @@ export function ProductDescription({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Description Panel */}
-      <div className="flex min-h-[64px] flex-col rounded-lg border border-[#E5E7EB] bg-white shadow-sm transition-all hover:shadow-md">
-        <div className="flex min-h-[48px] items-center px-5 py-3 text-left border-b border-[#F3F4F6]">
-          <span className="text-[15px] font-medium tracking-wide text-gray-800" style={{ fontFamily: 'Aeonik, sans-serif', letterSpacing: '0.02em' }}>Description</span>
+    <div className="space-y-6">
+      {/* Vendor */}
+      {vendor && (
+        <div>
+          
+          <p className="text-[15px] text-gray-900">{vendor}</p>
         </div>
-        <div className="px-5 py-4 text-[14px] leading-[1.7] text-gray-600" style={{ fontFamily: 'Quicking, sans-serif' }}>
+      )}
+
+      {/* Description */}
+      <div>
+        
+        <p className="text-[15px] leading-[1.7] text-gray-900">
           {description || 'No description available.'}
-        </div>
+        </p>
       </div>
 
-      {/* Materials/Fabric Panel */}
+      {/* Model Size */}
+      {modelSize && (
+        <div>
+          
+          <p className="text-[15px] text-gray-900">{modelSize}</p>
+        </div>
+      )}
+
+      {/* Materials/Fabric */}
       {fabricType && (
-        <div className="flex min-h-[64px] flex-col rounded-lg border border-[#E5E7EB] bg-white shadow-sm transition-all hover:shadow-md">
-          <div className="flex min-h-[48px] items-center px-5 py-3 text-left border-b border-[#F3F4F6]">
-            <span className="text-[15px] font-medium tracking-wide text-gray-800" style={{ fontFamily: 'Aeonik, sans-serif', letterSpacing: '0.02em' }}>Materials</span>
-          </div>
-          <div className="px-5 py-4 text-[14px] leading-[1.7] text-gray-600" style={{ fontFamily: 'Quicking, sans-serif' }}>
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Materials</h3>
+          <p className="text-[15px] text-gray-900">
             {fabricTypeLabels[fabricType] || fabricType}
-          </div>
+          </p>
         </div>
       )}
     </div>

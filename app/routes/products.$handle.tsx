@@ -284,10 +284,15 @@ const PRODUCT_FRAGMENT = `#graphql
         }
       }
     }
+    modelSize: metafield(namespace: "custom", key: "model_size") {
+      value
+      type
+    }
     metafields(identifiers: [
       {namespace: "custom", key: "size_chart"},
       {namespace: "custom", key: "size_dimensions"},
-      {namespace: "custom", key: "fabric_type"}
+      {namespace: "custom", key: "fabric_type"},
+      {namespace: "custom", key: "model_size"}
     ]) {
       id
       key

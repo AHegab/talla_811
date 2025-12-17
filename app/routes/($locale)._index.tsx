@@ -55,6 +55,7 @@ export default function Homepage() {
     const handleScroll = () => {
       const viewportHeight = window.innerHeight;
       const headerHeight = 72; // approximate header height
+      const triggerOffset = 350; // Start transition 350px earlier
       
       const newScales: Record<string, number> = {};
       
@@ -66,10 +67,10 @@ export default function Homepage() {
         const elementTop = rect.top;
         const elementHeight = rect.height;
         
-        // Calculate if element is going out of view at the top
-        if (elementTop < headerHeight && elementTop > -elementHeight) {
+        // Calculate if element is going out of view at the top (with earlier trigger)
+        if (elementTop < (headerHeight + triggerOffset) && elementTop > -elementHeight) {
           // Element is transitioning out at the top
-          const progress = Math.abs(elementTop - headerHeight) / elementHeight;
+          const progress = Math.abs(elementTop - (headerHeight + triggerOffset)) / (elementHeight + triggerOffset);
           // Scale from 1 to 1.15 as it goes up
           const scale = 1 + (progress * 0.15);
           newScales[collection.id] = Math.min(scale, 1.15);
@@ -110,10 +111,10 @@ export default function Homepage() {
                   key={collection.id}
                   ref={(el) => { categoryRefs.current[collection.id] = el; }}
                   to={`/collections/${collection.handle}`}
-                  className="group relative block w-full aspect-[3/4] overflow-hidden bg-gray-100 hover:shadow-lg transition-all duration-300 origin-center"
+                  className="group relative block w-full aspect-[3/4] overflow-hidden transition-all duration-300 origin-center"
                   style={{
                     transform: `scale(${scale})`,
-                    transition: 'transform 0.1s ease-out, margin 0.1s ease-out',
+                    transition: 'transform 0.3s ease-out, margin 0.3s ease-out',
                     marginBottom: index < collections.length - 1 ? `${24 + additionalMargin}px` : undefined,
                   }}
                 >
@@ -125,16 +126,6 @@ export default function Homepage() {
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 )}
-                
-                {/* Overlay with gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                
-                {/* Category Name */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <h3 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-wider uppercase text-center px-6 text-white group-hover:scale-105 transition-transform duration-300 relative z-10">
-                    {collection.title}
-                  </h3>
-                </div>
               </Link>
             );
             })}

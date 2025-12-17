@@ -18,22 +18,22 @@ export function ProductDescription({
   return (
     <div className="space-y-4">
       {/* Description Panel */}
-      <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-        <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-          <span className="tracking-wide">Description</span>
+      <div className="flex min-h-[64px] flex-col rounded-lg border border-[#E5E7EB] bg-white shadow-sm transition-all hover:shadow-md">
+        <div className="flex min-h-[48px] items-center px-5 py-3 text-left border-b border-[#F3F4F6]">
+          <span className="text-[15px] font-medium tracking-wide text-gray-800" style={{ fontFamily: 'Aeonik, sans-serif', letterSpacing: '0.02em' }}>Description</span>
         </div>
-        <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
+        <div className="px-5 py-4 text-[14px] leading-[1.7] text-gray-600" style={{ fontFamily: 'Quicking, sans-serif' }}>
           {description || 'No description available.'}
         </div>
       </div>
 
       {/* Materials/Fabric Panel */}
       {fabricType && (
-        <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-          <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-            <span className="tracking-wide">Materials</span>
+        <div className="flex min-h-[64px] flex-col rounded-lg border border-[#E5E7EB] bg-white shadow-sm transition-all hover:shadow-md">
+          <div className="flex min-h-[48px] items-center px-5 py-3 text-left border-b border-[#F3F4F6]">
+            <span className="text-[15px] font-medium tracking-wide text-gray-800" style={{ fontFamily: 'Aeonik, sans-serif', letterSpacing: '0.02em' }}>Materials</span>
           </div>
-          <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
+          <div className="px-5 py-4 text-[14px] leading-[1.7] text-gray-600" style={{ fontFamily: 'Quicking, sans-serif' }}>
             {fabricTypeLabels[fabricType] || fabricType}
           </div>
         </div>

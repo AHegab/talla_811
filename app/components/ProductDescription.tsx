@@ -46,14 +46,14 @@ export function ProductDescription({
       )}
 
       {/* Materials/Fabric */}
-      {fabricType && (
+      {/* {fabricType && (
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Materials</h3>
           <p className="text-[15px] text-gray-900">
             {fabricTypeLabels[fabricType] || fabricType}
           </p>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

@@ -37,7 +37,7 @@ export async function loader({context}: Route.LoaderArgs) {
   );
 
   // Filter to show only these specific categories
-  const categoryHandles = ['loungewear', 'basics', 'partywear', 'streetwear', 'bags'];
+  const categoryHandles = ['loungewear', 'basics', 'partywear', 'bags'];
   const filteredCollections = data.collections?.nodes.filter(
     collection => categoryHandles.includes(collection.handle.toLowerCase())
   ) ?? [];
@@ -52,8 +52,8 @@ export default function Homepage() {
 
   return (
     <main className="min-h-screen bg-talla-bg">
-      {/* Hero Section with proper top spacing for fixed header */}
-      <section className="w-full pt-14 sm:pt-16 lg:pt-[72px]">
+      {/* Hero Section - starts below the fixed header */}
+      <section className="w-full mt-28 sm:mt-32 lg:mt-40">
         <HeroCarousel />
       </section>
 

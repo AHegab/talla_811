@@ -376,7 +376,79 @@ export function ProductHeader({
   ];
 
   return (
-    <div
+    <>
+      {/* Size Recommendation Modal - Popup Style */}
+      {sizeRecOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 overflow-y-auto"
+          style={{
+            zIndex: 99999999,
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-lg z-10">
+              <h3 className="text-lg font-semibold text-gray-900">Size Recommendation</h3>
+              <button
+                onClick={() => setSizeRecOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              {/* Size Chart Table */}
+              {product.sizeDimensions && Object.keys(product.sizeDimensions).length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-base font-semibold text-gray-900 mb-4">Size Chart</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-300">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">Size</th>
+                          {product.sizeDimensions[Object.keys(product.sizeDimensions)[0]] &&
+                            Object.keys(product.sizeDimensions[Object.keys(product.sizeDimensions)[0]]).map((measurement) => (
+                              <th key={measurement} className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-900">
+                                {measurement.charAt(0).toUpperCase() + measurement.slice(1)}
+                              </th>
+                            ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(product.sizeDimensions).map(([size, measurements]: [string, any]) => (
+                          <tr key={size} className="hover:bg-gray-50">
+                            <td className="border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900">{size}</td>
+                            {Object.entries(measurements).map(([key, value]: [string, any]) => (
+                              <td key={key} className="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+                                {value}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="mt-4 text-xs text-gray-500">
+                    * All measurements are in centimeters (cm)
+                  </div>
+                  <div className="border-t border-gray-200 my-6"></div>
+                </div>
+              )}
+              
+              <SizeRecommendationPrompt
+                onComplete={() => setSizeRecOpen(false)}
+                onRecommendation={handleSizeRecommendation}
+                productSizeDimensions={product.sizeDimensions}
+                productType={product.productType}
+                tags={product.tags}
+                vendor={product.vendor}
+                mode="modal"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div
       className="product-header-fixed bg-white border-t border-gray-200"
       style={{
         position: 'fixed',
@@ -604,34 +676,7 @@ export function ProductHeader({
           </div>
         </div>
       )}
-
-      {/* Size Recommendation Modal */}
-      {sizeRecOpen && (
-        <div className="fixed inset-0 z-[9999999] flex items-start justify-center bg-black/60 overflow-y-auto">
-          <div className="bg-white w-full min-h-screen flex flex-col">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-lg font-semibold text-gray-900">Size Recommendation</h3>
-              <button
-                onClick={() => setSizeRecOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-6 flex-1">
-              <SizeRecommendationPrompt
-                onComplete={() => setSizeRecOpen(false)}
-                onRecommendation={handleSizeRecommendation}
-                productSizeDimensions={product.sizeDimensions}
-                productType={product.productType}
-                tags={product.tags}
-                vendor={product.vendor}
-                mode="modal"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+    </>
   );
 }

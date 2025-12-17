@@ -39,7 +39,7 @@ export function PageLayout({
       <MobileMenuAside header={header} publicStoreDomain={publicStoreDomain} />
       
       {/* TALLA Premium Layout */}
-      <div className="min-h-screen flex flex-col bg-talla-bg text-talla-text overflow-x-hidden max-w-full">
+      <div className="min-h-screen flex flex-col bg-talla-bg text-talla-text w-full overflow-x-hidden max-w-full">
         {header && (
           <Header
             header={header}
@@ -50,7 +50,7 @@ export function PageLayout({
         )}
 
         {/* Main content - offset for fixed header + mobile logo band */}
-        <main className="flex-1 pt-[7.5rem] sm:pt-[8.5rem] lg:pt-[4.5rem] overflow-x-hidden max-w-full">
+        <main className="flex-1 w-full overflow-x-hidden max-w-full">
           {children}
         </main>
         

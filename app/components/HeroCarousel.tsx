@@ -89,15 +89,13 @@ export function HeroCarousel() {
   };
 
   return (
-    // Frame container: centers the hero and gives a border + shadow
-    <div className="w-full px-4 sm:px-6 lg:px-16">
-      <div className="mx-auto max-w-[1400px] rounded-lg overflow-hidden border border-gray-200 shadow-md">
-        <div
-          className="relative w-full h-[380px] sm:h-[440px] md:h-[520px] lg:h-[600px] xl:h-[680px] overflow-hidden bg-gray-100"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
+    <div className="w-full">
+      <div
+        className="relative w-full h-[380px] sm:h-[440px] md:h-[520px] lg:h-[600px] xl:h-[680px] overflow-hidden"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
           {slides.map((slide, index) => (
             <div
               key={index}
@@ -117,7 +115,6 @@ export function HeroCarousel() {
             </div>
           ))}
         </div>
-      </div>
     </div>
   );
 }

@@ -29,7 +29,6 @@ export function addNotification(notification: Omit<RestockNotification, 'status'
   // Check if email already exists for this variant
   const duplicate = existing.find(n => n.email === notification.email);
   if (duplicate) {
-    console.log('⚠️  Notification already exists for:', notification.email, key);
     return;
   }
 
@@ -39,7 +38,6 @@ export function addNotification(notification: Omit<RestockNotification, 'status'
   });
 
   notifications.set(key, existing);
-  console.log('✅ Notification added:', notification.email, 'for variant:', key);
 }
 
 /**
@@ -58,7 +56,6 @@ export function markAsSent(variantId: string, email: string): void {
 
   if (notification) {
     notification.status = 'sent';
-    console.log('✅ Notification marked as sent:', email, variantId);
   }
 }
 
@@ -71,7 +68,6 @@ export function markAsFailed(variantId: string, email: string): void {
 
   if (notification) {
     notification.status = 'failed';
-    console.log('❌ Notification marked as failed:', email, variantId);
   }
 }
 
@@ -108,8 +104,6 @@ export function cleanupOldNotifications(): void {
       notifications.set(key, filtered);
     }
   });
-
-  console.log('🧹 Cleaned up old notifications');
 }
 
 /**

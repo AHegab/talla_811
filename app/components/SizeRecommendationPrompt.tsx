@@ -251,9 +251,6 @@ export function SizeRecommendationPrompt({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SizeRecommendation | null>(null);
 
-  // Debug: Log result changes
-  console.log('🔍 Current result state:', result);
-
   const [measurements, setMeasurements] = useState<UserMeasurementInput>({
     height: 0,
     weight: 0,
@@ -295,7 +292,6 @@ export function SizeRecommendationPrompt({
         tags,
         vendor,
       };
-      console.log('📤 Sending recommendation request:', requestData);
 
       // Call API
       const response = await fetch('/api/recommend-size', {
@@ -311,13 +307,12 @@ export function SizeRecommendationPrompt({
       }
 
       const data = await response.json() as SizeRecommendation;
-      console.log('✅ Size recommendation received:', data);
       setResult(data);
 
       // Don't call onRecommendation here - wait for user to click "Select Size" button
       // This prevents the panel from closing before showing results
     } catch (err) {
-      console.error('❌ Size recommendation error:', err);
+      console.error('Size recommendation error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
@@ -345,7 +340,6 @@ export function SizeRecommendationPrompt({
 
   // Trigger button (for inline mode)
   if (!showForm) {
-    console.log('👉 Showing trigger button (showForm is false)');
     return (
       <button
         onClick={() => setShowForm(true)}
@@ -369,8 +363,6 @@ export function SizeRecommendationPrompt({
     );
   }
 
-  console.log('📋 Rendering form, mode:', mode, 'result:', result ? 'HAS RESULT' : 'NO RESULT');
-
   // Modal/Inline wrapper
   const containerClass =
     mode === 'modal'
@@ -384,7 +376,6 @@ export function SizeRecommendationPrompt({
 
   // Result display
   if (result) {
-    console.log('✨ Rendering result display for size:', result.size);
     return (
       <div className={containerClass}>
         <div className={cardClass}>

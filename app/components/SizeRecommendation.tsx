@@ -61,9 +61,6 @@ export function SizeRecommendation({
       sizeDimensions,
     };
 
-    console.log('🚀 Sending recommendation request:', requestBody);
-    console.log('📦 Size dimensions being sent:', sizeDimensions);
-
     try {
       const response = await fetch('/api/recommend-size', {
         method: 'POST',
@@ -76,8 +73,6 @@ export function SizeRecommendation({
       }
 
       const data = (await response.json()) as SizeRecResponse;
-
-      console.log('📨 Received recommendation response:', data);
 
       if (!data.size) {
         throw new Error('Invalid response from recommendation service');

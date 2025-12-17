@@ -1,10 +1,10 @@
-import type {Route} from './+types/_index';
-import {useLoaderData} from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
+import type { Route } from './+types/_index';
 
-import {HeroCarousel} from '~/components/HeroCarousel';
-import {ProductItem} from '~/components/ProductItem';
-import {Container, ProductGrid, SectionHeading} from '~/components/ui';
-import type {AllProductsQuery} from 'storefrontapi.generated';
+import { HeroCarousel } from '~/components/HeroCarousel';
+import { Container } from '~/components/ui';
 
 export const meta: Route.MetaFunction = () => {
   return [
@@ -17,144 +17,123 @@ export const meta: Route.MetaFunction = () => {
   ];
 };
 
-type Products = AllProductsQuery['products']['nodes'];
+type CollectionsQuery = {
+  collections: {
+    nodes: Array<{
+      id: string;
+      title: string;
+      handle: string;
+      image?: {
+        url: string;
+        altText?: string;
+      };
+    }>;
+  };
+};
 
 export async function loader({context}: Route.LoaderArgs) {
-  // Critical, above-the-fold data
-  const criticalData = await loadCriticalData({context});
-
-  // Deferred / below-the-fold data placeholder (extend later if needed)
-  const deferredData = loadDeferredData({context});
-
-  return {...criticalData, ...deferredData};
-}
-
-/**
- * Load data necessary for rendering content above the fold.
- * If this fails, the whole page should error.
- */
-async function loadCriticalData({
-  context,
-}: {
-  context: Route.LoaderArgs['context'];
-}) {
-  const data = await context.storefront.query<AllProductsQuery>(
-    ALL_PRODUCTS_QUERY,
+  const data = await context.storefront.query<CollectionsQuery>(
+    COLLECTIONS_QUERY,
   );
 
+  // Filter to show only these specific categories
+  const categoryHandles = ['loungewear', 'basics', 'partywear', 'bags'];
+  const filteredCollections = data.collections?.nodes.filter(
+    collection => categoryHandles.includes(collection.handle.toLowerCase())
+  ) ?? [];
+
   return {
-    products: data.products?.nodes ?? [],
+    collections: filteredCollections,
   };
 }
 
-/**
- * Load data for rendering content below the fold.
- * This should never throw; the page must still succeed without it.
- */
-function loadDeferredData({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  context,
-}: {
-  context: Route.LoaderArgs['context'];
-}) {
-  // Add deferred queries here later (e.g. recommendations, editorials, etc.)
-  return {};
-}
-
 export default function Homepage() {
-  const {products} = useLoaderData<typeof loader>();
+  const { collections } = useLoaderData<typeof loader>();
 
   return (
     <main className="min-h-screen bg-talla-bg">
-      {/* Hero Section with proper top spacing for fixed header */}
-      <section className="w-full pt-14 sm:pt-16 lg:pt-[72px]">
+      {/* Hero Section - starts below the fixed header */}
+      <section className="w-full mt-28 sm:mt-32 lg:mt-40">
         <HeroCarousel />
       </section>
 
-      {/* Products Section */}
-      <AllProducts products={products} />
+      {/* Categories Section */}
+      <section className="w-full pt-6 pb-12 sm:pt-8 sm:pb-16 lg:pt-10 lg:pb-20">
+        <Container>
+          <div className="space-y-6">
+            {collections.map((collection, index) => (
+              <CategoryCard 
+                key={collection.id} 
+                collection={collection}
+                isLast={index === collections.length - 1}
+              />
+            ))}
+          </div>
+        </Container>
+      </section>
     </main>
   );
 }
 
-function AllProducts({products}: {products: Products}) {
-  const count = products?.length ?? 0;
+function CategoryCard({ 
+  collection, 
+  isLast 
+}: { 
+  collection: CollectionsQuery['collections']['nodes'][0];
+  isLast: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
 
-  if (!products || count === 0) {
-    return (
-      <Container className="section-padding">
-        <SectionHeading
-          title="All Products"
-          subtitle="No products available"
-        />
-        <div className="mt-4 text-center text-sm text-gray-600">
-          <p>
-            No products found. Make sure your products are published to the
-            Headless sales channel in Shopify.
-          </p>
-        </div>
-      </Container>
-    );
-  }
+  // Scale: grows from 1 to 1.15 as it approaches the top
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.15, 1.15]);
+  
+  // Margin: increases as scale increases to prevent overlap
+  const marginBottom = useTransform(scrollYProgress, [0, 0.5, 1], [24, 48, 48]);
 
   return (
-    <Container className="section-padding">
-      <SectionHeading
-        title="All Products"
-        subtitle={`Discover ${count} curated ${
-          count === 1 ? 'piece' : 'pieces'
-        } from our partner brands`}
-      />
-
-      <ProductGrid>
-        {products.map((product) => (
-          <ProductItem
-            key={product.id}
-            product={product}
-            loading="lazy"
+    <motion.div
+      ref={ref}
+      style={{ 
+        scale,
+        marginBottom: isLast ? 0 : marginBottom,
+      }}
+      className="origin-center"
+    >
+      <Link
+        to={`/collections/${collection.handle}`}
+        className="group relative block w-full aspect-[3/4] overflow-hidden"
+      >
+        {/* Category Image */}
+        {collection.image && (
+          <motion.img
+            src={collection.image.url}
+            alt={collection.image.altText || collection.title}
+            className="w-full h-full object-cover"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
           />
-        ))}
-      </ProductGrid>
-    </Container>
+        )}
+      </Link>
+    </motion.div>
   );
 }
 
-const ALL_PRODUCTS_QUERY = `#graphql
-  fragment ProductCard on Product {
-    id
-    title
-    handle
-    publishedAt
-    availableForSale
-    priceRange {
-      minVariantPrice {
-        amount
-        currencyCode
-      }
-    }
-    images(first: 1) {
+const COLLECTIONS_QUERY = `#graphql
+  query Collections($country: CountryCode, $language: LanguageCode)
+  @inContext(country: $country, language: $language) {
+    collections(first: 10) {
       nodes {
         id
-        url
-        altText
-        width
-        height
-      }
-    }
-    featuredImage {
-      id
-      url
-      altText
-      width
-      height
-    }
-  }
-
-  query AllProducts($country: CountryCode, $language: LanguageCode)
-  @inContext(country: $country, language: $language) {
-    products(first: 250) {
-      nodes {
-        ...ProductCard
+        title
+        handle
+        image {
+          url
+          altText
+        }
       }
     }
   }

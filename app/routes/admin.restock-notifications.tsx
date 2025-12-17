@@ -34,7 +34,7 @@ export default function RestockNotificationsAdmin() {
       try {
         const stored = localStorage.getItem('talla_restock_notifications');
         if (stored) {
-          setNotifications(JSON.parse(stored));
+          setNotifications(JSON.parse(stored) as any[]);
         }
       } catch (err) {
         console.error('Failed to load notifications:', err);
@@ -46,8 +46,6 @@ export default function RestockNotificationsAdmin() {
     setLoading(true);
     try {
       // You can add API call here to check Shopify inventory
-      console.log('Checking inventory for variant:', variantId);
-
       // For demo purposes, we'll just alert
       alert('Check your Shopify admin to see if this variant is in stock');
     } catch (err) {
@@ -77,7 +75,7 @@ export default function RestockNotificationsAdmin() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to send email');

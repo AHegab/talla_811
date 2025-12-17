@@ -458,7 +458,7 @@ export function ProductHeader({
         width: '100vw',
         maxWidth: '100vw',
         zIndex: 999999,
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+        boxShadow: '0 -1px 1px rgba(0,0,0,0.03)',
         transform: 'none',
         willChange: 'auto',
       }}
@@ -472,7 +472,7 @@ export function ProductHeader({
 
       <div className="px-3 py-0.5 pb-safe">
         {/* Header Top Row with Title and Size Guide Button */}
-        <div className="flex items-start justify-between mb-1">
+        <div className="flex items-start justify-between mb-0">
           {/* Title */}
           <h1
             className="text-gray-900 leading-tight flex-1"
@@ -497,19 +497,19 @@ export function ProductHeader({
         </div>
 
         {/* Price */}
-        <div className="text-gray-900 mb-2" style={{ fontSize: '16px', fontWeight: '400' }}>
+        <div className="text-gray-900" style={{ fontSize: '16px', fontWeight: '400' }}>
           <Money data={selectedVariant.price as any} />
         </div>
 
         {/* Option Selectors - Sizes first, then Colors below */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-0.5">
           {/* Size Options */}
           {product.options &&
             product.options.length > 0 &&
             product.options
               .filter((option) => option.name.toLowerCase() !== 'color')
               .map((option) => (
-                <div key={option.name} className="flex flex-wrap gap-2">
+                <div key={option.name} className="flex flex-wrap gap-1">
                   {option.values.map((value) => {
                     const isAvailable = product.variants.some(
                       (v) =>
@@ -559,7 +559,7 @@ export function ProductHeader({
             product.options
               .filter((option) => option.name.toLowerCase() === 'color')
               .map((option) => (
-                <div key={option.name} className="flex flex-wrap gap-2">
+                <div key={option.name} className="flex flex-wrap gap-1">
                   {option.values.map((value) => {
                     const isAvailable = product.variants.some(
                       (v) =>
@@ -628,7 +628,7 @@ export function ProductHeader({
               ))}
 
           {/* Add to Cart Button */}
-          <div className="mt-1">
+          <div>
             <AddToCartButton
               lines={lines}
               onClick={handleAddToCart}

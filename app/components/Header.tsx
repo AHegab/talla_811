@@ -3,13 +3,13 @@ import {
   useAnalytics,
   useOptimisticCart,
 } from '@shopify/hydrogen';
+import { Menu, Search, ShoppingBag, User, X } from 'lucide-react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { Await, NavLink, useAsyncValue, useLocation } from 'react-router';
 import type { CartApiQueryFragment, HeaderQuery } from 'storefrontapi.generated';
 import { useAside } from '~/components/Aside';
 import { SearchFormPredictive } from '~/components/SearchFormPredictive';
 import { SearchResultsPredictive } from '~/components/SearchResultsPredictive';
-import { Search, User, ShoppingBag, Menu, X } from 'lucide-react';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -95,6 +95,10 @@ export function Header({
   // Check if current page is a product page
   const isProductPage = location.pathname.includes('/products/');
 
+  // Check if current page is bags or partywear collection (dark theme)
+  const isDarkCollection = location.pathname.includes('/collections/bags') || 
+                           location.pathname.includes('/collections/partywear');
+
   useEffect(() => {
     function onScroll() {
       const currentY = window.scrollY || 0;
@@ -144,18 +148,17 @@ export function Header({
               prefetch="intent"
               to="/"
               end
-              className="hidden lg:flex fixed left-6 top-6 lg:top-[72px] z-40 items-center justify-center pointer-events-auto"
+              className="hidden lg:flex fixed left-1/2 -translate-x-1/2 top-[68px] z-40 items-center justify-center pointer-events-auto"
               aria-label={`${shop.name} home`}
-              style={{paddingTop: 'env(safe-area-inset-top)'}}
             >
-              <div className="overflow-hidden inline-flex items-center justify-center w-[220px] h-[100px]">
+              <div className="overflow-hidden inline-flex items-center justify-center w-[220px] h-[70px] py-3">
                 <img
-                  src="/talla-logo-black.svg"
+                  src={isDarkCollection ? "/talla-logo-white.svg" : "/talla-logo-black.svg"}
                   alt={shop.name}
-                  className="w-full h-auto object-contain block transform translate-y-0 lg:-translate-y-1"
+                  className="w-full h-auto object-contain block"
                   loading="eager"
                   width={220}
-                  height={100}
+                  height={70}
                 />
               </div>
             </NavLink>
@@ -253,19 +256,19 @@ export function Header({
       {/* Mobile logo overlay - hidden on product pages */}
       {!isProductPage && (
         <>
-          <div className="lg:hidden fixed top-14 sm:top-16 left-0 right-0 z-40 bg-transparent pointer-events-none">
+          <div className="lg:hidden fixed top-[calc(3.5rem+16px)] sm:top-[calc(4rem+16px)] left-0 right-0 z-40 bg-transparent pointer-events-none">
             {/* pointer-events-none on the parent prevents interactions; add pointer-events-auto to the link so logo stays decorative but is clickable */}
             <NavLink prefetch="intent" to="/" end className="block pointer-events-auto" aria-label={`${shop.name} home`}>
-              <div className="flex items-center justify-center h-[120px] w-full overflow-hidden bg-transparent">
+              <div className="flex items-center justify-center h-[70px] w-full overflow-hidden bg-transparent py-3">
                 <div
                   role="img"
                   aria-label={shop.name}
                   className="w-full h-full"
                   style={{
-                    backgroundImage: "url('/talla-logo-black.svg')",
+                    backgroundImage: isDarkCollection ? "url('/talla-logo-white.svg')" : "url('/talla-logo-black.svg')",
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
-                    backgroundSize: '60% auto',
+                    backgroundSize: '35% auto',
                   }}
                 />
               </div>

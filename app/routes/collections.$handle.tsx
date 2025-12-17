@@ -1,6 +1,6 @@
 import { Analytics, getPaginationVariables } from '@shopify/hydrogen';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, redirect, useLoaderData, useSearchParams } from 'react-router';
+import { redirect, useLoaderData, useSearchParams } from 'react-router';
 import type { ProductItemFragment } from 'storefrontapi.generated';
 import { ProductItem } from '~/components/ProductItem';
 import { ProductGrid } from '~/components/ui';
@@ -340,76 +340,37 @@ export default function Collection() {
     (filters.priceMax !== '' && parseFloat(filters.priceMax) !== maxPrice) ||
     filters.priceRange !== '';
 
+  // Check if this is bags or partywear collection
+  const isDarkTheme = collection.handle === 'bags' || collection.handle === 'partywear';
+
   // Default collection UI (non-men/non-women) with premium design
   return (
-    <div className="min-h-screen bg-[#FDF8F7]">
+    <div className={`min-h-screen ${isDarkTheme ? 'bg-black' : 'bg-[#FDF8F7]'}`}>
       {/* HERO SECTION WITH BRAND IMAGE */}
-      <section className="relative py-12 sm:py-16 lg:py-20 bg-white">
-        <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-16">
-          {/* Breadcrumb */}
-          <nav className="mb-10 flex items-center space-x-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[#5A4A4C]">
-            <Link to="/" className="transition-colors hover:text-[#1F191A]">
-              Home
-            </Link>
-            <span>/</span>
-            <Link to="/collections" className="transition-colors hover:text-[#1F191A]">
-              Collections
-            </Link>
-            <span>/</span>
-            <span className="text-[#1F191A]">{collection.title}</span>
-          </nav>
-
-          <div className="grid lg:grid-cols-[1.5fr,1fr] gap-10 lg:gap-20 items-center">
-            {/* Brand Logo/Image */}
-            <div className="flex items-center justify-center lg:justify-start">
-              {collection.image ? (
-                <div className="relative w-full">
-                  <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-gradient-to-br from-white to-[#FAFAFA] border border-[#E8E9EC] shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-center p-10 sm:p-16 lg:p-20">
-                    <img
-                      src={collection.image.url}
-                      alt={collection.image.altText || collection.title}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="aspect-[16/9] w-full rounded-2xl bg-gradient-to-br from-white to-[#FAFAFA] border border-[#E8E9EC] flex items-center justify-center">
-                  <span
-                    className="text-6xl sm:text-7xl lg:text-8xl font-bold text-[#E8E9EC] uppercase tracking-[0.1em]"
-                    style={{ fontFamily: 'Aeonik, sans-serif' }}
-                  >
-                    {collection.title.charAt(0)}
-                  </span>
-                </div>
-              )}
+      <section className={`relative pt-[128px] lg:pt-[128px] ${isDarkTheme ? 'bg-black' : 'bg-white'}`}>
+        <div className="mx-auto max-w-[1440px]">
+          
+          {/* Brand Image - Full Width Below Header */}
+          {collection.image && (
+            <div className="w-full mb-12">
+              <img
+                src={collection.image.url}
+                alt={collection.image.altText || collection.title}
+                className="w-full h-auto object-cover"
+              />
             </div>
+          )}
 
-            {/* Brand Info */}
-            <div className="text-center lg:text-left">
+          {/* Brand Info */}
+          <div className="text-center px-6 sm:px-10 lg:px-16 pb-12 sm:pb-16 lg:pb-20">
+            {collection.description && (
               <p
-                className="text-[11px] tracking-[0.28em] uppercase text-[#5A4A4C]/70 mb-4"
-                style={{
-                  fontFamily: 'Georgia, "Playfair Display SC", serif',
-                }}
+                className="text-base sm:text-lg leading-relaxed text-[#5A4A4C] max-w-2xl mx-auto"
+                style={{fontFamily: 'Quicking, sans-serif'}}
               >
-                Brand Collection
+                {collection.description}
               </p>
-              <h1
-                className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-[0.15em] uppercase text-[#1F191A] mb-6"
-                style={{fontFamily: 'Aeonik, sans-serif'}}
-              >
-                {collection.title}
-              </h1>
-              <div className="h-[2px] w-20 rounded-full bg-[#1F191A] mb-6 mx-auto lg:mx-0" />
-              {collection.description && (
-                <p
-                  className="text-base sm:text-lg leading-relaxed text-[#5A4A4C] max-w-xl mx-auto lg:mx-0"
-                  style={{fontFamily: 'Quicking, sans-serif'}}
-                >
-                  {collection.description}
-                </p>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -1135,7 +1096,7 @@ export default function Collection() {
               {filteredProducts.length > 0 ? (
                 <ProductGrid>
                   {filteredProducts.map((p: any) => (
-                  <ProductItem key={p.id} product={p as any} loading="lazy" />
+                  <ProductItem key={p.id} product={p as any} loading="lazy" isDarkTheme={isDarkTheme} />
                 ))}
               </ProductGrid>
             ) : (

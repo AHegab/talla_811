@@ -157,35 +157,6 @@ export default function CategoriesIndex() {
 
   return (
     <div className="min-h-screen bg-[#FDF8F7]">
-      {/* HERO SECTION */}
-      <section className="relative py-16 sm:py-20 lg:py-24">
-        <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-16">
-          <div className="text-center">
-            <p
-              className="text-[11px] tracking-[0.28em] uppercase text-[#5A4A4C]/70 mb-3"
-              style={{
-                fontFamily: 'Georgia, "Playfair Display SC", serif',
-              }}
-            >
-              Explore Our
-            </p>
-            <h1
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-[0.18em] uppercase text-[#1F191A] mb-6"
-              style={{fontFamily: 'Aeonik, sans-serif'}}
-            >
-              Categories
-            </h1>
-            <div className="mx-auto h-[2px] w-16 rounded-full bg-[#1F191A] mb-5" />
-            <p
-              className="mx-auto max-w-2xl text-sm sm:text-base leading-relaxed text-[#5A4A4C] text-center"
-              style={{fontFamily: 'Quicking, sans-serif'}}
-            >
-              Discover our curated selection of fashion categories, each chosen for exceptional quality and timeless style.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* CATEGORIES GRID */}
       <section className="pb-20 lg:pb-24">
         <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-16">

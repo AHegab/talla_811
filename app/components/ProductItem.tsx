@@ -1,12 +1,12 @@
 // app/components/ui/ProductItem.tsx
-import {Image, Money} from '@shopify/hydrogen';
-import {Link} from 'react-router';
+import { Image } from '@shopify/hydrogen';
+import { Link } from 'react-router';
 import type {
-  CollectionItemFragment,
-  ProductItemFragment,
-  RecommendedProductFragment,
+    CollectionItemFragment,
+    ProductItemFragment,
+    RecommendedProductFragment,
 } from 'storefrontapi.generated';
-import {useVariantUrl} from '~/lib/variants';
+import { useVariantUrl } from '~/lib/variants';
 
 /**
  * Zara-style product item: image, then name, then price
@@ -15,6 +15,7 @@ export function ProductItem({
   product,
   loading,
   to,
+  isDarkTheme,
 }: {
   product:
     | CollectionItemFragment
@@ -22,6 +23,7 @@ export function ProductItem({
     | RecommendedProductFragment;
   loading?: 'eager' | 'lazy';
   to?: string;
+  isDarkTheme?: boolean;
 }) {
   const variantUrl = to || useVariantUrl(product.handle);
   const image = product.featuredImage;
@@ -43,7 +45,7 @@ export function ProductItem({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
-                <div className="w-16 h-16 border border-dashed border-gray-300" />
+                <div className={`w-16 h-16 border border-dashed ${isDarkTheme ? 'border-gray-600' : 'border-gray-300'}`} />
               </div>
             )}
           </div>
@@ -51,17 +53,23 @@ export function ProductItem({
       </div>
 
       {/* Text block: name under pic, price under name */}
-      <div className="mt-9 px-1">
+      <div className="mt-4 px-1">
         <h4
-          className="text-[11px] font-normal uppercase text-black tracking-wide line-clamp-2"
-          style={{fontFamily: 'var(--font-sans)'}}
+          className="text-base font-semibold tracking-wide mb-2"
+          style={{
+            fontFamily: 'Aeonik, sans-serif',
+            color: isDarkTheme ? '#FFFFFF' : '#000000'
+          }}
         >
           {product.title}
         </h4>
 
         <p
-          className="mt-1 text-[11px] font-normal text-black"
-          style={{fontFamily: 'var(--font-sans)'}}
+          className="text-base font-normal"
+          style={{
+            fontFamily: 'Quicking, sans-serif',
+            color: isDarkTheme ? '#FFFFFF' : '#000000'
+          }}
         >
           {new Intl.NumberFormat('en-EG', {
             style: 'decimal',

@@ -14,7 +14,19 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(find:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(del:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(rmdir:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install)",
+      "Bash(npm install vite@^6.2.4)"
     ],
     "deny": [],
     "ask": []

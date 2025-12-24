@@ -454,7 +454,7 @@ export function ProductHeader({
                             <td className="border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900">{size}</td>
                             {Object.entries(measurements).map(([key, value]: [string, any]) => (
                               <td key={key} className="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-                                {value}
+                                {Array.isArray(value) ? value.join('-') : value}
                               </td>
                             ))}
                           </tr>

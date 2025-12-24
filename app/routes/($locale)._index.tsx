@@ -17,17 +17,13 @@ export const meta: Route.MetaFunction = () => {
   ];
 };
 
-type CollectionsQuery = {
-  collections: {
-    nodes: Array<{
-      id: string;
-      title: string;
-      handle: string;
-      image?: {
-        url: string;
-        altText?: string;
-      };
-    }>;
+type Collection = {
+  id?: string;
+  title?: string;
+  handle?: string;
+  image?: {
+    url?: string;
+    altText?: string;
   };
 };
 
@@ -71,9 +67,9 @@ export default function Homepage() {
       <section className="w-full pt-6 pb-12 sm:pt-8 sm:pb-16 lg:pt-10 lg:pb-20">
         <Container>
           <div className="space-y-6">
-            {collections.map((collection: CollectionsQuery['collections']['nodes'][0], index: number) => (
-              <CategoryCard 
-                key={collection.id} 
+            {collections.map((collection, index) => (
+              <CategoryCard
+                key={collection.id}
                 collection={collection}
                 isLast={index === collections.length - 1}
               />
@@ -85,11 +81,11 @@ export default function Homepage() {
   );
 }
 
-function CategoryCard({ 
-  collection, 
-  isLast 
-}: { 
-  collection: CollectionsQuery['collections']['nodes'][0];
+function CategoryCard({
+  collection,
+  isLast
+}: {
+  collection: Collection;
   isLast: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);

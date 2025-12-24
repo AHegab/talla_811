@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { ProductQuery } from 'storefrontapi.generated';
 import { mapMaterialToFabricType } from '~/lib/fabricMapping';
+import { useAside } from './Aside';
 import type { PDPProduct, PDPVariant } from './ProductBuyBox';
 import { ProductDescription } from './ProductDescription';
 import { ProductHeader } from './ProductHeader';
@@ -32,6 +33,8 @@ interface ProductPageProps {
 export function ProductPage({product, selectedVariant, similarProducts, brandSizeChart}: ProductPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sizeChartOpen, setSizeChartOpen] = useState(false);
+  const { type: asideType } = useAside();
+  const isCartOpen = asideType === 'cart';
 
   // Transform selectedVariant to PDPVariant
   const transformVariant = (
@@ -375,7 +378,7 @@ export function ProductPage({product, selectedVariant, similarProducts, brandSiz
       </div>
 
       {/* Fixed Header at Bottom - OUTSIDE main container to avoid transform issues */}
-      {currentVariant && (
+      {currentVariant && !isCartOpen && (
         <ProductHeader
           product={pdpProduct}
           selectedVariant={currentVariant}

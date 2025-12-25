@@ -157,6 +157,41 @@ export function ProductHeader({
     coffee: '#6f4e37',
     espresso: '#4e3629',
     taupe: '#b38b6d',
+
+    // Additional bag colors
+    'cracked black': '#1a1a1a',
+    crackedblack: '#1a1a1a',
+    'bloody red': '#8b0000',
+    bloodyred: '#8b0000',
+    pistachio: '#93c572',
+    'caramel brown': '#c68642',
+    caramelbrown: '#c68642',
+    'olive stone': '#6b705c',
+    olivestone: '#6b705c',
+    'glossy brown': '#5c4033',
+    glossybrown: '#5c4033',
+    'oat milk': '#e6dcc8',
+    oatmilk: '#e6dcc8',
+    'black truffle': '#2e2823',
+    blacktruffle: '#2e2823',
+    pastrami: '#8b6f47',
+    'retro red': '#c41e3a',
+    retrored: '#c41e3a',
+    'forest green': '#228b22',
+    forestgreen: '#228b22',
+    'diamond black': '#000000',
+    diamondblack: '#000000',
+    'dark chocolate': '#4a2c2a',
+    darkchocolate: '#4a2c2a',
+    'cherry red': '#d2042d',
+    cherryred: '#d2042d',
+    'wood brown': '#704214',
+    woodbrown: '#704214',
+    havan: '#d2a679',
+    'lime green': '#32cd32',
+    limegreen: '#32cd32',
+    'turquoise blue': '#40e0d0',
+    turquoiseblue: '#40e0d0',
   };
 
   // Parse multi-color values (e.g., "WHITE X LIGHT GREY")
@@ -419,7 +454,7 @@ export function ProductHeader({
                             <td className="border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900">{size}</td>
                             {Object.entries(measurements).map(([key, value]: [string, any]) => (
                               <td key={key} className="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-                                {value}
+                                {Array.isArray(value) ? value.join('-') : value}
                               </td>
                             ))}
                           </tr>
@@ -458,7 +493,7 @@ export function ProductHeader({
         width: '100vw',
         maxWidth: '100vw',
         zIndex: 999999,
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+        boxShadow: '0 -1px 1px rgba(0,0,0,0.03)',
         transform: 'none',
         willChange: 'auto',
       }}
@@ -470,14 +505,14 @@ export function ProductHeader({
         </div>
       )}
 
-      <div className="px-3 py-2 pb-safe">
+      <div className="px-3 py-0.5 pb-safe">
         {/* Header Top Row with Title and Size Guide Button */}
-        <div className="flex items-start justify-between mb-1">
+        <div className="flex items-start justify-between mb-0">
           {/* Title */}
           <h1
             className="text-gray-900 leading-tight flex-1"
             style={{
-              fontSize: '10px',
+              fontSize: '13px',
               fontWeight: '400',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
@@ -486,29 +521,32 @@ export function ProductHeader({
             {product.title}
           </h1>
           
-          {/* SIZE GUIDE Button */}
-          <button
-            onClick={() => setSizeRecOpen(true)}
-            className="bg-black text-white font-semibold text-[3px] px-1.5 py-0.5 rounded-sm hover:bg-gray-800 transition-all uppercase tracking-wide ml-2 flex-shrink-0"
-          >
-            SIZE GUIDE
-          </button>
+          {/* SIZE GUIDE Button - only show if product has size options */}
+          {product.options?.some(option => option.name.toLowerCase() === 'size') && (
+            <button
+              onClick={() => setSizeRecOpen(true)}
+              className="bg-black text-white font-semibold text-[6px] px-1 py-0.5 square-sm hover:bg-gray-800 transition-all uppercase tracking-wide ml-2 flex-shrink-0"
+              style={{ padding: '2px 6px' }}
+            >
+              SIZE GUIDE
+            </button>
+          )}
         </div>
 
         {/* Price */}
-        <div className="text-gray-900 mb-2" style={{ fontSize: '10px', fontWeight: '400' }}>
+        <div className="text-gray-900" style={{ fontSize: '16px', fontWeight: '400' }}>
           <Money data={selectedVariant.price as any} />
         </div>
 
         {/* Option Selectors - Sizes first, then Colors below */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-0.5">
           {/* Size Options */}
           {product.options &&
             product.options.length > 0 &&
             product.options
               .filter((option) => option.name.toLowerCase() !== 'color')
               .map((option) => (
-                <div key={option.name} className="flex flex-wrap gap-2">
+                <div key={option.name} className="flex flex-wrap gap-1">
                   {option.values.map((value) => {
                     const isAvailable = product.variants.some(
                       (v) =>
@@ -526,7 +564,7 @@ export function ProductHeader({
                         disabled={!isAvailable}
                         className={(() => {
                           // Size button - small square with centered text
-                          const base = 'w-6 h-6 flex items-center justify-center rounded-sm border transition-all flex-shrink-0 text-[9px] leading-none font-bold';
+                          const base = 'w-3.5 h-3.5 flex items-center justify-center border transition-all flex-shrink-0 text-[6px] leading-none font-bold';
                           const selected = isSelected
                             ? 'bg-black text-white border-black'
                             : 'bg-white text-black border-gray-300';
@@ -558,7 +596,7 @@ export function ProductHeader({
             product.options
               .filter((option) => option.name.toLowerCase() === 'color')
               .map((option) => (
-                <div key={option.name} className="flex flex-wrap gap-2">
+                <div key={option.name} className="flex flex-wrap gap-1">
                   {option.values.map((value) => {
                     const isAvailable = product.variants.some(
                       (v) =>
@@ -607,7 +645,7 @@ export function ProductHeader({
                         onClick={() => onOptionChange(option.name, value)}
                         className={(() => {
                           // Color swatch - small square, always clickable
-                          const base = 'w-4 h-4 rounded-sm border transition-all flex-shrink-0 relative';
+                          const base = 'w-2.5 h-2.5 border transition-all flex-shrink-0 relative';
                           const border = isSelected ? 'border-black border-2' : 'border-gray-300';
                           const hover = 'hover:border-black';
                           return `${base} ${border} ${hover}`.trim();
@@ -627,13 +665,13 @@ export function ProductHeader({
               ))}
 
           {/* Add to Cart Button */}
-          <div className="mt-1">
+          <div>
             <AddToCartButton
               lines={lines}
               onClick={handleAddToCart}
               disabled={!selectedVariant.availableForSale}
             >
-              <span className="text-sm font-medium">
+              <span className="text-xs font-medium">
                 {selectedVariant.availableForSale ? 'Add to Cart' : 'Sold Out'}
               </span>
             </AddToCartButton>

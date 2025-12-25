@@ -1,11 +1,15 @@
 interface ProductDescriptionProps {
   description?: string;
   fabricType?: 'cotton' | 'cotton_blend' | 'jersey_knit' | 'highly_elastic';
+  modelSize?: string;
+  vendor?: string;
 }
 
 export function ProductDescription({
   description,
   fabricType,
+  modelSize,
+  vendor,
 }: ProductDescriptionProps) {
   // Map fabric type to human-readable names
   const fabricTypeLabels: Record<string, string> = {
@@ -16,28 +20,40 @@ export function ProductDescription({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Description Panel */}
-      <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-        <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-          <span className="tracking-wide">Description</span>
-        </div>
-        <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
-          {description || 'No description available.'}
-        </div>
-      </div>
-
-      {/* Materials/Fabric Panel */}
-      {fabricType && (
-        <div className="flex min-h-[64px] flex-col rounded-xl border border-[#D1D5DB] bg-[#F8F9FB] shadow-md transition-all">
-          <div className="flex min-h-[56px] items-center rounded-xl px-6 py-4 text-left text-[17px] font-semibold tracking-[0.02em] text-gray-700">
-            <span className="tracking-wide">Materials</span>
-          </div>
-          <div className="min-h-[48px] px-6 pb-6 text-[16px] leading-relaxed text-gray-600">
-            {fabricTypeLabels[fabricType] || fabricType}
-          </div>
+    <div className="space-y-6">
+      {/* Vendor */}
+      {vendor && (
+        <div>
+          
+          <p className="text-[15px] text-gray-900">{vendor}</p>
         </div>
       )}
+
+      {/* Description */}
+      <div>
+        
+        <p className="text-[15px] leading-[1.7] text-gray-900">
+          {description || 'No description available.'}
+        </p>
+      </div>
+
+      {/* Model Size */}
+      {modelSize && (
+        <div>
+          
+          <p className="text-[15px] text-gray-900">{modelSize}</p>
+        </div>
+      )}
+
+      {/* Materials/Fabric */}
+      {/* {fabricType && (
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Materials</h3>
+          <p className="text-[15px] text-gray-900">
+            {fabricTypeLabels[fabricType] || fabricType}
+          </p>
+        </div>
+      )} */}
     </div>
   );
 }

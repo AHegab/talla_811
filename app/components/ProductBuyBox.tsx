@@ -55,6 +55,8 @@ export interface PDPProduct {
   sizeDimensions?: SizeDimensions | null;
   // optional fabric type for smart recommendation
   fabricType?: 'cotton' | 'cotton_blend' | 'jersey_knit' | 'highly_elastic';
+  // optional model size metafield
+  modelSize?: string;
 }
 
 export interface SimilarProduct {

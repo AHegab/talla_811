@@ -17,33 +17,39 @@ export const meta: Route.MetaFunction = () => {
   ];
 };
 
-type CollectionsQuery = {
-  collections: {
-    nodes: Array<{
-      id: string;
-      title: string;
-      handle: string;
-      image?: {
-        url: string;
-        altText?: string;
-      };
-    }>;
+type Collection = {
+  id?: string;
+  title?: string;
+  handle?: string;
+  image?: {
+    url?: string;
+    altText?: string;
   };
 };
 
 export async function loader({context}: Route.LoaderArgs) {
-  const data = await context.storefront.query<CollectionsQuery>(
-    COLLECTIONS_QUERY,
-  );
+  // Fetch the "categories" menu from Shopify instead of all collections
+  const {menu} = await context.storefront.query(CATEGORIES_MENU_QUERY, {
+    variables: {
+      handle: 'categories',
+    },
+  });
 
-  // Filter to show only these specific categories
-  const categoryHandles = ['loungewear', 'basics', 'partywear', 'bags'];
-  const filteredCollections = data.collections?.nodes.filter(
-    collection => categoryHandles.includes(collection.handle.toLowerCase())
-  ) ?? [];
+  // Transform menu items to collection format
+  const collections = menu?.items.map((item: any) => {
+    if (item.resource?.__typename === 'Collection') {
+      return {
+        id: item.resource.id,
+        title: item.resource.title,
+        handle: item.resource.handle,
+        image: item.resource.image,
+      };
+    }
+    return null;
+  }).filter(Boolean) ?? [];
 
   return {
-    collections: filteredCollections,
+    collections,
   };
 }
 
@@ -62,8 +68,8 @@ export default function Homepage() {
         <Container>
           <div className="space-y-6">
             {collections.map((collection, index) => (
-              <CategoryCard 
-                key={collection.id} 
+              <CategoryCard
+                key={collection.id}
                 collection={collection}
                 isLast={index === collections.length - 1}
               />
@@ -75,11 +81,11 @@ export default function Homepage() {
   );
 }
 
-function CategoryCard({ 
-  collection, 
-  isLast 
-}: { 
-  collection: CollectionsQuery['collections']['nodes'][0];
+function CategoryCard({
+  collection,
+  isLast
+}: {
+  collection: Collection;
   isLast: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -122,17 +128,25 @@ function CategoryCard({
   );
 }
 
-const COLLECTIONS_QUERY = `#graphql
-  query Collections($country: CountryCode, $language: LanguageCode)
-  @inContext(country: $country, language: $language) {
-    collections(first: 10) {
-      nodes {
+const CATEGORIES_MENU_QUERY = `#graphql
+  query CategoriesMenu($handle: String!) {
+    menu(handle: $handle) {
+      id
+      items {
         id
         title
-        handle
-        image {
-          url
-          altText
+        url
+        resource {
+          __typename
+          ... on Collection {
+            id
+            title
+            handle
+            image {
+              url
+              altText
+            }
+          }
         }
       }
     }

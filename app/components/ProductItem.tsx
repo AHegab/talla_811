@@ -53,12 +53,13 @@ export function ProductItem({
       </div>
 
       {/* Text block: name under pic, price under name */}
-      <div className="mt-4 px-1">
+      <div className="mt-6 px-1">
         <h4
-          className="text-base font-semibold tracking-wide mb-2"
+          className="text-sm font-normal tracking-wide mb-2"
           style={{
             fontFamily: 'Aeonik, sans-serif',
-            color: isDarkTheme ? '#FFFFFF' : '#000000'
+            color: isDarkTheme ? '#FFFFFF' : '#000000',
+            fontWeight: 400
           }}
         >
           {product.title}

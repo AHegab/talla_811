@@ -138,7 +138,7 @@ export function ProductImagesVertical({
           key={img.id || idx}
           onClick={() => openModal(idx)}
           className="w-full block relative bg-white group cursor-pointer border-0 outline-none"
-          style={{ aspectRatio: '3/4', margin: 0, padding: 0, border: 'none', outline: 'none', display: 'block', lineHeight: 0 }}
+          style={{ aspectRatio: '3/4', margin: 0, padding: 0, border: 'none', outline: 'none', display: 'block', lineHeight: 0, marginBottom: '-1px' }}
           aria-label={`View image ${idx + 1} in fullscreen`}
         >
           <Image
